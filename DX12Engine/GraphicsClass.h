@@ -15,7 +15,7 @@ public:
 	bool Frame();
 private:
 	bool Render();
-	D3dClass* direct3D;
+	D3dClass* m_pDirect3D;
 };
 
 

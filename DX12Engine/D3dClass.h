@@ -21,20 +21,20 @@ public:
 	bool Render();
 
 private:
-	bool vsync_enabled;
-	ID3D12Device* device;
-	ID3D12CommandQueue* commandQ;
-	char videocardDesc[128];
-	IDXGISwapChain3* swapChain;
-	ID3D12DescriptorHeap* rtvHeap;
-	ID3D12Resource* backbufferRenderTarget[2];
-	unsigned int bufferIndex;
-	ID3D12CommandAllocator* commandAllocator;
-	ID3D12GraphicsCommandList* graphicsCommandList;
-	ID3D12PipelineState* pipelineState;
-	ID3D12Fence* fence;
-	HANDLE fenceEvent;
-	unsigned long long fenceValue;
+	bool m_bVsyncEnabled;
+	ID3D12Device* m_pDevice;
+	ID3D12CommandQueue* m_pCommandQ;
+	char m_chVideocardDesc[128];
+	IDXGISwapChain3* m_pSwapChain;
+	ID3D12DescriptorHeap* m_pRtvHeap;
+	ID3D12Resource* m_pBackbufferRenderTarget[2];
+	unsigned int m_iBufferIndex;
+	ID3D12CommandAllocator* m_pCommandAllocator;
+	ID3D12GraphicsCommandList* m_pGraphicsCommandList;
+	ID3D12PipelineState* m_pPipelineState;
+	ID3D12Fence* m_pFence;
+	HANDLE m_fenceEvent;
+	unsigned long long m_llFenceValue;
 	
 	
 

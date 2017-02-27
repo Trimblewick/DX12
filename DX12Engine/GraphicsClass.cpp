@@ -8,11 +8,11 @@ GraphicsClass::GraphicsClass()
 GraphicsClass::~GraphicsClass()
 {
 	// Release the Direct3D object.
-	if (this->direct3D)
+	if (m_pDirect3D)
 	{
-		this->direct3D->Shutdown();
-		delete this->direct3D;
-		this->direct3D = 0;
+		m_pDirect3D->Shutdown();
+		delete m_pDirect3D;
+		m_pDirect3D = 0;
 	}
 }
 
@@ -22,14 +22,14 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 
 	// Create the Direct3D object.
-	this->direct3D = new D3dClass;
-	if (!this->direct3D)
+	m_pDirect3D = new D3dClass();
+	if (!m_pDirect3D)
 	{
 		return false;
 	}
 
 	// Initialize the Direct3D object.
-	result = this->direct3D->Initialize(screenWidth, screenHeight, hwnd, true, true);
+	result = m_pDirect3D->Initialize(screenWidth, screenHeight, hwnd, true, false);
 	if (!result)
 	{
 		MessageBox(hwnd, L"Could not initialize Direct3D", L"Error", MB_OK);
@@ -45,9 +45,10 @@ bool GraphicsClass::Render()
 
 
 	// Use the Direct3D object to render the scene.
-	result = direct3D->Render();
+	result = m_pDirect3D->Render();
 	if (!result)
 	{
+		std::cout << "Direct3D Renderer Failure" << std::endl;
 		return false;
 	}
 

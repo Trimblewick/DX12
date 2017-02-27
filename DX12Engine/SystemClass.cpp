@@ -4,16 +4,12 @@ static SystemClass* applicationhandle;
 
 SystemClass::SystemClass()
 {
-	//init here?
-	this->input = new Input();
-	this->graphics = new GraphicsClass();
 	
 }
 
 SystemClass::~SystemClass()
 {
-	delete this->screendimensions;
-	DestroyWindow(this->hWnd);
+	DestroyWindow(m_hWnd);
 }
 
 LRESULT CALLBACK SystemClass::MessageHandler(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -21,10 +17,10 @@ LRESULT CALLBACK SystemClass::MessageHandler(HWND hWnd, UINT message, WPARAM wPa
 	switch (message)
 	{
 	case WM_KEYDOWN:
-		this->input->KeyDown((unsigned int)wParam);
+		m_pInput->KeyDown((unsigned int)wParam);
 		return 0;
 	case WM_KEYUP:
-		this->input->KeyUp((unsigned int)wParam);
+		m_pInput->KeyUp((unsigned int)wParam);
 		return 0;
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
@@ -47,8 +43,10 @@ LRESULT CALLBACK WindowProcedure(HWND hWnd, UINT message, WPARAM wParam, LPARAM 
 
 bool SystemClass::Initialize()
 {
+	m_pInput = new Input();
+	m_pGraphics = new GraphicsClass();
 	//initialize window
-	this->hInstance = GetModuleHandle(NULL);
+	m_hInstance = GetModuleHandle(NULL);
 
 	applicationhandle = this;
 
@@ -56,7 +54,7 @@ bool SystemClass::Initialize()
 	wcx.cbSize = sizeof(WNDCLASSEX);
 	wcx.style = CS_HREDRAW | CS_VREDRAW;
 	wcx.lpfnWndProc = WindowProcedure;
-	wcx.hInstance = hInstance;
+	wcx.hInstance = this->m_hInstance;
 	wcx.lpszClassName = L"Våldeboll";
 	wcx.cbClsExtra = 0;
 	wcx.cbWndExtra = 0;
@@ -70,19 +68,18 @@ bool SystemClass::Initialize()
 		return false;
 	}
 
-	this->screendimensions = new screen_dimensionsXY;
 
-	this->screendimensions->screenWidth = 1280.0f;
-	this->screendimensions->screenHeight = 720.0f;
+	m_fScreenWidth = 1280.0f;
+	m_fScreenHeight = 720.0f;
 	
-	this->hWnd = CreateWindow(wcx.lpszClassName, wcx.lpszClassName, WS_OVERLAPPEDWINDOW, 100, 100, 
-		this->screendimensions->screenWidth, this->screendimensions->screenHeight, nullptr, nullptr, hInstance, nullptr);
+	m_hWnd = CreateWindow(wcx.lpszClassName, wcx.lpszClassName, WS_OVERLAPPEDWINDOW, 100, 100, 
+		m_fScreenWidth, m_fScreenHeight, nullptr, nullptr, m_hInstance, nullptr);
 
-	ShowWindow(this->hWnd, SW_SHOW);
-	SetForegroundWindow(this->hWnd);
-	SetFocus(this->hWnd);
+	ShowWindow(m_hWnd, SW_SHOW);
+	SetForegroundWindow(m_hWnd);
+	SetFocus(m_hWnd);
 
-	this->graphics->Initialize(screendimensions->screenWidth, screendimensions->screenHeight, hWnd);
+	this->m_pGraphics->Initialize(m_fScreenWidth, m_fScreenHeight, m_hWnd);
 
 	//////////////////////////////////////////////////created window, make private function
 
@@ -119,24 +116,24 @@ bool SystemClass::Initialize()
 void SystemClass::Run() throw()
 {
 	bool result;
-	this->msg = { 0 };
+	m_msg = { 0 };
 	
 
-	while (WM_QUIT != msg.message)
+	while (WM_QUIT != m_msg.message)
 	{
 
 
-		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		if (PeekMessage(&m_msg, nullptr, 0, 0, PM_REMOVE))
 		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			TranslateMessage(&m_msg);
+			DispatchMessage(&m_msg);
 		}
 		else
 		{
-			bool result = this->Frame();
+			bool result = Frame();
 			if (!result)
 			{
-				this->msg.message = WM_QUIT;
+				m_msg.message = WM_QUIT;
 			}
 		}
 	}
@@ -151,13 +148,13 @@ bool SystemClass::Frame()
 	bool result;
 
 	// Check if the user pressed escape and wants to exit the application.
-	if (!input->IsKeyDown(VK_ESCAPE))
+	if (!m_pInput->IsKeyDown(VK_ESCAPE))
 	{
 		return false;
 	}
 
 	// Do the frame processing for the graphics object.
-	result = this->graphics->Frame();
+	result = m_pGraphics->Frame();
 	if (!result)
 	{
 		return false;

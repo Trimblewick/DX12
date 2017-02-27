@@ -8,18 +8,17 @@ class Input
 	
 public:
 	Input();
-	//InputClass(const InputClass&);
 	~Input();
 
 	void Initialize();
 
-	void KeyDown(unsigned int);
-	void KeyUp(unsigned int);
+	void KeyDown(unsigned int const keyIndex);
+	void KeyUp(unsigned int const keyIndex);
 
-	bool IsKeyDown(unsigned int);
+	bool IsKeyDown(unsigned int const keyIndex);
 
 private:
-	bool keys[256];
+	bool m_bKeys[256];
 };
 
 #endif

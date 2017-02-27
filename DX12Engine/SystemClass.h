@@ -21,20 +21,19 @@ public:
 
 	LRESULT CALLBACK MessageHandler(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 private:
-	HINSTANCE hInstance;
-	LPWSTR lpCmdLine;
-	int nCmdShow;
-	HWND hWnd;
-	MSG msg;
+	HINSTANCE m_hInstance;
+	LPWSTR m_lpCmdLine;
+	int m_nCmdShow;
+	HWND m_hWnd;
+	MSG m_msg;
 
-	struct screen_dimensionsXY
-	{
-		float screenWidth;//X
-		float screenHeight;//Y
-	} *screendimensions;
+	
+	float m_fScreenWidth;
+	float m_fScreenHeight;
+	
 
-	Input* input;
-	GraphicsClass* graphics;
+	Input* m_pInput;
+	GraphicsClass* m_pGraphics;
 };
 
 
