@@ -17,6 +17,7 @@ public:
 
 	bool Initialize();
 	void Run();
+	void Shutdown();
 	bool Frame();
 
 	LRESULT CALLBACK MessageHandler(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);

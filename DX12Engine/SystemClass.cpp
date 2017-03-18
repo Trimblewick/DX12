@@ -9,7 +9,7 @@ SystemClass::SystemClass()
 
 SystemClass::~SystemClass()
 {
-	DestroyWindow(m_hWnd);
+	
 }
 
 LRESULT CALLBACK SystemClass::MessageHandler(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -55,7 +55,7 @@ bool SystemClass::Initialize()
 	wcx.style = CS_HREDRAW | CS_VREDRAW;
 	wcx.lpfnWndProc = WindowProcedure;
 	wcx.hInstance = this->m_hInstance;
-	wcx.lpszClassName = L"Våldeboll";
+	wcx.lpszClassName = L"DX12";
 	wcx.cbClsExtra = 0;
 	wcx.cbWndExtra = 0;
 	wcx.hbrBackground = static_cast<HBRUSH>(GetStockObject(WHITE_BRUSH));
@@ -81,35 +81,6 @@ bool SystemClass::Initialize()
 
 	this->m_pGraphics->Initialize(m_fScreenWidth, m_fScreenHeight, m_hWnd);
 
-	//////////////////////////////////////////////////created window, make private function
-
-/*
-	if (!hWnd)// creation of window failed, throw some exception
-	{
-		throw ExceptionHandler::initializationFailiure;
-		return;
-	}
-	else
-	{
-		DXGI_SWAP_CHAIN_DESC scd;
-		ZeroMemory(&scd, sizeof(DXGI_SWAP_CHAIN_DESC));
-
-		// fill the swap chain description struct
-		scd.BufferCount = 1;                                    // one back buffer
-		scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;     // use 32-bit color
-		scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;      // how swap chain is to be used
-		scd.OutputWindow = this->hWnd;                          // the window to be used
-		scd.SampleDesc.Count = 4;                               // how many multisamples
-		scd.Windowed = TRUE;                                    // windowed/full-screen mode
-
-		HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG, NULL, NULL, D3D11_SDK_VERSION, 
-			&scd, &this->swapChain, &this->device, NULL, &this->context);
-
-
-
-	}*/
-
-	
 	return true;
 }
 
@@ -139,6 +110,12 @@ void SystemClass::Run() throw()
 	}
 
 	return;
+}
+
+void SystemClass::Shutdown()
+{
+	DestroyWindow(m_hWnd);
+	
 }
 
 

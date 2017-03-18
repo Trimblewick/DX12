@@ -1,6 +1,7 @@
 #ifndef GRAPHICSCLASS_H
 #define GRAPHICSCLASS_H
-//#include <Windows.h>
+
+#include "Common.h"
 #include "D3dClass.h"
 
 

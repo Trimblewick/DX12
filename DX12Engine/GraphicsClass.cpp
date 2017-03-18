@@ -30,11 +30,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 	// Initialize the Direct3D object.
 	result = m_pDirect3D->Initialize(screenWidth, screenHeight, hwnd, true, false);
-	if (!result)
-	{
-		MessageBox(hwnd, L"Could not initialize Direct3D", L"Error", MB_OK);
-		return false;
-	}
+	assert(result);
 
 	return true;
 }
@@ -46,13 +42,7 @@ bool GraphicsClass::Render()
 
 	// Use the Direct3D object to render the scene.
 	result = m_pDirect3D->Render();
-	if (!result)
-	{
-		std::cout << "Direct3D Renderer Failure" << std::endl;
-		return false;
-	}
-
-
+	assert(result);
 
 	return true;
 }

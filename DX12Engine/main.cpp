@@ -4,23 +4,18 @@
 #include "SystemClass.h"
 
 
-//LRESULT CALLBACK WindowProcedure(HWND, UINT, WPARAM, LPARAM);
-
 int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline, int iCmdshow)
 {
 	SystemClass* system;
 	system = new SystemClass();
-	if (!system->Initialize())
+	if (system->Initialize())
 	{
-		std::cout << "system init failiure";
+		system->Run();
 	}
-
-	system->Run();
-	
 
 
 	// End application
-	//system->Shutdown();
+	system->Shutdown();
 	delete system;
 	system = 0;
 	
