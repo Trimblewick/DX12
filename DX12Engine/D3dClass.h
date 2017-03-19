@@ -8,6 +8,7 @@
 
 #include <d3d12.h>
 #include <dxgi1_4.h>
+#include <d3dcompiler.h>
 
 #include "Common.h"
 
@@ -16,6 +17,8 @@ class D3dClass
 public:
 	D3dClass();
 	~D3dClass();
+
+	ID3D12Device* GetDevice();
 
 	bool Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsyncstate, bool fullscreen);
 	void Shutdown();
@@ -32,7 +35,17 @@ private:
 	unsigned int m_iBufferIndex;
 	ID3D12CommandAllocator* m_pCommandAllocator;
 	ID3D12GraphicsCommandList* m_pGraphicsCommandList;
+
+
+
 	ID3D12PipelineState* m_pPipelineState;
+	ID3D12RootSignature* m_pRootSignature;
+
+	
+
+	ID3D12Resource* testVertexBuffer;
+	D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
+
 	ID3D12Fence* m_pFence;
 	HANDLE m_fenceEvent;
 	unsigned long long m_llFenceValue;

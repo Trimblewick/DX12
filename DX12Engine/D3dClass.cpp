@@ -11,7 +11,10 @@ D3dClass::D3dClass()
 	m_pBackbufferRenderTarget[1];
 	m_pCommandAllocator = 0;
 	m_pGraphicsCommandList = 0;
+	
 	m_pPipelineState = 0;
+	m_pRootSignature = 0;
+
 	m_pFence = 0;
 	m_fenceEvent = 0;
 }
@@ -20,22 +23,35 @@ D3dClass::~D3dClass()
 {
 }
 
+ID3D12Device * D3dClass::GetDevice()
+{
+	return m_pDevice;
+}
+
 bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsyncstate, bool fullscreen)
 {
 	D3D_FEATURE_LEVEL featureLevel;
 	HRESULT hr;
 	D3D12_COMMAND_QUEUE_DESC commandQDesc; 
-	IDXGIFactory4* factory;
-	IDXGIAdapter* adapter;
-	IDXGIOutput* adapterOutput;
+	IDXGIFactory4* pFactory;
+	IDXGIAdapter* pAdapter;
+	IDXGIOutput* pAdapterOutput;
 	unsigned int numModes, i, numerator, denominator, renderTargetViewDescriptorSize;
 	unsigned long long stringLength;
-	DXGI_MODE_DESC* displayModeList;
+	DXGI_MODE_DESC* pDisplayModeList;
 	DXGI_ADAPTER_DESC adapterDesc;
 	int error;
 	DXGI_SWAP_CHAIN_DESC swapChainDesc;
 	D3D12_DESCRIPTOR_HEAP_DESC renderTargetViewHeapDesc;
 	D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle;
+	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+	
+	ID3DBlob* pRootSignatureBlob;
+
+	ID3DBlob* pVertexShaderBlob;
+	ID3DBlob* pPixelShaderBlob;
+	D3D12_SHADER_BYTECODE vertexShaderBytecode = {};
+	D3D12_SHADER_BYTECODE pixelShaderBytecode = {};
 
 	m_bVsyncEnabled = vsyncstate;
 
@@ -57,35 +73,35 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	
 	DxAssert(m_pDevice->CreateCommandQueue(&commandQDesc, __uuidof(ID3D12CommandQueue), (void**)&m_pCommandQ), S_OK);
 
-	DxAssert(CreateDXGIFactory1(__uuidof(IDXGIFactory4), (void**)&factory), S_OK);
+	DxAssert(CreateDXGIFactory1(__uuidof(IDXGIFactory4), (void**)&pFactory), S_OK);
 
-	DxAssert(factory->EnumAdapters(0, &adapter), S_OK);
+	DxAssert(pFactory->EnumAdapters(0, &pAdapter), S_OK);
 
-	DxAssert(adapter->EnumOutputs(0, &adapterOutput), S_OK);
+	DxAssert(pAdapter->EnumOutputs(0, &pAdapterOutput), S_OK);
 
-	DxAssert(adapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, NULL), S_OK);
+	DxAssert(pAdapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, NULL), S_OK);
 	
-	displayModeList = new DXGI_MODE_DESC[numModes];
-	assert(displayModeList);
+	pDisplayModeList = new DXGI_MODE_DESC[numModes];
+	assert(pDisplayModeList);
 
-	DxAssert(adapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, displayModeList), S_OK);
+	DxAssert(pAdapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, pDisplayModeList), S_OK);
 
 	// Now go through all the display modes and find the one that matches the screen height and width.
 	// When a match is found store the numerator and denominator of the refresh rate for that monitor.
 	for (i = 0; i < numModes; i++)
 	{
-		if (displayModeList[i].Height == (unsigned int)screenHeight)
+		if (pDisplayModeList[i].Height == (unsigned int)screenHeight)
 		{
-			if (displayModeList[i].Width == (unsigned int)screenWidth)
+			if (pDisplayModeList[i].Width == (unsigned int)screenWidth)
 			{
-				numerator = displayModeList[i].RefreshRate.Numerator;
-				denominator = displayModeList[i].RefreshRate.Denominator;
+				numerator = pDisplayModeList[i].RefreshRate.Numerator;
+				denominator = pDisplayModeList[i].RefreshRate.Denominator;
 				break;
 			}
 		}
 	}
 
-	DxAssert(adapter->GetDesc(&adapterDesc), S_OK);
+	DxAssert(pAdapter->GetDesc(&adapterDesc), S_OK);
 	
 
 	error = wcstombs_s(&stringLength, m_chVideocardDesc, 128, adapterDesc.Description, 128);
@@ -94,9 +110,9 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 		return false;
 	}
 	//release
-	delete[] displayModeList;
-	SAFE_RELEASE(adapterOutput);
-	SAFE_RELEASE(adapter);
+	delete[] pDisplayModeList;
+	SAFE_RELEASE(pAdapterOutput);
+	SAFE_RELEASE(pAdapter);
 
 	ZeroMemory(&swapChainDesc, sizeof(swapChainDesc));
 
@@ -140,18 +156,18 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	swapChainDesc.Flags = 0;
 
 	// Finally create the swap chain using the swap chain description.	
-	IDXGISwapChain* p_tempSwapChain;
-	DxAssert(factory->CreateSwapChain(m_pCommandQ, &swapChainDesc, &p_tempSwapChain), S_OK);
+	IDXGISwapChain* pTempSwapChain;
+	DxAssert(pFactory->CreateSwapChain(m_pCommandQ, &swapChainDesc, &pTempSwapChain), S_OK);
 
 	// Next upgrade the IDXGISwapChain to a IDXGISwapChain3 interface and store it in a private member variable named m_pSwapChain.
 	// This will allow us to use the newer functionality such as getting the current back buffer index.
-	DxAssert(p_tempSwapChain->QueryInterface(__uuidof(IDXGISwapChain3), (void**)&m_pSwapChain), S_OK);
+	DxAssert(pTempSwapChain->QueryInterface(__uuidof(IDXGISwapChain3), (void**)&m_pSwapChain), S_OK);
 
 	// Clear pointer to original swap chain interface since we are using version 3 instead (m_swapChain).
-	p_tempSwapChain = 0;
+	pTempSwapChain = 0;
 
 	// Release the factory now that the swap chain has been created.
-	SAFE_RELEASE(factory);
+	SAFE_RELEASE(pFactory);
 
 	// Initialize the render target view heap description for the two back buffers.
 	ZeroMemory(&renderTargetViewHeapDesc, sizeof(renderTargetViewHeapDesc));
@@ -210,6 +226,27 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	// Initialize the starting fence value. 
 	m_llFenceValue = 1;
 
+
+	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+	rootSignatureDesc.NumParameters = 0;
+	rootSignatureDesc.NumStaticSamplers = 0;
+	rootSignatureDesc.pParameters = nullptr;
+	rootSignatureDesc.pStaticSamplers = nullptr;
+
+	DxAssert(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &pRootSignatureBlob, nullptr), S_OK);
+
+	DxAssert(m_pDevice->CreateRootSignature(0, pRootSignatureBlob->GetBufferPointer(), pRootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&m_pRootSignature)), S_OK);
+	
+	DxAssert(D3DCompileFromFile(L"VertexShader.hlsl", nullptr, nullptr, "main", "vs_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &pVertexShaderBlob, nullptr), S_OK);
+	
+	vertexShaderBytecode.BytecodeLength = pVertexShaderBlob->GetBufferSize();
+	vertexShaderBytecode.pShaderBytecode = pVertexShaderBlob->GetBufferPointer();
+
+	DxAssert(D3DCompileFromFile(L"PixelShader.hlsl", nullptr, nullptr, "main", "ps_5_0", D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &pPixelShaderBlob, nullptr), S_OK);
+	
+	pixelShaderBytecode.BytecodeLength = pPixelShaderBlob->GetBufferSize();
+	pixelShaderBytecode.pShaderBytecode = pPixelShaderBlob->GetBufferPointer();
+
 	return true;
 }
 
@@ -264,7 +301,6 @@ void D3dClass::Shutdown()
 
 bool D3dClass::Render()
 {
-	HRESULT hr;
 	D3D12_RESOURCE_BARRIER barrier;
 	D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle;
 	unsigned int renderTargetViewDescriptorSize;
