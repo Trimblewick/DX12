@@ -31,3 +31,11 @@
 *.sdf
 *.log
 *.tlog
+
+*.VC.db
+*.VC.VC.opendb
+*.suo
+
+build/
+packages/
+intermediate/
