@@ -9,6 +9,10 @@
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <d3dcompiler.h>
+#include <DirectXMath.h>
+
+
+#include "d3dx12.h"
 
 #include "Common.h"
 
@@ -17,6 +21,10 @@ class D3dClass
 public:
 	D3dClass();
 	~D3dClass();
+
+	struct Vertex {
+		DirectX::XMFLOAT3 pos;
+	};
 
 	ID3D12Device* GetDevice();
 
@@ -48,10 +56,12 @@ private:
 
 	ID3D12Fence* m_pFence;
 	HANDLE m_fenceEvent;
+	unsigned int m_iFrameIndex;
 	unsigned long long m_llFenceValue;
 	
 	
-
+	D3D12_VIEWPORT viewport;
+	D3D12_RECT scissorRect;
 
 
 };

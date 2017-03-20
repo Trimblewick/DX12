@@ -52,7 +52,7 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	ID3DBlob* pPixelShaderBlob;
 	D3D12_SHADER_BYTECODE vertexShaderBytecode = {};
 	D3D12_SHADER_BYTECODE pixelShaderBytecode = {};
-
+	m_iFrameIndex = 0;
 
 
 	m_bVsyncEnabled = vsyncstate;
@@ -258,6 +258,9 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
 
+	D3D12_INPUT_LAYOUT_DESC testLayout;
+
+
 	inputLayoutDesc.NumElements = sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC);
 	inputLayoutDesc.pInputElementDescs = inputLayout;
 
@@ -291,8 +294,68 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	psoDesc.NumRenderTargets = 1;
 
 	DxAssert(m_pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pPipelineState)), S_OK);
+	Vertex vList[] = {
+		{ { 0.0f, 0.5f, 0.5f } },
+		{ { 0.5f, -0.5f, 0.5f } },
+		{ { -0.5f, -0.5f, 0.5f } },
+	};
 
+	int vBufferSize = sizeof(vList);
 
+	DxAssert(m_pDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(vBufferSize), D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&testVertexBuffer)), S_OK);
+
+	testVertexBuffer->SetName(L"Vertex Buffer Resource Heap");
+
+	ID3D12Resource* vBufferUploadHeap;
+
+	m_pDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(vBufferSize), D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&vBufferUploadHeap));
+
+	vBufferUploadHeap->SetName(L"Vertex Buffer Upload Resource Heap");
+
+	D3D12_SUBRESOURCE_DATA vertexData = {};
+	vertexData.pData = reinterpret_cast<BYTE*>(vList);
+	vertexData.RowPitch = vBufferSize;
+	vertexData.SlicePitch = vBufferSize;
+
+	UpdateSubresources(m_pGraphicsCommandList, testVertexBuffer, vBufferUploadHeap, 0, 0, 1, &vertexData);
+
+	m_pGraphicsCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(testVertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+
+	m_pGraphicsCommandList->Close();
+
+	ID3D12CommandList* ppCommandLists[] = { m_pGraphicsCommandList };
+	m_pCommandQ->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+	DxAssert(m_pCommandQ->Signal(m_pFence, m_llFenceValue), S_OK);
+
+	vertexBufferView.BufferLocation = testVertexBuffer->GetGPUVirtualAddress();
+	vertexBufferView.StrideInBytes = sizeof(Vertex);
+	vertexBufferView.SizeInBytes = vBufferSize;
+
+	// Fill out the Viewport
+	viewport.TopLeftX = 0;
+	viewport.TopLeftY = 0;
+	viewport.Width = screenWidth;
+	viewport.Height = screenHeight;
+	viewport.MinDepth = 0.0f;
+	viewport.MaxDepth = 1.0f;
+
+	// Fill out a scissor rect
+	scissorRect.left = 0;
+	scissorRect.top = 0;
+	scissorRect.right = screenWidth;
+	scissorRect.bottom = screenHeight;
+
+	m_pGraphicsCommandList->SetGraphicsRootSignature(m_pRootSignature); // set the root signature
+	m_pGraphicsCommandList->RSSetViewports(1, &viewport); // set the viewports
+	m_pGraphicsCommandList->RSSetScissorRects(1, &scissorRect); // set the scissor rects
+	m_pGraphicsCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
+	m_pGraphicsCommandList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
+	m_pGraphicsCommandList->DrawInstanced(3, 1, 0, 0); // finally draw 3 vertices (draw the triangle)
+
+	DxAssert(m_pSwapChain->Present(0, 0), S_OK);
+
+	int stopper = 0;
 
 	return true;
 }
