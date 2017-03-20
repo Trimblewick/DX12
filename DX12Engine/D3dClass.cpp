@@ -53,6 +53,8 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	D3D12_SHADER_BYTECODE vertexShaderBytecode = {};
 	D3D12_SHADER_BYTECODE pixelShaderBytecode = {};
 
+
+
 	m_bVsyncEnabled = vsyncstate;
 
 	featureLevel = D3D_FEATURE_LEVEL_12_1;
@@ -227,6 +229,8 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	m_llFenceValue = 1;
 
 
+
+	//TODO: Move this 
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAGS::D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 	rootSignatureDesc.NumParameters = 0;
 	rootSignatureDesc.NumStaticSamplers = 0;
@@ -246,6 +250,49 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	
 	pixelShaderBytecode.BytecodeLength = pPixelShaderBlob->GetBufferSize();
 	pixelShaderBytecode.pShaderBytecode = pPixelShaderBlob->GetBufferPointer();
+
+	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
+
+	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
+
+	inputLayoutDesc.NumElements = sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC);
+	inputLayoutDesc.pInputElementDescs = inputLayout;
+
+	D3D12_RASTERIZER_DESC rasterizerDesc = {};
+	rasterizerDesc.AntialiasedLineEnable = FALSE;
+	rasterizerDesc.ConservativeRaster = D3D12_CONSERVATIVE_RASTERIZATION_MODE_OFF;
+	rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+	rasterizerDesc.DepthBias = D3D12_DEFAULT_DEPTH_BIAS;
+	rasterizerDesc.DepthBiasClamp = D3D12_DEFAULT_DEPTH_BIAS_CLAMP;
+	rasterizerDesc.DepthClipEnable = TRUE;
+	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+	rasterizerDesc.SlopeScaledDepthBias = D3D12_DEFAULT_SLOPE_SCALED_DEPTH_BIAS;
+	rasterizerDesc.ForcedSampleCount = 0;
+	rasterizerDesc.FrontCounterClockwise = FALSE;
+	rasterizerDesc.MultisampleEnable = FALSE;
+
+	D3D12_BLEND_DESC blendDesc = {};
+
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+	psoDesc.InputLayout = inputLayoutDesc;
+	psoDesc.pRootSignature = m_pRootSignature;
+	psoDesc.VS = vertexShaderBytecode;
+	psoDesc.PS = pixelShaderBytecode;
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE::D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	psoDesc.SampleDesc = swapChainDesc.SampleDesc;
+	psoDesc.SampleMask = 0xffffffff;
+	psoDesc.RasterizerState = rasterizerDesc;
+	psoDesc.BlendState = blendDesc;
+	psoDesc.NumRenderTargets = 1;
+
+	DxAssert(m_pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pPipelineState)), S_OK);
+
+
 
 	return true;
 }
