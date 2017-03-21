@@ -44,6 +44,7 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	DXGI_SWAP_CHAIN_DESC swapChainDesc;
 	D3D12_DESCRIPTOR_HEAP_DESC renderTargetViewHeapDesc;
 	D3D12_CPU_DESCRIPTOR_HANDLE renderTargetViewHandle;
+
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	
 	ID3DBlob* pRootSignatureBlob;
@@ -251,14 +252,14 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	pixelShaderBytecode.BytecodeLength = pPixelShaderBlob->GetBufferSize();
 	pixelShaderBytecode.pShaderBytecode = pPixelShaderBlob->GetBufferPointer();
 
+
+
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
-
-	D3D12_INPUT_LAYOUT_DESC testLayout;
 
 
 	inputLayoutDesc.NumElements = sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC);
@@ -277,7 +278,7 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	rasterizerDesc.FrontCounterClockwise = FALSE;
 	rasterizerDesc.MultisampleEnable = FALSE;
 
-	D3D12_BLEND_DESC blendDesc = {};
+	D3D12_BLEND_DESC blendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
@@ -285,7 +286,7 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	psoDesc.pRootSignature = m_pRootSignature;
 	psoDesc.VS = vertexShaderBytecode;
 	psoDesc.PS = pixelShaderBytecode;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE::D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 	psoDesc.SampleDesc = swapChainDesc.SampleDesc;
 	psoDesc.SampleMask = 0xffffffff;
@@ -294,6 +295,7 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	psoDesc.NumRenderTargets = 1;
 
 	DxAssert(m_pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pPipelineState)), S_OK);
+
 	Vertex vList[] = {
 		{ { 0.0f, 0.5f, 0.5f } },
 		{ { 0.5f, -0.5f, 0.5f } },
@@ -345,15 +347,7 @@ bool D3dClass::Initialize(int screenWidth, int screenHeight, HWND hwnd, bool vsy
 	scissorRect.top = 0;
 	scissorRect.right = screenWidth;
 	scissorRect.bottom = screenHeight;
-
-	m_pGraphicsCommandList->SetGraphicsRootSignature(m_pRootSignature); // set the root signature
-	m_pGraphicsCommandList->RSSetViewports(1, &viewport); // set the viewports
-	m_pGraphicsCommandList->RSSetScissorRects(1, &scissorRect); // set the scissor rects
-	m_pGraphicsCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
-	m_pGraphicsCommandList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
-	m_pGraphicsCommandList->DrawInstanced(3, 1, 0, 0); // finally draw 3 vertices (draw the triangle)
-
-	DxAssert(m_pSwapChain->Present(0, 0), S_OK);
+	
 
 	int stopper = 0;
 
@@ -418,6 +412,20 @@ bool D3dClass::Render()
 	ID3D12CommandList* ppCommandLists[1];
 	unsigned long long fenceToWaitFor;
 
+
+	fenceToWaitFor = m_llFenceValue;
+
+	DxAssert(m_pCommandQ->Signal(m_pFence, fenceToWaitFor), S_OK);
+
+	m_llFenceValue++;
+
+	if (m_pFence->GetCompletedValue() < fenceToWaitFor)
+	{
+		DxAssert(m_pFence->SetEventOnCompletion(fenceToWaitFor, m_fenceEvent), S_OK);
+
+		WaitForSingleObject(m_fenceEvent, INFINITE);
+	}
+
 	// Reset (re-use) the memory associated command allocator.
 	DxAssert(m_pCommandAllocator->Reset(), S_OK);
 	
@@ -427,21 +435,13 @@ bool D3dClass::Render()
 
 	// Record commands in the command list now.
 	// Start by setting the resource barrier.
-	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
-	barrier.Transition.pResource = m_pBackbufferRenderTarget[m_iBufferIndex];
-	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;
-	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;
-	barrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
-	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
-	m_pGraphicsCommandList->ResourceBarrier(1, &barrier);
+	m_pGraphicsCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pBackbufferRenderTarget[m_iBufferIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	// Get the render target view handle for the current back buffer.
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_pRtvHeap->GetCPUDescriptorHandleForHeapStart(), m_iBufferIndex, m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV));
+
 	renderTargetViewHandle = m_pRtvHeap->GetCPUDescriptorHandleForHeapStart();
 	renderTargetViewDescriptorSize = m_pDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	if (m_iBufferIndex == 1)
-	{
-		renderTargetViewHandle.ptr += renderTargetViewDescriptorSize;
-	}
 
 	// Set the back buffer as the render target.
 	m_pGraphicsCommandList->OMSetRenderTargets(1, &renderTargetViewHandle, FALSE, NULL);
@@ -449,20 +449,30 @@ bool D3dClass::Render()
 	// Then clear the window to.
 	m_pGraphicsCommandList->ClearRenderTargetView(renderTargetViewHandle, clearColor, 0, NULL);
 
+	m_pGraphicsCommandList->SetGraphicsRootSignature(m_pRootSignature); // set the root signature
+	m_pGraphicsCommandList->RSSetViewports(1, &viewport); // set the viewports
+	m_pGraphicsCommandList->RSSetScissorRects(1, &scissorRect); // set the scissor rects
+	m_pGraphicsCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
+	m_pGraphicsCommandList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
+	m_pGraphicsCommandList->DrawInstanced(3, 1, 0, 0); // finally draw 3 vertices (draw the triangle)
+
 	// Indicate that the back buffer will now be used to present.
 	barrier.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;
 	barrier.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;
-	m_pGraphicsCommandList->ResourceBarrier(1, &barrier);
-
+	m_pGraphicsCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pBackbufferRenderTarget[m_iBufferIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+	
+	HRESULT hr = m_pGraphicsCommandList->Close();
 	// Close the list of commands.
-	DxAssert(m_pGraphicsCommandList->Close(), S_OK);
+	//DxAssert(m_pGraphicsCommandList->Close(), S_OK);
 
 	// Load the command list array (only one command list for now).
 	ppCommandLists[0] = m_pGraphicsCommandList;
 
 	// Execute the list of commands.
 	m_pCommandQ->ExecuteCommandLists(1, ppCommandLists);
-
+	
+	DxAssert(m_pSwapChain->Present(0, 0), S_OK);
+	/*
 	// Finally present the back buffer to the screen since rendering is complete.
 	if (m_bVsyncEnabled)
 	{
@@ -473,23 +483,12 @@ bool D3dClass::Render()
 	else
 	{
 		// Present as fast as possible.
-		DxAssert(m_pSwapChain->Present(0, 0), S_OK);
 		
-	}
+		
+	}*/
 
 	// Signal and increment the fence value.
-	fenceToWaitFor = m_llFenceValue;
-	DxAssert(m_pCommandQ->Signal(m_pFence, fenceToWaitFor), S_OK);
-
-	m_llFenceValue++;
-
-	// Wait until the GPU is done rendering.
-	if (m_pFence->GetCompletedValue() < fenceToWaitFor)
-	{
-		DxAssert(m_pFence->SetEventOnCompletion(fenceToWaitFor, m_fenceEvent), S_OK);
-		
-		WaitForSingleObject(m_fenceEvent, INFINITE);
-	}
+	
 
 	// Alternate the back buffer index back and forth between 0 and 1 each frame.
 	m_iBufferIndex == 0 ? m_iBufferIndex = 1 : m_iBufferIndex = 0;
