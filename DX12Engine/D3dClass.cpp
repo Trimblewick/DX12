@@ -1,6 +1,37 @@
 
 #include "D3dClass.h"
 
+ID3D12Device* D3DClass::m_pDevice;
+IDXGISwapChain3* D3DClass::m_pSwapChain;
+ID3D12CommandQueue* D3DClass::m_pCommandQueue;
+
+
+ID3D12DescriptorHeap* D3DClass::m_pRTVDescriptorHeap;
+ ID3D12Resource* D3DClass::m_pRenderTargets[g_cFrameBufferCount];//right now just for backbuffering
+ ID3D12CommandAllocator* D3DClass::m_pCommandAllocator[g_cFrameBufferCount];
+ ID3D12Fence* D3DClass::m_pFence[g_cFrameBufferCount];
+ HANDLE D3DClass::m_hFenceEventHandle;
+ UINT64 D3DClass::m_ui64FenceValue[g_cFrameBufferCount];
+ unsigned int D3DClass::m_uiFrameIndex;
+ int D3DClass::m_iRTVDescriptorSize;
+
+
+//temp
+ ID3D12GraphicsCommandList* D3DClass::commandList; // a command list we can record commands into, then execute them to render the frame
+
+ ID3D12PipelineState* D3DClass::pipelineStateObject; // pso containing a pipeline state
+
+ ID3D12RootSignature* D3DClass::rootSignature; // root signature defines data shaders will access
+
+ D3D12_VIEWPORT D3DClass::viewport; // area that output from rasterizer will be stretched to.
+
+ D3D12_RECT D3DClass::scissorRect; // the area to draw in. pixels outside that area will not be drawn onto
+
+ ID3D12Resource* D3DClass::vertexBuffer; // a default buffer in GPU memory that we will load vertex data for our triangle into
+
+ D3D12_VERTEX_BUFFER_VIEW D3DClass::vertexBufferView; // a structure containing a pointer to the vertex data in gpu memory
+
+
 D3DClass::D3DClass()
 {
 }
@@ -9,7 +40,7 @@ D3DClass::~D3DClass()
 {
 }
 
-bool D3DClass::Initialize(const WindowClass window, const unsigned int cFrameBufferCount)
+bool D3DClass::Initialize(const unsigned int cFrameBufferCount)
 {
 	HRESULT hr;
 
@@ -82,8 +113,8 @@ bool D3DClass::Initialize(const WindowClass window, const unsigned int cFrameBuf
 	// -- Create the Swap Chain (double/tripple buffering) -- //
 
 	DXGI_MODE_DESC backBufferDesc = {}; // this is to describe our display mode
-	backBufferDesc.Width = window.GetWidth(); // buffer width
-	backBufferDesc.Height = window.GetHeight(); // buffer height
+	backBufferDesc.Width = WindowClass::GetWidth(); // buffer width
+	backBufferDesc.Height = WindowClass::GetHeight(); // buffer height
 	backBufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the buffer (rgba 32 bits, 8 bits for each chanel)
 
 														// describe our multi-sampling. We are not multi-sampling, so we set the count to 1 (we need at least one sample of course)
@@ -96,9 +127,9 @@ bool D3DClass::Initialize(const WindowClass window, const unsigned int cFrameBuf
 	swapChainDesc.BufferDesc = backBufferDesc; // our back buffer description
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // this says the pipeline will render to this swap chain
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // dxgi will discard the buffer (data) after we call present
-	swapChainDesc.OutputWindow = window.GetWindowHandler(); // handle to our window
+	swapChainDesc.OutputWindow = WindowClass::GetWindowHandler(); // handle to our window
 	swapChainDesc.SampleDesc = sampleDesc; // our multi-sampling description
-	swapChainDesc.Windowed = !window.IsFullscreen(); // set to true, then if in fullscreen must call SetFullScreenState with true for full screen to get uncapped fps
+	swapChainDesc.Windowed = !WindowClass::IsFullscreen(); // set to true, then if in fullscreen must call SetFullScreenState with true for full screen to get uncapped fps
 
 	IDXGISwapChain* tempSwapChain;
 
@@ -391,28 +422,133 @@ bool D3DClass::Initialize(const WindowClass window, const unsigned int cFrameBuf
 	// Fill out the Viewport
 	viewport.TopLeftX = 0;
 	viewport.TopLeftY = 0;
-	viewport.Width = window.GetWidth();
-	viewport.Height = window.GetHeight();
+	viewport.Width = WindowClass::GetWidth();
+	viewport.Height = WindowClass::GetHeight();
 	viewport.MinDepth = 0.0f;
 	viewport.MaxDepth = 1.0f;
 
 	// Fill out a scissor rect
 	scissorRect.left = 0;
 	scissorRect.top = 0;
-	scissorRect.right = window.GetWidth();
-	scissorRect.bottom = window.GetHeight();
+	scissorRect.right = WindowClass::GetWidth();
+	scissorRect.bottom = WindowClass::GetHeight();
 
 	return true;
 }
 
 void D3DClass::Render()
 {
+	HRESULT hr;
+
+	// We have to wait for the gpu to finish with the command allocator before we reset it
+	WaitForPreviousFrame();
+
+	// we can only reset an allocator once the gpu is done with it
+	// resetting an allocator frees the memory that the command list was stored in
+	hr = m_pCommandAllocator[m_uiFrameIndex]->Reset();
+	if (FAILED(hr))
+	{
+		//Running = false;
+	}
+
+	// reset the command list. by resetting the command list we are putting it into
+	// a recording state so we can start recording commands into the command allocator.
+	// the command allocator that we reference here may have multiple command lists
+	// associated with it, but only one can be recording at any time. Make sure
+	// that any other command lists associated to this command allocator are in
+	// the closed state (not recording).
+	// Here you will pass an initial pipeline state object as the second parameter,
+	// but in this tutorial we are only clearing the rtv, and do not actually need
+	// anything but an initial default pipeline, which is what we get by setting
+	// the second parameter to NULL
+	hr = commandList->Reset(m_pCommandAllocator[m_uiFrameIndex], pipelineStateObject);
+	if (FAILED(hr))
+	{
+		//Running = false;
+	}
+
+	// here we start recording commands into the commandList (which all the commands will be stored in the commandAllocator)
+
+	// transition the "frameIndex" render target from the present state to the render target state so the command list draws to it starting from here
+	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	// here we again get the handle to our current render target view so we can set it as the render target in the output merger stage of the pipeline
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_pRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_uiFrameIndex, m_iRTVDescriptorSize);
+
+	// set the render target for the output merger stage (the output of the pipeline)
+	commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+
+	// Clear the render target by using the ClearRenderTargetView command
+	const float clearColor[] = { 0.5f, 0.0f, 0.0f, 1.0f };
+	commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+
+	// draw triangle
+	commandList->SetGraphicsRootSignature(rootSignature); // set the root signature
+	commandList->RSSetViewports(1, &viewport); // set the viewports
+	commandList->RSSetScissorRects(1, &scissorRect); // set the scissor rects
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
+	commandList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
+	commandList->DrawInstanced(3, 1, 0, 0); // finally draw 3 vertices (draw the triangle)
+
+											// transition the "frameIndex" render target from the render target state to the present state. If the debug layer is enabled, you will receive a
+											// warning if present is called on the render target when it's not in the present state
+	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+
+	hr = commandList->Close();
+	if (FAILED(hr))
+	{
+		//Running = false;
+	}
+
+	ID3D12CommandList* ppCommandLists[] = { commandList };
+
+	// execute the array of command lists
+	m_pCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+	// this command goes in at the end of our command queue. we will know when our command queue 
+	// has finished because the fence value will be set to "fenceValue" from the GPU since the command
+	// queue is being executed on the GPU
+	hr = m_pCommandQueue->Signal(m_pFence[m_uiFrameIndex], m_ui64FenceValue[m_uiFrameIndex]);
+	if (FAILED(hr))
+	{
+		//Running = false;
+	}
+
+	// present the current backbuffer
+	hr = m_pSwapChain->Present(0, 0);
+	if (FAILED(hr))
+	{
+		//Running = false;
+	}
 }
 
 void D3DClass::Cleanup()
 {
 }
 
-void D3DClass::SyncLastFence()
+void D3DClass::WaitForPreviousFrame()
 {
+	HRESULT hr;
+
+	// swap the current rtv buffer index so we draw on the correct buffer
+	m_uiFrameIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+
+	// if the current fence value is still less than "fenceValue", then we know the GPU has not finished executing
+	// the command queue since it has not reached the "commandQueue->Signal(fence, fenceValue)" command
+	if (m_pFence[m_uiFrameIndex]->GetCompletedValue() < m_ui64FenceValue[m_uiFrameIndex])
+	{
+		// we have the fence create an event which is signaled once the fence's current value is "fenceValue"
+		hr = m_pFence[m_uiFrameIndex]->SetEventOnCompletion(m_ui64FenceValue[m_uiFrameIndex], m_hFenceEventHandle);
+		if (FAILED(hr))
+		{
+			//Running = false;
+		}
+
+		// We will wait until the fence has triggered the event that it's current value has reached "fenceValue". once it's value
+		// has reached "fenceValue", we know the command queue has finished executing
+		WaitForSingleObject(m_hFenceEventHandle, INFINITE);
+	}
+
+	// increment fenceValue for next frame
+	m_ui64FenceValue[m_uiFrameIndex]++;
 }

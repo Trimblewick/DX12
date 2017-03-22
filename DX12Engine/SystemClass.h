@@ -25,14 +25,13 @@ public:
 	SystemClass();
 	~SystemClass();
 
-	static void SystemInit(HINSTANCE hInstance, HINSTANCE hPrevInstance, int nCmdShow, LONG windowWidth, LONG windowHeight, LPWSTR title);
-	static void SystemRun();
+	static void Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance, int nCmdShow, LONG windowWidth, LONG windowHeight, LPWSTR title);
+	static void Run();
 	static void SystemPause();
 	static void SystemStop();
 
 private:
-	static WindowClass s_mainWindow;
-	static D3DClass s_d3d;
+	static bool s_bRunning;
 };
 
 

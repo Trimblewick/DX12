@@ -8,9 +8,9 @@ using namespace DirectX; // we will be using the directxmath library
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 
-	SystemClass::SystemInit(hInstance, hPrevInstance, nShowCmd, 800, 600, L"WINDOW!");
+	SystemClass::Initialize(hInstance, hPrevInstance, nShowCmd, 800, 600, L"WINDOW!");
 
-	system("pause");
+	SystemClass::Run();
 
 	return 0;
 }
