@@ -27,7 +27,10 @@
     <ClCompile Include="D3dClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Window.cpp">
+    <ClCompile Include="SystemClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="WindowClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -47,7 +50,10 @@
     <ClInclude Include="D3dClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Window.h">
+    <ClInclude Include="SystemClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="WindowClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

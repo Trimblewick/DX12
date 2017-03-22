@@ -1,54 +1,34 @@
-/*
-#include <Windows.h>
-#include <exception>
+
 #include "SystemClass.h"
-
-
-int main(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline, int iCmdshow)
-{
-	SystemClass* system;
-	system = new SystemClass();
-	if (system->Initialize())
-	{
-		system->Run();
-	}
-
-
-	// End application
-	system->Shutdown();
-	delete system;
-	system = 0;
-	
-	return 0;
-}*/
-
-#include "stdafx.h"
 
 using namespace DirectX; // we will be using the directxmath library
 
-struct Vertex {
-	XMFLOAT3 pos;
-};
 
-int WINAPI WinMain(HINSTANCE hInstance,    //Main windows function
-	HINSTANCE hPrevInstance,
-	LPSTR lpCmdLine,
-	int nShowCmd)
 
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+
+	SystemClass::SystemInit(hInstance, hPrevInstance, nShowCmd, 800, 600, L"WINDOW!");
+
+	system("pause");
+
+	return 0;
+}
+
+/*
 	// create the window
 	if (!InitializeWindow(hInstance, nShowCmd, FullScreen))
 	{
-		MessageBox(0, L"Window Initialization - Failed",
-			L"Error", MB_OK);
+		MessageBox(0, L"Window Initialization - Failed", L"Error", MB_OK);
+
 		return 1;
 	}
 
 	// initialize direct3d
 	if (!InitD3D())
 	{
-		MessageBox(0, L"Failed to initialize direct3d 12",
-			L"Error", MB_OK);
+		MessageBox(0, L"Failed to initialize direct3d 12", L"Error", MB_OK);
+
 		Cleanup();
 		return 1;
 	}
@@ -60,7 +40,7 @@ int WINAPI WinMain(HINSTANCE hInstance,    //Main windows function
 	WaitForPreviousFrame();
 
 	// close the fence event
-	CloseHandle(fenceEvent);
+	//CloseHandle(fenceEvent);
 
 	// clean up everything
 	Cleanup();
@@ -740,4 +720,4 @@ void WaitForPreviousFrame()
 
 	// increment fenceValue for next frame
 	fenceValue[frameIndex]++;
-}
+}*/

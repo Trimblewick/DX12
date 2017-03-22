@@ -160,7 +160,8 @@
     <ClCompile Include="D3dClass.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Window.cpp" />
+    <ClCompile Include="SystemClass.cpp" />
+    <ClCompile Include="WindowClass.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common.h" />
@@ -168,7 +169,8 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="Window.h" />
+    <ClInclude Include="SystemClass.h" />
+    <ClInclude Include="WindowClass.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="PixelShader.hlsl">
