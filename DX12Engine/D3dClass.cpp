@@ -1,21 +1,23 @@
 
 #include "D3dClass.h"
 
+
+
 ID3D12Device* D3DClass::m_pDevice;
 IDXGISwapChain3* D3DClass::m_pSwapChain;
 ID3D12CommandQueue* D3DClass::m_pCommandQueue;
 
 
 ID3D12DescriptorHeap* D3DClass::m_pRTVDescriptorHeap;
- ID3D12Resource* D3DClass::m_pRenderTargets[g_cFrameBufferCount];//right now just for backbuffering
- ID3D12CommandAllocator* D3DClass::m_pCommandAllocator[g_cFrameBufferCount];
- ID3D12Fence* D3DClass::m_pFence[g_cFrameBufferCount];
- HANDLE D3DClass::m_hFenceEventHandle;
- UINT64 D3DClass::m_ui64FenceValue[g_cFrameBufferCount];
- unsigned int D3DClass::m_uiFrameIndex;
- int D3DClass::m_iRTVDescriptorSize;
+ID3D12Resource* D3DClass::m_pRenderTargets[g_cFrameBufferCount];//right now just for backbuffering
+ID3D12CommandAllocator* D3DClass::m_pCommandAllocator[g_cFrameBufferCount];
+ID3D12Fence* D3DClass::m_pFence[g_cFrameBufferCount];
+HANDLE D3DClass::m_hFenceEventHandle;
+UINT64 D3DClass::m_ui64FenceValue[g_cFrameBufferCount];
+unsigned int D3DClass::m_uiFrameIndex;
+int D3DClass::m_iRTVDescriptorSize;
 
-
+std::vector<ID3D12PipelineState*> D3DClass::m_vPSOs;
 //temp
  ID3D12GraphicsCommandList* D3DClass::commandList; // a command list we can record commands into, then execute them to render the frame
 
@@ -23,9 +25,6 @@ ID3D12DescriptorHeap* D3DClass::m_pRTVDescriptorHeap;
 
  ID3D12RootSignature* D3DClass::rootSignature; // root signature defines data shaders will access
 
- D3D12_VIEWPORT D3DClass::viewport; // area that output from rasterizer will be stretched to.
-
- D3D12_RECT D3DClass::scissorRect; // the area to draw in. pixels outside that area will not be drawn onto
 
  ID3D12Resource* D3DClass::vertexBuffer; // a default buffer in GPU memory that we will load vertex data for our triangle into
 
@@ -43,6 +42,13 @@ D3DClass::~D3DClass()
 bool D3DClass::Initialize(const unsigned int cFrameBufferCount)
 {
 	HRESULT hr;
+
+	#ifdef BUILD_ENABLE_D3D12_DEBUG
+		ID3D12Debug* d;
+		D3D12GetDebugInterface(IID_PPV_ARGS(&d));
+		d->EnableDebugLayer();
+		SAFE_RELEASE(d);
+	#endif
 
 	// -- Create the Device -- //
 
@@ -88,15 +94,8 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount)
 	}
 
 	// Create the device
-	hr = D3D12CreateDevice(
-		adapter,
-		D3D_FEATURE_LEVEL_11_0,
-		IID_PPV_ARGS(&m_pDevice)
-		);
-	if (FAILED(hr))
-	{
-		return false;
-	}
+	DxAssert(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&m_pDevice)), S_OK);
+	
 
 	// -- Create a direct command queue -- //
 
@@ -153,11 +152,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount)
 													   // This heap will not be directly referenced by the shaders (not shader visible), as this will store the output from the pipeline
 													   // otherwise we would set the heap's flag to D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	hr = m_pDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_pRTVDescriptorHeap));
-	if (FAILED(hr))
-	{
-		return false;
-	}
+	DxAssert(m_pDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_pRTVDescriptorHeap)), S_OK);
 
 	// get the size of a descriptor in this heap (this is a rtv heap, so only rtv descriptors should be stored in it.
 	// descriptor sizes may vary from device to device, which is why there is no set size and we must ask the 
@@ -173,11 +168,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount)
 	{
 		// first we get the n'th buffer in the swap chain and store it in the n'th
 		// position of our ID3D12Resource array
-		hr = m_pSwapChain->GetBuffer(i, IID_PPV_ARGS(&m_pRenderTargets[i]));
-		if (FAILED(hr))
-		{
-			return false;
-		}
+		DxAssert(m_pSwapChain->GetBuffer(i, IID_PPV_ARGS(&m_pRenderTargets[i])), S_OK);
 
 		// the we "create" a render target view which binds the swap chain buffer (ID3D12Resource[n]) to the rtv handle
 		m_pDevice->CreateRenderTargetView(m_pRenderTargets[i], nullptr, rtvHandle);
@@ -190,11 +181,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount)
 
 	for (int i = 0; i < cFrameBufferCount; i++)
 	{
-		hr = m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pCommandAllocator[i]));
-		if (FAILED(hr))
-		{
-			return false;
-		}
+		DxAssert(m_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pCommandAllocator[i])), S_OK);
 	}
 
 	// -- Create a Command List -- //
@@ -419,24 +406,10 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount)
 	vertexBufferView.StrideInBytes = sizeof(Vertex);
 	vertexBufferView.SizeInBytes = vBufferSize;
 
-	// Fill out the Viewport
-	viewport.TopLeftX = 0;
-	viewport.TopLeftY = 0;
-	viewport.Width = WindowClass::GetWidth();
-	viewport.Height = WindowClass::GetHeight();
-	viewport.MinDepth = 0.0f;
-	viewport.MaxDepth = 1.0f;
-
-	// Fill out a scissor rect
-	scissorRect.left = 0;
-	scissorRect.top = 0;
-	scissorRect.right = WindowClass::GetWidth();
-	scissorRect.bottom = WindowClass::GetHeight();
-
 	return true;
 }
 
-void D3DClass::Render()
+bool D3DClass::Render(Camera* camera)
 {
 	HRESULT hr;
 
@@ -448,7 +421,7 @@ void D3DClass::Render()
 	hr = m_pCommandAllocator[m_uiFrameIndex]->Reset();
 	if (FAILED(hr))
 	{
-		//Running = false;
+		return false;
 	}
 
 	// reset the command list. by resetting the command list we are putting it into
@@ -464,7 +437,7 @@ void D3DClass::Render()
 	hr = commandList->Reset(m_pCommandAllocator[m_uiFrameIndex], pipelineStateObject);
 	if (FAILED(hr))
 	{
-		//Running = false;
+		return false;
 	}
 
 	// here we start recording commands into the commandList (which all the commands will be stored in the commandAllocator)
@@ -484,20 +457,20 @@ void D3DClass::Render()
 
 	// draw triangle
 	commandList->SetGraphicsRootSignature(rootSignature); // set the root signature
-	commandList->RSSetViewports(1, &viewport); // set the viewports
-	commandList->RSSetScissorRects(1, &scissorRect); // set the scissor rects
+	commandList->RSSetViewports(1, &camera->GetViewport()); // set the viewports
+	commandList->RSSetScissorRects(1, &camera->GetScissorRect()); // set the scissor rects
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // set the primitive topology
 	commandList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
 	commandList->DrawInstanced(3, 1, 0, 0); // finally draw 3 vertices (draw the triangle)
 
-											// transition the "frameIndex" render target from the render target state to the present state. If the debug layer is enabled, you will receive a
-											// warning if present is called on the render target when it's not in the present state
+	// transition the "frameIndex" render target from the render target state to the present state. If the debug layer is enabled, you will receive a
+	// warning if present is called on the render target when it's not in the present state
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
 	hr = commandList->Close();
 	if (FAILED(hr))
 	{
-		//Running = false;
+		return false;
 	}
 
 	ID3D12CommandList* ppCommandLists[] = { commandList };
@@ -511,19 +484,47 @@ void D3DClass::Render()
 	hr = m_pCommandQueue->Signal(m_pFence[m_uiFrameIndex], m_ui64FenceValue[m_uiFrameIndex]);
 	if (FAILED(hr))
 	{
-		//Running = false;
+		return false;
 	}
-
 	// present the current backbuffer
 	hr = m_pSwapChain->Present(0, 0);
 	if (FAILED(hr))
 	{
-		//Running = false;
+		return false;
 	}
+	return true;
 }
 
 void D3DClass::Cleanup()
 {
+	// wait for the gpu to finish all frames
+	
+	for (int i = 0; i < g_cFrameBufferCount; ++i)
+	{
+		//WaitForPreviousFrame();
+	}
+
+	// get swapchain out of full screen before exiting
+	BOOL fs = false;
+	if (m_pSwapChain->GetFullscreenState(&fs, NULL))
+		m_pSwapChain->SetFullscreenState(false, NULL);
+
+	SAFE_RELEASE(m_pDevice);
+	SAFE_RELEASE(m_pSwapChain);
+	SAFE_RELEASE(m_pCommandQueue);
+	SAFE_RELEASE(m_pRTVDescriptorHeap);
+	SAFE_RELEASE(commandList);
+
+	for (int i = 0; i < g_cFrameBufferCount; ++i)
+	{
+		SAFE_RELEASE(m_pRenderTargets[i]);
+		SAFE_RELEASE(m_pCommandAllocator[i]);
+		SAFE_RELEASE(m_pFence[i]);
+	};
+
+	SAFE_RELEASE(pipelineStateObject);
+	SAFE_RELEASE(rootSignature);
+	SAFE_RELEASE(vertexBuffer);
 }
 
 void D3DClass::WaitForPreviousFrame()
@@ -541,12 +542,13 @@ void D3DClass::WaitForPreviousFrame()
 		hr = m_pFence[m_uiFrameIndex]->SetEventOnCompletion(m_ui64FenceValue[m_uiFrameIndex], m_hFenceEventHandle);
 		if (FAILED(hr))
 		{
+			int stopper = 0;
 			//Running = false;
 		}
-
 		// We will wait until the fence has triggered the event that it's current value has reached "fenceValue". once it's value
 		// has reached "fenceValue", we know the command queue has finished executing
 		WaitForSingleObject(m_hFenceEventHandle, INFINITE);
+		
 	}
 
 	// increment fenceValue for next frame

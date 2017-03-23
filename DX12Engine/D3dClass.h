@@ -6,9 +6,15 @@
 #include <DirectXMath.h>
 #include "d3dx12.h"
 #include <string>
+#include <vector>
 
 #include "WindowClass.h"
+#include "Camera.h"
+#include "Common.h"
 
+#ifdef _DEBUG
+#define BUILD_ENABLE_D3D12_DEBUG
+#endif
 
 const int g_cFrameBufferCount = 3;//eg double buffering, tripple buffering
 
@@ -24,7 +30,7 @@ public:
 	D3DClass();
 	~D3DClass();
 	static bool Initialize(const unsigned int cFrameBufferCount);
-	static void Render();
+	static bool Render(Camera* camera);
 	static void Cleanup(); // release com ojects and clean up memory
 	static void WaitForPreviousFrame();
 
@@ -43,18 +49,13 @@ private:
 	static unsigned int m_uiFrameIndex;
 	static int m_iRTVDescriptorSize;
 
-
+	static std::vector<ID3D12PipelineState*> m_vPSOs;
 	//temp
 	static ID3D12GraphicsCommandList* commandList; // a command list we can record commands into, then execute them to render the frame
 
 	static ID3D12PipelineState* pipelineStateObject; // pso containing a pipeline state
 
 	static ID3D12RootSignature* rootSignature; // root signature defines data shaders will access
-
-	static D3D12_VIEWPORT viewport; // area that output from rasterizer will be stretched to.
-
-	static D3D12_RECT scissorRect; // the area to draw in. pixels outside that area will not be drawn onto
-
 	static ID3D12Resource* vertexBuffer; // a default buffer in GPU memory that we will load vertex data for our triangle into
 
 	static D3D12_VERTEX_BUFFER_VIEW vertexBufferView; // a structure containing a pointer to the vertex data in gpu memory

@@ -2,10 +2,12 @@
 
 
 bool SystemClass::s_bRunning;
+GameClass SystemClass::s_game;
 
 SystemClass::SystemClass()
 {
 	s_bRunning = false;
+	
 }
 
 SystemClass::~SystemClass()
@@ -15,8 +17,10 @@ SystemClass::~SystemClass()
 void SystemClass::Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance, int nCmdShow, LONG windowWidth, LONG windowHeight, LPWSTR title)
 {
 	WindowClass::Initialize(hInstance, nCmdShow, windowWidth, windowHeight, title, false);
-	D3DClass::Initialize(3);
+	s_game.Initialize(3);
+	
 	s_bRunning = true;
+	
 }
 
 void SystemClass::Run()
@@ -29,23 +33,42 @@ void SystemClass::Run()
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			if (msg.message == WM_QUIT)
+			{
+				SystemClass::Stop();
 				break;
-
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			}
+			else
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 		}
-		else {
+		else 
+		{
 			// run game code
 			//Update(); // update the game logic
-			D3DClass::Render(); // execute the command queue (rendering the scene is the result of the gpu executing the command lists)
+
+			s_bRunning = s_game.Render();
+			//D3DClass::Render(); // execute the command queue (rendering the scene is the result of the gpu executing the command lists)
 		}
 	}
+	
+	
 }
 
-void SystemClass::SystemPause()
+void SystemClass::Pause()
 {
 }
 
-void SystemClass::SystemStop()
+void SystemClass::Stop()
 {
+	s_bRunning = false;
+}
+
+void SystemClass::CleanUp()
+{
+	
+	WindowClass::Destroy();
+	s_game.CleanUp();
+	D3DClass::Cleanup();
 }

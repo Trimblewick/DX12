@@ -12,6 +12,7 @@ bool WindowClass::s_visibleCursor;
 WindowClass::Ratio WindowClass::s_ratio;
 bool WindowClass::s_bFullscreen;
 
+
 WindowClass::WindowClass()
 {
 }
@@ -54,7 +55,6 @@ LRESULT CALLBACK WindowClass::EventHandler(HWND hWnd, UINT message, WPARAM wPara
 			if (MessageBox(0, L"Are you sure you want to exit?",
 				L"Really?", MB_YESNO | MB_ICONQUESTION) == IDYES)
 			{
-				//Running = false;
 				DestroyWindow(hWnd);
 			}
 		}
@@ -98,7 +98,7 @@ bool WindowClass::Initialize(HINSTANCE hInstance, int nCmdShow, LONG width, LONG
 	s_windowClassInfo.style = CS_HREDRAW | CS_VREDRAW;
 	s_windowClassInfo.lpfnWndProc = EventHandler; //Callback for EVENTS
 	s_windowClassInfo.hInstance = hInstance;
-	s_windowClassInfo.lpszClassName = L"ThomasWindow";
+	s_windowClassInfo.lpszClassName = L"Window";
 	s_windowClassInfo.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(101));
 
 	if (!RegisterClassEx(&s_windowClassInfo))
@@ -111,7 +111,7 @@ bool WindowClass::Initialize(HINSTANCE hInstance, int nCmdShow, LONG width, LONG
 	AdjustWindowRect(&s_windowRectangle, WS_OVERLAPPEDWINDOW, FALSE);
 
 	s_windowHandler = CreateWindow(
-		L"ThomasWindow",			// CLASS, if does not exists fails!
+		L"Window",			// CLASS, if does not exists fails!
 		title,		// Window name (title)
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
@@ -129,6 +129,7 @@ bool WindowClass::Initialize(HINSTANCE hInstance, int nCmdShow, LONG width, LONG
 		s_initialized = true;
 		ChangeWindowShowState(nCmdShow);
 	}
+
 
 	return s_initialized;
 }
