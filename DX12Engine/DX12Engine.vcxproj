@@ -162,7 +162,9 @@
     <ClCompile Include="GameClass.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PSOHandler.cpp" />
     <ClCompile Include="SystemClass.cpp" />
+    <ClCompile Include="TriangleObject.cpp" />
     <ClCompile Include="WindowClass.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -172,7 +174,9 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="GameClass.h" />
     <ClInclude Include="Input.h" />
+    <ClInclude Include="PSOHandler.h" />
     <ClInclude Include="SystemClass.h" />
+    <ClInclude Include="TriangleObject.h" />
     <ClInclude Include="WindowClass.h" />
   </ItemGroup>
   <ItemGroup>

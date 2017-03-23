@@ -13,7 +13,8 @@ GameClass::~GameClass()
 void GameClass::Initialize(int cFrameBufferCount)
 {
 	m_pMainCamera = new Camera();
-	D3DClass::Initialize(3);
+	m_pPsoHandler = new PSOHandler();
+	D3DClass::Initialize(3, m_pPsoHandler);
 
 }
 
@@ -35,5 +36,12 @@ bool GameClass::Render()
 void GameClass::CleanUp()
 {
 	delete m_pMainCamera;
+	delete m_pPsoHandler;
+	m_pMainCamera = nullptr;
+}
+
+PSOHandler * GameClass::GetPSOHander()
+{
+	return m_pPsoHandler;
 }
 

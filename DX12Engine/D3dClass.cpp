@@ -17,7 +17,7 @@ UINT64 D3DClass::m_ui64FenceValue[g_cFrameBufferCount];
 unsigned int D3DClass::m_uiFrameIndex;
 int D3DClass::m_iRTVDescriptorSize;
 
-std::vector<ID3D12PipelineState*> D3DClass::m_vPSOs;
+/*
 //temp
  ID3D12GraphicsCommandList* D3DClass::commandList; // a command list we can record commands into, then execute them to render the frame
 
@@ -25,21 +25,21 @@ std::vector<ID3D12PipelineState*> D3DClass::m_vPSOs;
 
  ID3D12RootSignature* D3DClass::rootSignature; // root signature defines data shaders will access
 
-
  ID3D12Resource* D3DClass::vertexBuffer; // a default buffer in GPU memory that we will load vertex data for our triangle into
 
  D3D12_VERTEX_BUFFER_VIEW D3DClass::vertexBufferView; // a structure containing a pointer to the vertex data in gpu memory
 
-
+ */
 D3DClass::D3DClass()
 {
 }
 
 D3DClass::~D3DClass()
 {
+	
 }
 
-bool D3DClass::Initialize(const unsigned int cFrameBufferCount)
+bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPsoHandler)
 {
 	HRESULT hr;
 
@@ -132,11 +132,10 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount)
 
 	IDXGISwapChain* tempSwapChain;
 
-	dxgiFactory->CreateSwapChain(
-		m_pCommandQueue, // the queue will be flushed once the swap chain is created
-		&swapChainDesc, // give it the swap chain description we created above
-		&tempSwapChain // store the created swap chain in a temp IDXGISwapChain interface
-		);
+	// the queue will be flushed once the swap chain is created
+	// give it the swap chain description we created above
+	// store the created swap chain in a temp IDXGISwapChain interface
+	dxgiFactory->CreateSwapChain(m_pCommandQueue, &swapChainDesc, &tempSwapChain);
 
 	m_pSwapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
 
@@ -149,8 +148,8 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount)
 	rtvHeapDesc.NumDescriptors = cFrameBufferCount; // number of descriptors for this heap.
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV; // this heap is a render target view heap
 
-													   // This heap will not be directly referenced by the shaders (not shader visible), as this will store the output from the pipeline
-													   // otherwise we would set the heap's flag to D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
+	// This heap will not be directly referenced by the shaders (not shader visible), as this will store the output from the pipeline
+	// otherwise we would set the heap's flag to D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE
 	rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
 	DxAssert(m_pDevice->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_pRTVDescriptorHeap)), S_OK);
 
@@ -328,13 +327,16 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount)
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blent state.
 	psoDesc.NumRenderTargets = 1; // we are only binding one render target
 
-								  // create the pso
+	// create the pso
+
+	pipelineStateObject = pPsoHandler->CreatePipelineStateObject(&psoDesc, m_pDevice);
+	/*
 	hr = m_pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pipelineStateObject));
 	if (FAILED(hr))
 	{
 		return false;
 	}
-
+	*/
 	// Create vertex buffer
 
 	// a triangle
@@ -525,6 +527,7 @@ void D3DClass::Cleanup()
 	SAFE_RELEASE(pipelineStateObject);
 	SAFE_RELEASE(rootSignature);
 	SAFE_RELEASE(vertexBuffer);
+
 }
 
 void D3DClass::WaitForPreviousFrame()
@@ -553,4 +556,9 @@ void D3DClass::WaitForPreviousFrame()
 
 	// increment fenceValue for next frame
 	m_ui64FenceValue[m_uiFrameIndex]++;
+}
+
+ID3D12Device * D3DClass::GetDevice()
+{
+	return m_pDevice;
 }
