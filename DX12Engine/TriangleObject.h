@@ -3,6 +3,9 @@
 #include <DirectXMath.h>
 #include <d3d12.h>
 #include "Common.h"
+#include "D3dClass.h"
+#include "PSOHandler.h"
+#include "Camera.h"
 
 class TriangleObject
 {
@@ -13,10 +16,14 @@ private:
 
 
 public:
-	TriangleObject();
+	TriangleObject(PSOHandler* pPsoHandler);
 	~TriangleObject();
+	void Draw(D3D12_CPU_DESCRIPTOR_HANDLE m_cpuDescHandle, UINT uiFrameIndex, UINT uiDescriptorSize, Camera* camera);
+
+	ID3D12CommandList* GetCommandList();
 
 private:
+
 	ID3D12PipelineState*			m_pPSO;
 	ID3D12GraphicsCommandList*		m_pCommandList;
 	ID3D12RootSignature*			m_pRootSignature;

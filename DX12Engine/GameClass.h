@@ -2,6 +2,7 @@
 
 #include "D3dClass.h"
 #include "Camera.h"
+#include "TriangleObject.h"
 
 class GameClass
 {
@@ -19,5 +20,6 @@ public:
 private:
 	Camera* m_pMainCamera;
 	PSOHandler* m_pPsoHandler;
+	TriangleObject* tri;
 };
 

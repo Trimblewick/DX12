@@ -8,6 +8,7 @@
 #include <string>
 
 #include "PSOHandler.h"
+#include "TriangleObject.h"
 #include "WindowClass.h"
 #include "Camera.h"
 #include "Common.h"
@@ -17,6 +18,8 @@
 #endif
 
 const int g_cFrameBufferCount = 3;//eg double buffering, tripple buffering
+
+class TriangleObject;
 
 class D3DClass
 {
@@ -30,12 +33,20 @@ public:
 	D3DClass();
 	~D3DClass();
 	static bool Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPsoHandler);
-	static bool Render(Camera* camera);
+	static bool Render(Camera* camera, TriangleObject* tri);
 	static void Cleanup(); // release com ojects and clean up memory
 	static void WaitForPreviousFrame();
 
 
 	static ID3D12Device* GetDevice();
+	static ID3D12CommandAllocator* GetCurrentCommandAllocator();
+	static ID3D12Resource* GetCurrentRenderTarget();
+	static IDXGISwapChain3* GetSwapChain();
+	static ID3D12CommandQueue* GetCommandQueue();
+
+	static void incrementFenceValue();
+	static ID3D12Fence* GetCurrentFence();
+	static UINT64 GetCurrentFenceValue();
 
 private:
 	static ID3D12Device*				m_pDevice;

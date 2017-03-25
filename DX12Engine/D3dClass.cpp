@@ -184,14 +184,14 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 	}
 
 	// -- Create a Command List -- //
-
+	/*
 	// create the command list with the first allocator
 	hr = m_pDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_pCommandAllocator[m_uiFrameIndex], NULL, IID_PPV_ARGS(&commandList));
 	if (FAILED(hr))
 	{
 		return false;
 	}
-
+	*/
 	// -- Create a Fence & Fence Event -- //
 
 	// create the fences
@@ -213,7 +213,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 	}
 
 	// create root signature
-
+	/*
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
@@ -229,7 +229,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 	{
 		return false;
 	}
-
+	*/
 	// create vertex and pixel shaders
 
 	// when debugging, we can compile the shader files at runtime.
@@ -239,68 +239,13 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 	// shader bytecode, which of course is faster than compiling
 	// them at runtime
 
-	// compile vertex shader
-	ID3DBlob* vertexShader; // d3d blob for holding vertex shader bytecode
-	ID3DBlob* errorBuff; // a buffer holding the error data if any
-	hr = D3DCompileFromFile(L"VertexShader.hlsl",
-		nullptr,
-		nullptr,
-		"main",
-		"vs_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&vertexShader,
-		&errorBuff);
-	if (FAILED(hr))
-	{
-		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-		return false;
-	}
-
-	// fill out a shader bytecode structure, which is basically just a pointer
-	// to the shader bytecode and the size of the shader bytecode
-	D3D12_SHADER_BYTECODE vertexShaderBytecode = {};
-	vertexShaderBytecode.BytecodeLength = vertexShader->GetBufferSize();
-	vertexShaderBytecode.pShaderBytecode = vertexShader->GetBufferPointer();
-
-	// compile pixel shader
-	ID3DBlob* pixelShader;
-	hr = D3DCompileFromFile(L"PixelShader.hlsl",
-		nullptr,
-		nullptr,
-		"main",
-		"ps_5_0",
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
-		0,
-		&pixelShader,
-		&errorBuff);
-	if (FAILED(hr))
-	{
-		OutputDebugStringA((char*)errorBuff->GetBufferPointer());
-		return false;
-	}
-
-	// fill out shader bytecode structure for pixel shader
-	D3D12_SHADER_BYTECODE pixelShaderBytecode = {};
-	pixelShaderBytecode.BytecodeLength = pixelShader->GetBufferSize();
-	pixelShaderBytecode.pShaderBytecode = pixelShader->GetBufferPointer();
-
+	
 	// create input layout
 
 	// The input layout is used by the Input Assembler so that it knows
 	// how to read the vertex data bound to it.
 
-	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
-	// fill out an input layout description structure
-	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
-
-	// we can get the number of elements in an array by "sizeof(array) / sizeof(arrayElementType)"
-	inputLayoutDesc.NumElements = sizeof(inputLayout) / sizeof(D3D12_INPUT_ELEMENT_DESC);
-	inputLayoutDesc.pInputElementDescs = inputLayout;
+	
 
 	// create a pipeline state object (PSO)
 
@@ -314,7 +259,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 	// output, and not on a render target, which means you would not need anything after the stream
 	// output.
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {}; // a structure to define a pso
+	/*D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {}; // a structure to define a pso
 	psoDesc.InputLayout = inputLayoutDesc; // the structure describing our input layout
 	psoDesc.pRootSignature = rootSignature; // the root signature that describes the input data this pso needs
 	psoDesc.VS = vertexShaderBytecode; // structure describing where to find the vertex shader bytecode and how large it is
@@ -329,7 +274,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 
 	// create the pso
 
-	pipelineStateObject = pPsoHandler->CreatePipelineStateObject(&psoDesc, m_pDevice);
+	pipelineStateObject = pPsoHandler->CreatePipelineStateObject(&psoDesc, m_pDevice);*/
 	/*
 	hr = m_pDevice->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pipelineStateObject));
 	if (FAILED(hr))
@@ -338,7 +283,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 	}
 	*/
 	// Create vertex buffer
-
+/*
 	// a triangle
 	Vertex vList[] = {
 		{ { 0.0f, 0.5f, 0.5f } },
@@ -407,11 +352,11 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 	vertexBufferView.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
 	vertexBufferView.StrideInBytes = sizeof(Vertex);
 	vertexBufferView.SizeInBytes = vBufferSize;
-
+	*/
 	return true;
 }
 
-bool D3DClass::Render(Camera* camera)
+bool D3DClass::Render(Camera* camera, TriangleObject* tri)
 {
 	HRESULT hr;
 
@@ -436,7 +381,10 @@ bool D3DClass::Render(Camera* camera)
 	// but in this tutorial we are only clearing the rtv, and do not actually need
 	// anything but an initial default pipeline, which is what we get by setting
 	// the second parameter to NULL
-	hr = commandList->Reset(m_pCommandAllocator[m_uiFrameIndex], pipelineStateObject);
+
+	tri->Draw(m_pRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_uiFrameIndex, m_iRTVDescriptorSize, camera);
+	
+	/*hr = commandList->Reset(m_pCommandAllocator[m_uiFrameIndex], pipelineStateObject);
 	if (FAILED(hr))
 	{
 		return false;
@@ -465,6 +413,8 @@ bool D3DClass::Render(Camera* camera)
 	commandList->IASetVertexBuffers(0, 1, &vertexBufferView); // set the vertex buffer (using the vertex buffer view)
 	commandList->DrawInstanced(3, 1, 0, 0); // finally draw 3 vertices (draw the triangle)
 
+
+
 	// transition the "frameIndex" render target from the render target state to the present state. If the debug layer is enabled, you will receive a
 	// warning if present is called on the render target when it's not in the present state
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pRenderTargets[m_uiFrameIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
@@ -474,8 +424,9 @@ bool D3DClass::Render(Camera* camera)
 	{
 		return false;
 	}
+	*/
 
-	ID3D12CommandList* ppCommandLists[] = { commandList };
+	ID3D12CommandList* ppCommandLists[] = { tri->GetCommandList() };
 
 	// execute the array of command lists
 	m_pCommandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
@@ -515,7 +466,6 @@ void D3DClass::Cleanup()
 	SAFE_RELEASE(m_pSwapChain);
 	SAFE_RELEASE(m_pCommandQueue);
 	SAFE_RELEASE(m_pRTVDescriptorHeap);
-	SAFE_RELEASE(commandList);
 
 	for (int i = 0; i < g_cFrameBufferCount; ++i)
 	{
@@ -524,9 +474,6 @@ void D3DClass::Cleanup()
 		SAFE_RELEASE(m_pFence[i]);
 	};
 
-	SAFE_RELEASE(pipelineStateObject);
-	SAFE_RELEASE(rootSignature);
-	SAFE_RELEASE(vertexBuffer);
 
 }
 
@@ -561,4 +508,39 @@ void D3DClass::WaitForPreviousFrame()
 ID3D12Device * D3DClass::GetDevice()
 {
 	return m_pDevice;
+}
+
+ID3D12CommandAllocator * D3DClass::GetCurrentCommandAllocator()
+{
+	return m_pCommandAllocator[m_uiFrameIndex];
+}
+
+ID3D12Resource * D3DClass::GetCurrentRenderTarget()
+{
+	return m_pRenderTargets[m_uiFrameIndex];
+}
+
+IDXGISwapChain3 * D3DClass::GetSwapChain()
+{
+	return m_pSwapChain;
+}
+
+ID3D12CommandQueue * D3DClass::GetCommandQueue()
+{
+	return m_pCommandQueue;
+}
+
+void D3DClass::incrementFenceValue()
+{
+	m_ui64FenceValue[m_uiFrameIndex]++;
+}
+
+ID3D12Fence * D3DClass::GetCurrentFence()
+{
+	return m_pFence[m_uiFrameIndex];
+}
+
+UINT64 D3DClass::GetCurrentFenceValue()
+{
+	return m_ui64FenceValue[m_uiFrameIndex];
 }

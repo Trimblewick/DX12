@@ -14,8 +14,9 @@ void GameClass::Initialize(int cFrameBufferCount)
 {
 	m_pMainCamera = new Camera();
 	m_pPsoHandler = new PSOHandler();
+	
 	D3DClass::Initialize(3, m_pPsoHandler);
-
+	tri = new TriangleObject(m_pPsoHandler);
 }
 
 void GameClass::Update()
@@ -26,7 +27,7 @@ void GameClass::Update()
 bool GameClass::Render()
 {
 	
-	if (!D3DClass::Render(m_pMainCamera))
+	if (!D3DClass::Render(m_pMainCamera, tri))
 	{
 		return false;
 	}
