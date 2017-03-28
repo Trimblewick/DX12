@@ -68,8 +68,8 @@ void SystemClass::Stop()
 void SystemClass::CleanUp()
 {
 	
-	WindowClass::Destroy();
+	
 	s_game.CleanUp();
 	D3DClass::Cleanup();
-	
+	WindowClass::Destroy();
 }

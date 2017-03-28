@@ -90,7 +90,7 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	psoDesc.NumRenderTargets = 1; // we are only binding one render target
 
 	// create the pso
-	m_pPSO = pPsoHandler->CreatePipelineStateObject(&psoDesc, D3DClass::GetDevice());
+	_pPSO = pPsoHandler->CreatePipelineStateObject(&psoDesc, D3DClass::GetDevice());
 
 
 	// a triangle
@@ -153,7 +153,7 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	D3DClass::GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
 	// increment the fence value now, otherwise the buffer might not be uploaded by the time we start drawing
-	D3DClass::incrementFenceValue();
+	D3DClass::IncrementFenceValue();
 //	m_ui64FenceValue[m_uiFrameIndex]++;
 	hr = D3DClass::GetCommandQueue()->Signal(D3DClass::GetCurrentFence(), D3DClass::GetCurrentFenceValue());//m_pFence[m_uiFrameIndex], m_ui64FenceValue[m_uiFrameIndex]);
 	if (FAILED(hr))
@@ -169,12 +169,15 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 
 TriangleObject::~TriangleObject()
 {
+	SAFE_RELEASE(m_pCommandList);
+	SAFE_RELEASE(m_pRootSignature);
+	SAFE_RELEASE(m_pVertexBuffer);
 }
 
-void TriangleObject::Draw(D3D12_CPU_DESCRIPTOR_HANDLE m_cpuDescHandle, UINT uiFrameIndex, UINT uiDescriptorSize, Camera* camera)
+void TriangleObject::Draw(D3D12_CPU_DESCRIPTOR_HANDLE* rtvHandle, Camera* camera)
 {
 	HRESULT hr;
-	hr = m_pCommandList->Reset(D3DClass::GetCurrentCommandAllocator(), m_pPSO);
+	hr = m_pCommandList->Reset(D3DClass::GetCurrentCommandAllocator(), _pPSO);
 	if (FAILED(hr))
 	{
 		int stopper = 0;
@@ -184,16 +187,14 @@ void TriangleObject::Draw(D3D12_CPU_DESCRIPTOR_HANDLE m_cpuDescHandle, UINT uiFr
 
 	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(D3DClass::GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_cpuDescHandle, uiFrameIndex, uiDescriptorSize);
-
-	m_pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+	m_pCommandList->OMSetRenderTargets(1, rtvHandle, FALSE, nullptr);
 
 
 	const float clearColor[] = { 0.5f, 0.0f, 0.0f, 1.0f };
-	m_pCommandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+	m_pCommandList->ClearRenderTargetView(*rtvHandle, clearColor, 0, nullptr);
 
 
-	m_pCommandList->SetComputeRootSignature(m_pRootSignature);
+	m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);
 	m_pCommandList->RSSetViewports(1, &camera->GetViewport());
 	m_pCommandList->RSSetScissorRects(1, &camera->GetScissorRect());
 	m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

@@ -15,7 +15,6 @@ public:
 	bool Render();
 	void CleanUp();
 
-	PSOHandler* GetPSOHander();
 
 private:
 	Camera* m_pMainCamera;

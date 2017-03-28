@@ -18,13 +18,13 @@ private:
 public:
 	TriangleObject(PSOHandler* pPsoHandler);
 	~TriangleObject();
-	void Draw(D3D12_CPU_DESCRIPTOR_HANDLE m_cpuDescHandle, UINT uiFrameIndex, UINT uiDescriptorSize, Camera* camera);
+	void Draw(D3D12_CPU_DESCRIPTOR_HANDLE* rtvHandle, Camera* camera);
 
 	ID3D12CommandList* GetCommandList();
 
 private:
 
-	ID3D12PipelineState*			m_pPSO;
+	ID3D12PipelineState*			_pPSO;
 	ID3D12GraphicsCommandList*		m_pCommandList;
 	ID3D12RootSignature*			m_pRootSignature;
 	ID3D12Resource*					m_pVertexBuffer;

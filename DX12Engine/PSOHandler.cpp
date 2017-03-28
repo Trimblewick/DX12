@@ -8,7 +8,12 @@ PSOHandler::PSOHandler()
 
 PSOHandler::~PSOHandler()
 {
-	
+	for (ID3D12PipelineState* pso : m_vPSOs)
+	{
+		pso->Release();
+	}
+	m_vPSOs.clear();
+	m_vPSODescs.clear();
 }
 
 bool operator==(const D3D12_GRAPHICS_PIPELINE_STATE_DESC lhs, const D3D12_GRAPHICS_PIPELINE_STATE_DESC rhs)
