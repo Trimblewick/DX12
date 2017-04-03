@@ -235,6 +235,7 @@ void D3DClass::Cleanup()
 	}
 
 	_vGraphicsCommandLists.clear();
+	
 }
 
 void D3DClass::WaitForPreviousFrame()
@@ -249,12 +250,8 @@ void D3DClass::WaitForPreviousFrame()
 	if (m_pFence[m_uiFrameIndex]->GetCompletedValue() < m_ui64FenceValue[m_uiFrameIndex])
 	{
 		// we have the fence create an event which is signaled once the fence's current value is "fenceValue"
-		hr = m_pFence[m_uiFrameIndex]->SetEventOnCompletion(m_ui64FenceValue[m_uiFrameIndex], m_hFenceEventHandle);
-		if (FAILED(hr))
-		{
-			int stopper = 0;
-			//Running = false;
-		}
+		DxAssert(m_pFence[m_uiFrameIndex]->SetEventOnCompletion(m_ui64FenceValue[m_uiFrameIndex], m_hFenceEventHandle), S_OK);
+		
 		// We will wait until the fence has triggered the event that it's current value has reached "fenceValue". once it's value
 		// has reached "fenceValue", we know the command queue has finished executing
 		WaitForSingleObject(m_hFenceEventHandle, INFINITE);

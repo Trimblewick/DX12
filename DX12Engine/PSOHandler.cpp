@@ -18,6 +18,7 @@ PSOHandler::~PSOHandler()
 
 bool operator==(const D3D12_GRAPHICS_PIPELINE_STATE_DESC lhs, const D3D12_GRAPHICS_PIPELINE_STATE_DESC rhs)
 {
+	//gg
 	if (lhs.pRootSignature != rhs.pRootSignature) return false;
 	if (lhs.VS.BytecodeLength == rhs.VS.BytecodeLength) return false;
 	if (lhs.VS.pShaderBytecode != rhs.VS.pShaderBytecode) return false;

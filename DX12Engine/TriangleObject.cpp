@@ -8,7 +8,10 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 {
 	HRESULT hr;
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	D3D12_INPUT_ELEMENT_DESC inputLayoutElementDesc[] = { { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 } };
+	D3D12_INPUT_ELEMENT_DESC inputLayoutElementDesc[] = { 
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, 
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
 	DXGI_SWAP_CHAIN_DESC tempSwapChainDesc;
 
@@ -96,11 +99,17 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	SAFE_RELEASE(pixelShader);
 
 	// a triangle
-	Vertex vList[] = {
-		{ { 0.0f, 0.5f, 0.5f } },
-		{ { 0.5f, -0.5f, 0.5f } },
-		{ { -0.5f, -0.5f, 0.5f } },
-	};
+	Vertex v1;
+	v1.pos = { 0.0f, 0.5f, 0.5f };
+	v1.color = { 1.0f, 0.0f, 0.0f, 1.0f };
+	Vertex v2;
+	v2.pos = { 0.5f, -0.5f, 0.5f };
+	v2.color = { 0.0f, 1.0f, 0.0f, 1.0f };
+	Vertex v3;
+	v3.pos = { -0.5f, -0.5f, 0.5f };
+	v3.color = { 0.0f, 0.0f, 1.0f, 1.0f };
+
+	Vertex vList[] = { v1, v2, v3 };
 
 	int vBufferSize = sizeof(vList);
 
@@ -143,27 +152,35 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 										 // the upload heap to the default heap
 	UpdateSubresources(m_pCommandList, m_pVertexBuffer, vBufferUploadHeap, 0, 0, 1, &vertexData);
 
+	
+	
 	// transition the vertex buffer data from copy destination state to vertex buffer state
 	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pVertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 
+	
 	// Now we execute the command list to upload the initial assets (triangle data)
-	m_pCommandList->Close();
+	DxAssert(m_pCommandList->Close(), S_OK);
 
 	
-
-	ID3D12CommandList* ppCommandLists[] = { m_pCommandList };
-	D3DClass::GetCommandQueue()->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
+	
+	D3DClass::QueueGraphicsCommandList(m_pCommandList);
+	D3DClass::ExecuteGraphicsCommandLists();
+	
+	
+	SAFE_RELEASE(vBufferUploadHeap);//Should this be released upon exiting??!
+	
+	
 	// increment the fence value now, otherwise the buffer might not be uploaded by the time we start drawing
-	D3DClass::IncrementFenceValue();
+	//D3DClass::IncrementFenceValue();
 
-	DxAssert(D3DClass::GetCommandQueue()->Signal(D3DClass::GetCurrentFence(), D3DClass::GetCurrentFenceValue()), S_OK);//m_pFence[m_uiFrameIndex], m_ui64FenceValue[m_uiFrameIndex]);
+	//DxAssert(D3DClass::GetCommandQueue()->Signal(D3DClass::GetCurrentFence(), D3DClass::GetCurrentFenceValue()), S_OK);//m_pFence[m_uiFrameIndex], m_ui64FenceValue[m_uiFrameIndex]);
 	
 	
 	// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
 	m_vertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
 	m_vertexBufferView.StrideInBytes = sizeof(Vertex);
 	m_vertexBufferView.SizeInBytes = vBufferSize;
+
 }
 
 TriangleObject::~TriangleObject()
@@ -183,7 +200,7 @@ void TriangleObject::Draw(D3D12_CPU_DESCRIPTOR_HANDLE* rtvHandle, Camera* camera
 	m_pCommandList->OMSetRenderTargets(1, rtvHandle, FALSE, nullptr);
 
 
-	const float clearColor[] = { 0.5f, 0.0f, 0.0f, 1.0f };
+	const float clearColor[] = { 0.4f, 0.4f, 0.4f, 1.0f };
 	m_pCommandList->ClearRenderTargetView(*rtvHandle, clearColor, 0, nullptr);
 
 
