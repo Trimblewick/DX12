@@ -198,54 +198,25 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 	return true;
 }
 
-bool D3DClass::Render(Camera* camera, TriangleObject* tri)
-{
-	HRESULT hr;
-
-	// We have to wait for the gpu to finish with the command allocator before we reset it
-	//WaitForPreviousFrame();
-/*
-	// we can only reset an allocator once the gpu is done with it
-	// resetting an allocator frees the memory that the command list was stored in
-	hr = m_pCommandAllocator[m_uiFrameIndex]->Reset();
-	if (FAILED(hr))
-	{
-		return false;
-	}
-	*/
-	// reset the command list. by resetting the command list we are putting it into
-	// a recording state so we can start recording commands into the command allocator.
-	// the command allocator that we reference here may have multiple command lists
-	// associated with it, but only one can be recording at any time. Make sure
-	// that any other command lists associated to this command allocator are in
-	// the closed state (not recording).
-	// Here you will pass an initial pipeline state object as the second parameter,
-	// but in this tutorial we are only clearing the rtv, and do not actually need
-	// anything but an initial default pipeline, which is what we get by setting
-	// the second parameter to NULL
-
-	//tri->Draw(m_pRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_uiFrameIndex, m_iRTVDescriptorSize, camera);
-
-	//_vGraphicsCommandLists.push_back(tri->GetCommandList());
-	//ID3D12CommandList* ppCommandLists[] = { tri->GetCommandList() };
-
-	
-	// present the current backbuffer
-	hr = m_pSwapChain->Present(0, 0);
-	if (FAILED(hr))
-	{
-		return false;
-	}
-	return true;
-}
-
 void D3DClass::Cleanup()
 {
 	// wait for the gpu to finish all frames
 	
-	//for 3
-	//WaitForPreviousFrame();
+	for (int i = 0; i < g_cFrameBufferCount; i++)
+	{
+		m_uiFrameIndex = i;
+		//WaitForPreviousFrame();
+		if (m_pFence[m_uiFrameIndex]->GetCompletedValue() < m_ui64FenceValue[m_uiFrameIndex])
+		{
+			// we have the fence create an event which is signaled once the fence's current value is "fenceValue"
+			DxAssert(m_pFence[m_uiFrameIndex]->SetEventOnCompletion(m_ui64FenceValue[m_uiFrameIndex], m_hFenceEventHandle), S_OK);
+			
+			// We will wait until the fence has triggered the event that it's current value has reached "fenceValue". once it's value
+			// has reached "fenceValue", we know the command queue has finished executing
+			WaitForSingleObject(m_hFenceEventHandle, INFINITE);
 
+		}
+	}
 	// get swapchain out of full screen before exiting
 	BOOL fs = false;
 	if (m_pSwapChain->GetFullscreenState(&fs, NULL))
@@ -263,7 +234,7 @@ void D3DClass::Cleanup()
 		SAFE_RELEASE(m_pFence[i]);
 	}
 
-
+	_vGraphicsCommandLists.clear();
 }
 
 void D3DClass::WaitForPreviousFrame()

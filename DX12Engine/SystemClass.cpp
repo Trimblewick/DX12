@@ -3,24 +3,30 @@
 
 bool SystemClass::s_bRunning;
 GameClass SystemClass::s_game;
+bool SystemClass::s_initialized;
 
 SystemClass::SystemClass()
 {
 	s_bRunning = false;
-	
+	s_initialized = false;
 }
 
 SystemClass::~SystemClass()
 {
 }
 
-void SystemClass::Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance, int nCmdShow, LONG windowWidth, LONG windowHeight, LPWSTR title)
+bool SystemClass::Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance, int nCmdShow, LONG windowWidth, LONG windowHeight, LPWSTR title)
 {
+	if (s_initialized)
+	{
+		return false;
+	}
 	WindowClass::Initialize(hInstance, nCmdShow, windowWidth, windowHeight, title, false);
 	s_game.Initialize(3);
 	
 	s_bRunning = true;
-	
+	s_initialized = true;
+	return true;
 }
 
 void SystemClass::Run()
@@ -70,6 +76,5 @@ void SystemClass::CleanUp()
 	
 	
 	s_game.CleanUp();
-	D3DClass::Cleanup();
 	WindowClass::Destroy();
 }

@@ -27,7 +27,7 @@ public:
 	SystemClass();
 	~SystemClass();
 
-	static void Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance, int nCmdShow, LONG windowWidth, LONG windowHeight, LPWSTR title);
+	static bool Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance, int nCmdShow, LONG windowWidth, LONG windowHeight, LPWSTR title);
 	static void Run();
 	static void Pause();
 	static void Stop();
@@ -37,4 +37,5 @@ public:
 private:
 	static GameClass s_game;
 	static bool s_bRunning;
+	static bool s_initialized;
 };

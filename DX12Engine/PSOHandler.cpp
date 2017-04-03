@@ -10,7 +10,7 @@ PSOHandler::~PSOHandler()
 {
 	for (ID3D12PipelineState* pso : m_vPSOs)
 	{
-		pso->Release();
+		SAFE_RELEASE(pso);
 	}
 	m_vPSOs.clear();
 	m_vPSODescs.clear();

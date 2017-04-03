@@ -31,7 +31,8 @@ bool GameClass::Render()
 {
 	D3DClass::WaitForPreviousFrame();
 
-	D3DClass::GetCurrentCommandAllocator()->Reset();
+	DxAssert(D3DClass::GetCurrentCommandAllocator()->Reset(), S_OK);
+	
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(D3DClass::GetRTVDescriptorHeap()->GetCPUDescriptorHandleForHeapStart(), D3DClass::GetFrameIndex(), D3DClass::GetRTVDescriptorSize());
 
@@ -42,16 +43,15 @@ bool GameClass::Render()
 
 	D3DClass::ExecuteGraphicsCommandLists();
 	
-	if (!D3DClass::Render(m_pMainCamera, tri))
-	{
-		return false;
-	}
+	DxAssert(D3DClass::GetSwapChain()->Present(0, 0), S_OK);
+	
 	
 	return true;
 }
 
 void GameClass::CleanUp()
 {
+	D3DClass::Cleanup();
 	if (m_pMainCamera)
 	{
 		delete m_pMainCamera;
@@ -62,6 +62,9 @@ void GameClass::CleanUp()
 		delete m_pPsoHandler;
 		m_pPsoHandler = nullptr;
 	}
-	delete tri;
-
+	if (tri)
+	{
+		delete tri;
+		tri = nullptr;
+	}
 }

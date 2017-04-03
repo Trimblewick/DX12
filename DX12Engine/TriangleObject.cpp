@@ -92,6 +92,8 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	// create the pso
 	_pPSO = pPsoHandler->CreatePipelineStateObject(&psoDesc, D3DClass::GetDevice());
 
+	SAFE_RELEASE(vertexShader);
+	SAFE_RELEASE(pixelShader);
 
 	// a triangle
 	Vertex vList[] = {
@@ -154,12 +156,9 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 
 	// increment the fence value now, otherwise the buffer might not be uploaded by the time we start drawing
 	D3DClass::IncrementFenceValue();
-//	m_ui64FenceValue[m_uiFrameIndex]++;
-	hr = D3DClass::GetCommandQueue()->Signal(D3DClass::GetCurrentFence(), D3DClass::GetCurrentFenceValue());//m_pFence[m_uiFrameIndex], m_ui64FenceValue[m_uiFrameIndex]);
-	if (FAILED(hr))
-	{
-		//Running = false;
-	}
+
+	DxAssert(D3DClass::GetCommandQueue()->Signal(D3DClass::GetCurrentFence(), D3DClass::GetCurrentFenceValue()), S_OK);//m_pFence[m_uiFrameIndex], m_ui64FenceValue[m_uiFrameIndex]);
+	
 	
 	// create a vertex buffer view for the triangle. We get the GPU memory address to the vertex pointer using the GetGPUVirtualAddress() method
 	m_vertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
@@ -172,19 +171,13 @@ TriangleObject::~TriangleObject()
 	SAFE_RELEASE(m_pCommandList);
 	SAFE_RELEASE(m_pRootSignature);
 	SAFE_RELEASE(m_pVertexBuffer);
+	_pPSO = nullptr;
 }
 
 void TriangleObject::Draw(D3D12_CPU_DESCRIPTOR_HANDLE* rtvHandle, Camera* camera)
 {
-	HRESULT hr;
-	hr = m_pCommandList->Reset(D3DClass::GetCurrentCommandAllocator(), _pPSO);
-	if (FAILED(hr))
-	{
-		int stopper = 0;
-		//
-		//return false;
-	}
-
+	DxAssert(m_pCommandList->Reset(D3DClass::GetCurrentCommandAllocator(), _pPSO), S_OK);
+	
 	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(D3DClass::GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	m_pCommandList->OMSetRenderTargets(1, rtvHandle, FALSE, nullptr);
@@ -203,12 +196,8 @@ void TriangleObject::Draw(D3D12_CPU_DESCRIPTOR_HANDLE* rtvHandle, Camera* camera
 
 	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(D3DClass::GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
-	hr = m_pCommandList->Close();
-	if (FAILED(hr))
-	{
-		int stopper = 0;
-		
-	}
+	DxAssert(m_pCommandList->Close(), S_OK);
+	
 
 	return;
 }

@@ -19,7 +19,6 @@
 
 const int g_cFrameBufferCount = 3;//eg double buffering, tripple buffering
 
-class TriangleObject;
 
 class D3DClass
 {
@@ -33,7 +32,7 @@ public:
 	D3DClass();
 	~D3DClass();
 	static bool Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPsoHandler);
-	static bool Render(Camera* camera, TriangleObject* tri);
+	
 	static void Cleanup(); // release com ojects and clean up memory
 	static void WaitForPreviousFrame();
 
@@ -53,6 +52,7 @@ public:
 	static void IncrementFenceValue();
 	static ID3D12Fence* GetCurrentFence();
 	static UINT64 GetCurrentFenceValue();
+
 
 	static void QueueGraphicsCommandList(ID3D12CommandList* pCL);
 	static void ExecuteGraphicsCommandLists();
