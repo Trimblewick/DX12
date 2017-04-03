@@ -22,6 +22,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	SystemClass::CleanUp();
 
+
 	_CrtDumpMemoryLeaks();
 	return (int)msg.wParam;
 }

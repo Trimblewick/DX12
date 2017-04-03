@@ -164,6 +164,7 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	
 	
 	D3DClass::QueueGraphicsCommandList(m_pCommandList);
+	//D3DClass::IncrementFenceValue();
 	D3DClass::ExecuteGraphicsCommandLists();
 	
 	
@@ -171,7 +172,7 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	
 	
 	// increment the fence value now, otherwise the buffer might not be uploaded by the time we start drawing
-	//D3DClass::IncrementFenceValue();
+	
 
 	//DxAssert(D3DClass::GetCommandQueue()->Signal(D3DClass::GetCurrentFence(), D3DClass::GetCurrentFenceValue()), S_OK);//m_pFence[m_uiFrameIndex], m_ui64FenceValue[m_uiFrameIndex]);
 	
@@ -186,6 +187,7 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 TriangleObject::~TriangleObject()
 {
 	SAFE_RELEASE(m_pCommandList);
+	
 	SAFE_RELEASE(m_pRootSignature);
 	SAFE_RELEASE(m_pVertexBuffer);
 	_pPSO = nullptr;

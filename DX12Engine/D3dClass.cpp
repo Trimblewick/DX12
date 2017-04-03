@@ -234,7 +234,12 @@ void D3DClass::Cleanup()
 		SAFE_RELEASE(m_pFence[i]);
 	}
 
+	//WIERDEST LEAK EUW
+	//std::vector <ID3D12CommandList*> temp;
 	_vGraphicsCommandLists.clear();
+	//_vGraphicsCommandLists.swap(temp);
+	_vGraphicsCommandLists.shrink_to_fit();
+	
 	
 }
 

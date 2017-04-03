@@ -14,6 +14,9 @@ PSOHandler::~PSOHandler()
 	}
 	m_vPSOs.clear();
 	m_vPSODescs.clear();
+	m_vPSOs.shrink_to_fit();
+	m_vPSODescs.shrink_to_fit();
+	
 }
 
 bool operator==(const D3D12_GRAPHICS_PIPELINE_STATE_DESC lhs, const D3D12_GRAPHICS_PIPELINE_STATE_DESC rhs)

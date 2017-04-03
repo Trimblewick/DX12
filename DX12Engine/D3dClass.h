@@ -8,7 +8,6 @@
 #include <string>
 
 #include "PSOHandler.h"
-#include "TriangleObject.h"
 #include "WindowClass.h"
 #include "Camera.h"
 #include "Common.h"
@@ -23,10 +22,7 @@ const int g_cFrameBufferCount = 3;//eg double buffering, tripple buffering
 class D3DClass
 {
 private:
-	struct Vertex {
-		DirectX::XMFLOAT3 pos;
-	};
-
+	
 
 public:
 	D3DClass();
