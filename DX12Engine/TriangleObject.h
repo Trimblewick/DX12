@@ -30,4 +30,7 @@ private:
 	ID3D12RootSignature*			m_pRootSignature;
 	ID3D12Resource*					m_pVertexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW		m_vertexBufferView;
+
+	ID3D12Resource*					m_pIndexBuffer;
+	D3D12_INDEX_BUFFER_VIEW			m_indexBufferView;
 };

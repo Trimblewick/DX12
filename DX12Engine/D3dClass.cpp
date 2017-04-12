@@ -240,7 +240,6 @@ void D3DClass::Cleanup()
 	//_vGraphicsCommandLists.swap(temp);
 	_vGraphicsCommandLists.shrink_to_fit();
 	
-	
 }
 
 void D3DClass::WaitForPreviousFrame()
