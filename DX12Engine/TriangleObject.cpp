@@ -97,6 +97,8 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT); // a default rasterizer state.
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blent state.
 	psoDesc.NumRenderTargets = 1; // we are only binding one render target
+	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
 	// create the pso
 	_pPSO = pPsoHandler->CreatePipelineStateObject(&psoDesc, D3DClass::GetDevice());
@@ -104,7 +106,40 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	SAFE_RELEASE(vertexShader);
 	SAFE_RELEASE(pixelShader);
 
-	//for a quad
+	
+	//Create a descriptor heap for depthstencil
+	D3D12_DESCRIPTOR_HEAP_DESC depthStencilStateDescriptorHeadpDesc= {};
+	depthStencilStateDescriptorHeadpDesc.NumDescriptors = 1;
+	depthStencilStateDescriptorHeadpDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	depthStencilStateDescriptorHeadpDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAGS::D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	DxAssert(D3DClass::GetDevice()->CreateDescriptorHeap(&depthStencilStateDescriptorHeadpDesc, IID_PPV_ARGS(&m_pDepthStencilDescriptorHeap)), S_OK);
+
+	
+	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {};
+	depthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	depthStencilViewDesc.Flags = D3D12_DSV_FLAG_NONE;
+	depthStencilViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+
+	D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+	depthOptimizedClearValue.Format = depthStencilViewDesc.Format;
+	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+	depthOptimizedClearValue.DepthStencil.Stencil = 0;
+
+
+
+	D3DClass::GetDevice()->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, WindowClass::GetWidth(), WindowClass::GetHeight(), 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&depthOptimizedClearValue,
+		IID_PPV_ARGS(&m_pDepthStencilBuffer)
+	);
+	m_pDepthStencilDescriptorHeap->SetName(L"Depth/Stencil Resource Heap");
+
+	D3DClass::GetDevice()->CreateDepthStencilView(m_pDepthStencilBuffer, &depthStencilViewDesc, m_pDepthStencilDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+	//for quad 1
 	Vertex v1;
 	v1.pos = { -0.5f, 0.5f, 0.5f };
 	v1.color = { 1.0f, 0.0f, 0.0f, 1.0f };
@@ -118,8 +153,22 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	v4.pos = { 0.5f, 0.5f, 0.5f };
 	v4.color = { 1.0f, 0.0f, 1.0f, 1.0f };
 	
+	//for quad 2
+	Vertex v5;
+	v5.pos = { -0.8f, 0.2f, 0.7f };
+	v5.color = { 0.0f, 1.0f, 0.0f, 1.0f };
+	Vertex v6;
+	v6.pos = { 0.2f, -0.8f, 0.7f };
+	v6.color = { 0.0f, 1.0f, 0.0f, 1.0f };
+	Vertex v7;
+	v7.pos = { -0.8f, -0.8f, 0.7f };
+	v7.color = { 0.0f, 1.0f, 0.0f, 1.0f };
+	Vertex v8;
+	v8.pos = { 0.2f, 0.2f, 0.7f };
+	v8.color = { 0.0f, 1.0f, 0.0f, 1.0f };
+
 	//vertex list
-	Vertex vList[] = { v1, v2, v3, v4 };
+	Vertex vList[] = { v1, v2, v3, v4, v5, v6, v7, v8 };
 
 	
 	int vBufferSize = sizeof(vList);
@@ -229,6 +278,10 @@ TriangleObject::~TriangleObject()
 
 	SAFE_RELEASE(m_pIndexBuffer);
 
+
+	SAFE_RELEASE(m_pDepthStencilBuffer);
+	SAFE_RELEASE(m_pDepthStencilDescriptorHeap);
+
 	_pPSO = nullptr;
 }
 
@@ -238,8 +291,13 @@ void TriangleObject::Draw(D3D12_CPU_DESCRIPTOR_HANDLE* rtvHandle, Camera* camera
 	
 	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(D3DClass::GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	m_pCommandList->OMSetRenderTargets(1, rtvHandle, FALSE, nullptr);
+	// get a handle to the depth/stencil buffer
+	CD3DX12_CPU_DESCRIPTOR_HANDLE depthStencilDescriptorHandle(m_pDepthStencilDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
+	// set the render target for the output merger stage (the output of the pipeline)
+	m_pCommandList->OMSetRenderTargets(1, rtvHandle, FALSE, &depthStencilDescriptorHandle);
+
+	m_pCommandList->ClearDepthStencilView(m_pDepthStencilDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
 
 	const float clearColor[] = { 0.4f, 0.4f, 0.4f, 1.0f };
 	m_pCommandList->ClearRenderTargetView(*rtvHandle, clearColor, 0, nullptr);
@@ -252,6 +310,7 @@ void TriangleObject::Draw(D3D12_CPU_DESCRIPTOR_HANDLE* rtvHandle, Camera* camera
 	m_pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	m_pCommandList->IASetIndexBuffer(&m_indexBufferView);
 	m_pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
+	m_pCommandList->DrawIndexedInstanced(6, 1, 0, 4, 0);
 
 	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(D3DClass::GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 

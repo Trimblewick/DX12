@@ -33,4 +33,7 @@ private:
 
 	ID3D12Resource*					m_pIndexBuffer;
 	D3D12_INDEX_BUFFER_VIEW			m_indexBufferView;
+
+	ID3D12Resource*					m_pDepthStencilBuffer;
+	ID3D12DescriptorHeap*			m_pDepthStencilDescriptorHeap;
 };
