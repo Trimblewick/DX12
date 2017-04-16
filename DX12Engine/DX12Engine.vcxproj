@@ -164,6 +164,7 @@
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PSOHandler.cpp" />
+    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="SystemClass.cpp" />
     <ClCompile Include="TriangleObject.cpp" />
     <ClCompile Include="WindowClass.cpp" />
@@ -177,6 +178,7 @@
     <ClInclude Include="GameClass.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="PSOHandler.h" />
+    <ClInclude Include="Shader.h" />
     <ClInclude Include="SystemClass.h" />
     <ClInclude Include="TriangleObject.h" />
     <ClInclude Include="WindowClass.h" />

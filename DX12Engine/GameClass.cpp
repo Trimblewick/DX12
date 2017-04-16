@@ -36,7 +36,7 @@ bool GameClass::Render()
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(D3DClass::GetRTVDescriptorHeap()->GetCPUDescriptorHandleForHeapStart(), D3DClass::GetFrameIndex(), D3DClass::GetRTVDescriptorSize());
 
-	
+	tri->Update();
 	tri->Draw(&rtvHandle, m_pMainCamera);
 	
 	D3DClass::QueueGraphicsCommandList(tri->GetCommandList());

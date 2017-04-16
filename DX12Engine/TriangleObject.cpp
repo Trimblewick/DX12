@@ -7,36 +7,56 @@
 TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 {
 	HRESULT hr;
-	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+
 	D3D12_INPUT_ELEMENT_DESC inputLayoutElementDesc[] = { 
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }, 
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
-	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
-	DXGI_SWAP_CHAIN_DESC tempSwapChainDesc;
 
+	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
 	// we can get the number of elements in an array by "sizeof(array) / sizeof(arrayElementType)"
 	inputLayoutDesc.NumElements = sizeof(inputLayoutElementDesc) / sizeof(D3D12_INPUT_ELEMENT_DESC);
 	inputLayoutDesc.pInputElementDescs = inputLayoutElementDesc;
 
-	
-
 	D3DClass::GetDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3DClass::GetCurrentCommandAllocator(), NULL, IID_PPV_ARGS(&m_pCommandList));
-	
-	
-	rootSignatureDesc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	
+
+	// create a descriptor range (descriptor table) and fill it out
+	// this is a range of descriptors inside a descriptor heap
+	D3D12_DESCRIPTOR_RANGE  descriptorTableRanges[1]; // only one range right now
+	descriptorTableRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV; // this is a range of constant buffer views (descriptors)
+	descriptorTableRanges[0].NumDescriptors = 1; // we only have one constant buffer, so the range is only 1
+	descriptorTableRanges[0].BaseShaderRegister = 0; // start index of the shader registers in the range
+	descriptorTableRanges[0].RegisterSpace = 0; // space 0. can usually be zero
+	descriptorTableRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND; // this appends the range to the end of the root signature descriptor tables
+
+																									   // create a descriptor table
+	D3D12_ROOT_DESCRIPTOR_TABLE descriptorTable;
+	descriptorTable.NumDescriptorRanges = _countof(descriptorTableRanges); // we only have one range
+	descriptorTable.pDescriptorRanges = &descriptorTableRanges[0]; // the pointer to the beginning of our ranges array
+
+																   // create a root parameter and fill it out
+	D3D12_ROOT_PARAMETER  rootParameters[1]; // only one parameter right now
+	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE; // this is a descriptor table
+	rootParameters[0].DescriptorTable = descriptorTable; // this is our descriptor table for this root parameter
+	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; // our pixel shader will be the only shader accessing this parameter for now
+
+	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+	rootSignatureDesc.Init(_countof(rootParameters), // we have 1 root parameter
+		rootParameters, // a pointer to the beginning of our root parameters array
+		0,
+		nullptr,
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT | // we can deny shader stages here for better performance
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS);
+
 
 	ID3DBlob* signature;
 	DxAssert(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, nullptr), S_OK);
-	
+
 	DxAssert(D3DClass::GetDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_pRootSignature)), S_OK);
 
-	
-	//get the swapchaindesc to get its sample desc into the pso
-	D3DClass::GetSwapChain()->GetDesc(&tempSwapChainDesc);
-
-	
 
 	// compile vertex shader
 	ID3DBlob* vertexShader; // d3d blob for holding vertex shader bytecode
@@ -84,6 +104,10 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	pixelShaderBytecode.BytecodeLength = pixelShader->GetBufferSize();
 	pixelShaderBytecode.pShaderBytecode = pixelShader->GetBufferPointer();
 
+	DXGI_SWAP_CHAIN_DESC tempSwapChainDesc;
+	//get the swapchaindesc to get its sample desc into the pso
+	D3DClass::GetSwapChain()->GetDesc(&tempSwapChainDesc);
+
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {}; // a structure to define a pso
 	psoDesc.InputLayout = inputLayoutDesc; // the structure describing our input layout
@@ -103,6 +127,7 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	// create the pso
 	_pPSO = pPsoHandler->CreatePipelineStateObject(&psoDesc, D3DClass::GetDevice());
 
+	//release after assigned to the pso?
 	SAFE_RELEASE(vertexShader);
 	SAFE_RELEASE(pixelShader);
 
@@ -139,6 +164,40 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 
 	D3DClass::GetDevice()->CreateDepthStencilView(m_pDepthStencilBuffer, &depthStencilViewDesc, m_pDepthStencilDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
+	for (int i = 0; i < g_cFrameBufferCount; ++i)
+	{
+		D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+		heapDesc.NumDescriptors = 1;
+		heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+		heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		DxAssert(D3DClass::GetDevice()->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_ppColorMultiplyerDescriptorHeap[i])), S_OK);
+	}
+
+
+	// create a resource heap, descriptor heap, and pointer to cbv for each frame
+	for (int i = 0; i < g_cFrameBufferCount; ++i)
+	{
+		DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), // this heap will be used to upload the constant buffer data
+			D3D12_HEAP_FLAG_NONE, // no flags
+			&CD3DX12_RESOURCE_DESC::Buffer(1024 * 64), // size of the resource heap. Must be a multiple of 64KB for single-textures and constant buffers
+			D3D12_RESOURCE_STATE_GENERIC_READ, // will be data that is read from so we keep it in the generic read state
+			nullptr, // we do not have use an optimized clear value for constant buffers
+			IID_PPV_ARGS(&m_ppColorMultiplyerConstantBufferUpploadHeap[i])), S_OK);
+		m_ppColorMultiplyerConstantBufferUpploadHeap[i]->SetName(L"Constant Buffer Upload Resource Heap");
+
+		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
+		cbvDesc.BufferLocation = m_ppColorMultiplyerConstantBufferUpploadHeap[i]->GetGPUVirtualAddress();
+		cbvDesc.SizeInBytes = (sizeof(CBColorMultiplyer) + 255) & ~255;    // CB size is required to be 256-byte aligned.
+		D3DClass::GetDevice()->CreateConstantBufferView(&cbvDesc, m_ppColorMultiplyerDescriptorHeap[i]->GetCPUDescriptorHandleForHeapStart());
+
+		ZeroMemory(&m_colorMultiplyerData, sizeof(m_colorMultiplyerData));
+
+		CD3DX12_RANGE readRange(0, 0);    // We do not intend to read from this resource on the CPU. (End is less than or equal to begin)
+		hr = m_ppColorMultiplyerConstantBufferUpploadHeap[i]->Map(0, &readRange, reinterpret_cast<void**>(&m_ui8ColorMultiplyerGPUAddress[i]));
+		memcpy(m_ui8ColorMultiplyerGPUAddress[i], &m_colorMultiplyerData, sizeof(m_colorMultiplyerData));
+	}
+
 	//for quad 1
 	Vertex v1;
 	v1.pos = { -0.5f, 0.5f, 0.5f };
@@ -152,7 +211,7 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	Vertex v4;
 	v4.pos = { 0.5f, 0.5f, 0.5f };
 	v4.color = { 1.0f, 0.0f, 1.0f, 1.0f };
-	
+	/*
 	//for quad 2
 	Vertex v5;
 	v5.pos = { -0.8f, 0.2f, 0.7f };
@@ -165,10 +224,10 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	v7.color = { 0.0f, 1.0f, 0.0f, 1.0f };
 	Vertex v8;
 	v8.pos = { 0.2f, 0.2f, 0.7f };
-	v8.color = { 0.0f, 1.0f, 0.0f, 1.0f };
+	v8.color = { 0.0f, 1.0f, 0.0f, 1.0f };*/
 
 	//vertex list
-	Vertex vList[] = { v1, v2, v3, v4, v5, v6, v7, v8 };
+	Vertex vList[] = { v1, v2, v3, v4, /*v5, v6, v7, v8*/ };
 
 	
 	int vBufferSize = sizeof(vList);
@@ -282,6 +341,12 @@ TriangleObject::~TriangleObject()
 	SAFE_RELEASE(m_pDepthStencilBuffer);
 	SAFE_RELEASE(m_pDepthStencilDescriptorHeap);
 
+	for (int i = 0; i < g_cFrameBufferCount; ++i)
+	{
+		SAFE_RELEASE(m_ppColorMultiplyerDescriptorHeap[i]);
+		SAFE_RELEASE(m_ppColorMultiplyerConstantBufferUpploadHeap[i]);
+	};
+
 	_pPSO = nullptr;
 }
 
@@ -303,14 +368,23 @@ void TriangleObject::Draw(D3D12_CPU_DESCRIPTOR_HANDLE* rtvHandle, Camera* camera
 	m_pCommandList->ClearRenderTargetView(*rtvHandle, clearColor, 0, nullptr);
 
 
+
 	m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);
+
+	// set constant buffer descriptor heap
+	ID3D12DescriptorHeap* descriptorHeaps[] = { m_ppColorMultiplyerDescriptorHeap[D3DClass::GetFrameIndex()] };
+	m_pCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+	// set the root descriptor table 0 to the constant buffer descriptor heap
+	m_pCommandList->SetGraphicsRootDescriptorTable(0, m_ppColorMultiplyerDescriptorHeap[D3DClass::GetFrameIndex()]->GetGPUDescriptorHandleForHeapStart());
+
 	m_pCommandList->RSSetViewports(1, &camera->GetViewport());
 	m_pCommandList->RSSetScissorRects(1, &camera->GetScissorRect());
 	m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	m_pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	m_pCommandList->IASetIndexBuffer(&m_indexBufferView);
 	m_pCommandList->DrawIndexedInstanced(6, 1, 0, 0, 0);
-	m_pCommandList->DrawIndexedInstanced(6, 1, 0, 4, 0);
+	//m_pCommandList->DrawIndexedInstanced(6, 1, 0, 4, 0);
 
 	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(D3DClass::GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
@@ -318,6 +392,38 @@ void TriangleObject::Draw(D3D12_CPU_DESCRIPTOR_HANDLE* rtvHandle, Camera* camera
 	
 
 	return;
+}
+
+void TriangleObject::Update()
+{
+	// update app logic, such as moving the camera or figuring out what objects are in view
+	static float rIncrement = 0.00002f;
+	static float gIncrement = 0.00006f;
+	static float bIncrement = 0.00009f;
+
+	m_colorMultiplyerData.colorMultiplier.x += rIncrement;
+	m_colorMultiplyerData.colorMultiplier.y += gIncrement;
+	m_colorMultiplyerData.colorMultiplier.z += bIncrement;
+
+	if (m_colorMultiplyerData.colorMultiplier.x >= 1.0 || m_colorMultiplyerData.colorMultiplier.x <= 0.0)
+	{
+		m_colorMultiplyerData.colorMultiplier.x = m_colorMultiplyerData.colorMultiplier.x >= 1.0 ? 1.0 : 0.0;
+		rIncrement = -rIncrement;
+	}
+	if (m_colorMultiplyerData.colorMultiplier.y >= 1.0 || m_colorMultiplyerData.colorMultiplier.y <= 0.0)
+	{
+		m_colorMultiplyerData.colorMultiplier.y = m_colorMultiplyerData.colorMultiplier.y >= 1.0 ? 1.0 : 0.0;
+		gIncrement = -gIncrement;
+	}
+	if (m_colorMultiplyerData.colorMultiplier.z >= 1.0 || m_colorMultiplyerData.colorMultiplier.z <= 0.0)
+	{
+		m_colorMultiplyerData.colorMultiplier.z = m_colorMultiplyerData.colorMultiplier.z >= 1.0 ? 1.0 : 0.0;
+		bIncrement = -bIncrement;
+	}
+
+	// copy our ConstantBuffer instance to the mapped constant buffer resource
+	memcpy(m_ui8ColorMultiplyerGPUAddress[D3DClass::GetFrameIndex()], &m_colorMultiplyerData, sizeof(m_colorMultiplyerData));
+	
 }
 
 ID3D12CommandList * TriangleObject::GetCommandList()

@@ -15,11 +15,16 @@ private:
 		DirectX::XMFLOAT4 color;
 	};
 
+	struct CBColorMultiplyer
+	{
+		DirectX::XMFLOAT4 colorMultiplier;
+	};
 
 public:
 	TriangleObject(PSOHandler* pPsoHandler);
 	~TriangleObject();
 	void Draw(D3D12_CPU_DESCRIPTOR_HANDLE* rtvHandle, Camera* camera);
+	void Update();
 
 	ID3D12CommandList* GetCommandList();
 
@@ -36,4 +41,11 @@ private:
 
 	ID3D12Resource*					m_pDepthStencilBuffer;
 	ID3D12DescriptorHeap*			m_pDepthStencilDescriptorHeap;
+
+	ID3D12Resource*					m_ppColorMultiplyerConstantBufferUpploadHeap[g_cFrameBufferCount];
+	ID3D12DescriptorHeap*			m_ppColorMultiplyerDescriptorHeap[g_cFrameBufferCount];
+
+	UINT8*							m_ui8ColorMultiplyerGPUAddress[g_cFrameBufferCount];
+
+	CBColorMultiplyer				m_colorMultiplyerData;
 };
