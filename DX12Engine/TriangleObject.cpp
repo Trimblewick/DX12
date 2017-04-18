@@ -1,9 +1,6 @@
 #include "TriangleObject.h"
 
 
-
-
-
 TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 {
 	HRESULT hr;

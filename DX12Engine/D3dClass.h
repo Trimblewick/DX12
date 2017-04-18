@@ -55,22 +55,22 @@ public:
 
 
 private:
-	static ID3D12Device*				m_pDevice;
-	static IDXGISwapChain3*				m_pSwapChain;
-	static ID3D12CommandQueue*			m_pCommandQueue;
+	static ID3D12Device*				s_pDevice;
+	static IDXGISwapChain3*				s_pSwapChain;
+	static ID3D12CommandQueue*			s_pCommandQueue;
 
 
 	//static ID3D12CommandList*			m_pClearColorBundle;
 
 	static std::vector<ID3D12CommandList*> _vGraphicsCommandLists;
 
-	static ID3D12DescriptorHeap*		m_pRTVDescriptorHeap;
-	static ID3D12Resource*				m_pRenderTargets[g_cFrameBufferCount];//right now just for backbuffering
-	static ID3D12CommandAllocator*		m_pCommandAllocator[g_cFrameBufferCount];
-	static ID3D12Fence*					m_pFence[g_cFrameBufferCount];
-	static HANDLE						m_hFenceEventHandle;
-	static UINT64						m_ui64FenceValue[g_cFrameBufferCount];
-	static unsigned int					m_uiFrameIndex;
-	static int							m_iRTVDescriptorSize;
+	static ID3D12DescriptorHeap*		s_pRTVDescriptorHeap;
+	static ID3D12Resource*				s_pRenderTargets[g_cFrameBufferCount];//right now just for backbuffering
+	static ID3D12CommandAllocator*		s_pCommandAllocator[g_cFrameBufferCount];
+	static ID3D12Fence*					s_pFence[g_cFrameBufferCount];
+	static HANDLE						s_hFenceEventHandle;
+	static UINT64						s_ui64FenceValue[g_cFrameBufferCount];
+	static unsigned int					s_uiFrameIndex;
+	static int							s_iRTVDescriptorSize;
 };
 
