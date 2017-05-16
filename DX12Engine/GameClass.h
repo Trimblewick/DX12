@@ -3,6 +3,7 @@
 #include "D3dClass.h"
 #include "Camera.h"
 #include "TriangleObject.h"
+#include "BoxObject.h"
 
 class GameClass
 {
@@ -20,5 +21,6 @@ private:
 	Camera* m_pMainCamera;
 	PSOHandler* m_pPsoHandler;
 	TriangleObject* tri;
+	BoxObject* box;
 };
 

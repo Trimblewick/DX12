@@ -10,15 +10,17 @@
 class TriangleObject
 {
 private:
-	struct Vertex {
+	struct Vertex 
+	{
 		DirectX::XMFLOAT3 pos;
-		DirectX::XMFLOAT4 color;
+		DirectX::XMFLOAT4 color; 
 	};
 
 	struct CBColorMultiplyer
 	{
 		DirectX::XMFLOAT4 colorMultiplier;
 	};
+
 
 public:
 	TriangleObject(PSOHandler* pPsoHandler);

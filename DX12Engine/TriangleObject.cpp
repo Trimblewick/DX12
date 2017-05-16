@@ -26,12 +26,12 @@ TriangleObject::TriangleObject(PSOHandler* pPsoHandler)
 	descriptorTableRanges[0].RegisterSpace = 0; // space 0. can usually be zero
 	descriptorTableRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND; // this appends the range to the end of the root signature descriptor tables
 
-																									   // create a descriptor table
+	// create a descriptor table
 	D3D12_ROOT_DESCRIPTOR_TABLE descriptorTable;
 	descriptorTable.NumDescriptorRanges = _countof(descriptorTableRanges); // we only have one range
 	descriptorTable.pDescriptorRanges = &descriptorTableRanges[0]; // the pointer to the beginning of our ranges array
 
-																   // create a root parameter and fill it out
+	// create a root parameter and fill it out
 	D3D12_ROOT_PARAMETER  rootParameters[1]; // only one parameter right now
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE; // this is a descriptor table
 	rootParameters[0].DescriptorTable = descriptorTable; // this is our descriptor table for this root parameter
@@ -342,7 +342,7 @@ TriangleObject::~TriangleObject()
 	{
 		SAFE_RELEASE(m_ppColorMultiplyerDescriptorHeap[i]);
 		SAFE_RELEASE(m_ppColorMultiplyerConstantBufferUpploadHeap[i]);
-	};
+	}
 
 	_pPSO = nullptr;
 }

@@ -157,6 +157,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="BoxObject.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="D3dClass.cpp" />
     <ClCompile Include="DHHandler.cpp" />
@@ -170,6 +171,7 @@
     <ClCompile Include="WindowClass.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BoxObject.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="D3dClass.h" />

@@ -19,12 +19,15 @@ void GameClass::Initialize(int cFrameBufferCount)
 
 
 
-	tri = new TriangleObject(m_pPsoHandler);
+	//tri = new TriangleObject(m_pPsoHandler);
+	DirectX::XMFLOAT4 boxInitPos = DirectX::XMFLOAT4(0, 0, 0, 0);
+	box = new BoxObject(boxInitPos, boxInitPos, m_pPsoHandler);
 }
 
 void GameClass::Update()
 {
-
+	//tri->Update();
+	box->Update(m_pMainCamera);
 }
 
 bool GameClass::Render()
@@ -36,10 +39,13 @@ bool GameClass::Render()
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(D3DClass::GetRTVDescriptorHeap()->GetCPUDescriptorHandleForHeapStart(), D3DClass::GetFrameIndex(), D3DClass::GetRTVDescriptorSize());
 
-	tri->Update();
-	tri->Draw(&rtvHandle, m_pMainCamera);
+	this->Update();
 	
-	D3DClass::QueueGraphicsCommandList(tri->GetCommandList());
+	
+	//tri->Draw(&rtvHandle, m_pMainCamera);
+	box->Draw(rtvHandle, m_pMainCamera);
+	
+	D3DClass::QueueGraphicsCommandList(box->GetGraphicsCommandList());
 
 	D3DClass::ExecuteGraphicsCommandLists();
 	
@@ -66,5 +72,10 @@ void GameClass::CleanUp()
 	{
 		delete tri;
 		tri = nullptr;
+	}
+	if (box)
+	{
+		delete box;
+		box = nullptr;
 	}
 }
