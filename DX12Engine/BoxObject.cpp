@@ -116,6 +116,39 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 	SAFE_RELEASE(vertexShader);
 	SAFE_RELEASE(pixelShader);
 
+	//Create a descriptor heap for depthstencil
+	D3D12_DESCRIPTOR_HEAP_DESC depthStencilStateDescriptorHeadpDesc = {};
+	depthStencilStateDescriptorHeadpDesc.NumDescriptors = 1;
+	depthStencilStateDescriptorHeadpDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+	depthStencilStateDescriptorHeadpDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAGS::D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+	DxAssert(D3DClass::GetDevice()->CreateDescriptorHeap(&depthStencilStateDescriptorHeadpDesc, IID_PPV_ARGS(&m_pDepthStencilDescriptorHeap)), S_OK);
+
+
+	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {};
+	depthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	depthStencilViewDesc.Flags = D3D12_DSV_FLAG_NONE;
+	depthStencilViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+
+	D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+	depthOptimizedClearValue.Format = depthStencilViewDesc.Format;
+	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+	depthOptimizedClearValue.DepthStencil.Stencil = 0;
+
+
+
+	D3DClass::GetDevice()->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, WindowClass::GetWidth(), WindowClass::GetHeight(), 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+		D3D12_RESOURCE_STATE_DEPTH_WRITE,
+		&depthOptimizedClearValue,
+		IID_PPV_ARGS(&m_pDepthStencilBuffer)
+		);
+	m_pDepthStencilDescriptorHeap->SetName(L"Depth/Stencil Resource Heap");
+
+	D3DClass::GetDevice()->CreateDepthStencilView(m_pDepthStencilBuffer, &depthStencilViewDesc, m_pDepthStencilDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+
 	Vertex boxVertexList[] = {
 		// front face
 		{ -0.5f,  0.5f, -0.5f, 1.0f, 0.0f, 0.0f, 1.0f },
@@ -213,14 +246,24 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 
 	m_iNumCubeIndices = sizeof(boxIndexBufferList) / sizeof(DWORD);
 
-	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(iIndexBufferSize), D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COPY_DEST, nullptr, IID_PPV_ARGS(&m_pIndexBuffer)), S_OK);
+	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT), 
+		D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(iIndexBufferSize), 
+		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COPY_DEST, 
+		nullptr, 
+		IID_PPV_ARGS(&m_pIndexBuffer)), S_OK);
 
 	m_pIndexBuffer->SetName(L"BOX- INDEXBUFFER RESOURCE HEAP");
 
 	ID3D12Resource* pIndexBufferUploadHeap;
-	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(iIndexBufferSize), D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&pIndexBufferUploadHeap)), S_OK);
+	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD), 
+		D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(iIndexBufferSize), 
+		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ, 
+		nullptr, 
+		IID_PPV_ARGS(&pIndexBufferUploadHeap)), S_OK);
 
 	pIndexBufferUploadHeap->SetName(L"BOX- INDEX BUFFER UPLOAD HEAP");
 
@@ -231,8 +274,13 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 
 	UpdateSubresources(m_pCommandList, m_pIndexBuffer, pIndexBufferUploadHeap, 0, 0, 1, &indexData);
 
-	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pIndexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+	m_pCommandList->ResourceBarrier(
+		1, 
+		&CD3DX12_RESOURCE_BARRIER::Transition(m_pIndexBuffer, 
+			D3D12_RESOURCE_STATE_COPY_DEST, 
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 
+	
 
 	for (unsigned int i = 0; i < g_cFrameBufferCount; ++i)
 	{
@@ -269,6 +317,8 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 
 	DxAssert(m_pCommandList->Close(), S_OK);
 
+	
+
 	D3DClass::QueueGraphicsCommandList(m_pCommandList);
 	//D3DClass::IncrementFenceValue();
 	D3DClass::ExecuteGraphicsCommandLists();
@@ -282,18 +332,26 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 	m_indexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
 	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	m_indexBufferView.SizeInBytes = iIndexBufferSize;
+
+	SAFE_RELEASE(pVertexBufferUpploadHeap);
+	SAFE_RELEASE(pIndexBufferUploadHeap);
 }
 
 BoxObject::~BoxObject()
 {
 	SAFE_RELEASE(m_pRootSignature);
+	SAFE_RELEASE(m_pVertexBuffer);
+	SAFE_RELEASE(m_pIndexBuffer);
+	SAFE_RELEASE(m_pDepthStencilBuffer);
+	SAFE_RELEASE(m_pDepthStencilDescriptorHeap);
 	for (int i = 0; i < g_cFrameBufferCount; ++i)
 	{
 		SAFE_RELEASE(m_pWVPMatUpploadHeaps[i]);
-		delete m_pWVPGPUAdress[i];//...
+		
+		//delete m_pWVPGPUAdress[i];//...
 	}
-
-
+	
+	SAFE_RELEASE(m_pCommandList);
 }
 
 void BoxObject::Update(Camera * cam)
@@ -328,8 +386,13 @@ void BoxObject::Draw(D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, Camera * camera)
 	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(D3DClass::GetCurrentRenderTarget(), 
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-	//CD3DX12_CPU_DESCRIPTOR_HANDLE depth
-	m_pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, NULL);
+	// get a handle to the depth/stencil buffer
+	CD3DX12_CPU_DESCRIPTOR_HANDLE depthStencilDescriptorHandle(m_pDepthStencilDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+	m_pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &depthStencilDescriptorHandle);
+
+	m_pCommandList->ClearDepthStencilView(m_pDepthStencilDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+
 
 	const float clearColor[] = { 0.4f, 0.4f, 0.4f, 1.0f };
 	m_pCommandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
