@@ -282,11 +282,8 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, FrameBuffer* 
 	DirectX::XMStoreFloat4x4(&m_xmWorldMatrix, tempWorldMatrix);
 
 	
-
-
 	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Close(), S_OK);
 
-	
 
 	D3DClass::QueueGraphicsCommandList(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD));
 	D3DClass::IncrementFenceValue();
@@ -302,8 +299,10 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, FrameBuffer* 
 	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	m_indexBufferView.SizeInBytes = iIndexBufferSize;
 
-	SAFE_RELEASE(pVertexBufferUpploadHeap);
-	SAFE_RELEASE(pIndexBufferUploadHeap);
+
+	//TODO: FENCE EVENT??!?
+	//SAFE_RELEASE(pVertexBufferUpploadHeap);
+	//SAFE_RELEASE(pIndexBufferUploadHeap);
 }
 
 BoxObject::~BoxObject()
