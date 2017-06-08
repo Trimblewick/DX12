@@ -3,7 +3,6 @@
 #include <d3d12.h>
 #include "Common.h"
 #include "D3dClass.h"
-#include "PSOHandler.h"
 #include "Camera.h"
 #include "FrameBuffer.h"
 
@@ -26,7 +25,7 @@ private:
 	unsigned int m_iConstantBufferWVPAlignedSize = (sizeof(ConstantBufferWVP) + 255 & ~255);
 
 public:
-	BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* pPsoHandler, FrameBuffer* pFrameBuffer);
+	BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, FrameBuffer* pFrameBuffer);
 	~BoxObject();
 
 	void Update(Camera* cam);
@@ -34,7 +33,8 @@ public:
 
 
 private:
-	ID3D12PipelineState*				_pPSO;
+	ID3D12PipelineState*				m_pPSO;
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC  m_psoDesc;
 
 	ID3D12Resource*						m_pVertexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW			m_vertexBufferView;

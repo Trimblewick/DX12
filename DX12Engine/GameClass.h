@@ -20,8 +20,7 @@ public:
 
 private:
 	Camera* m_pMainCamera;
-	PSOHandler* m_pPsoHandler;
-	TriangleObject* tri;
+
 	BoxObject* box;
 	BoxObject* box1;
 

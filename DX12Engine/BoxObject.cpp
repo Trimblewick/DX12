@@ -1,7 +1,7 @@
 #include "BoxObject.h"
 
 
-BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* pPsoHandler, FrameBuffer* pFrameBuffer)
+BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, FrameBuffer* pFrameBuffer)
 {
 	HRESULT hr;
 
@@ -95,23 +95,23 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 	inputLayoutDesc.NumElements = sizeof(inputLayoutElementDesc) / sizeof(D3D12_INPUT_ELEMENT_DESC);
 	inputLayoutDesc.pInputElementDescs = inputLayoutElementDesc;
 
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {}; // a structure to define a pso
-	psoDesc.InputLayout = inputLayoutDesc; // the structure describing our input layout
-	psoDesc.pRootSignature = m_pRootSignature; // the root signature that describes the input data this pso needs
-	psoDesc.VS = vertexShaderBytecode; // structure describing where to find the vertex shader bytecode and how large it is
-	psoDesc.PS = pixelShaderBytecode; // same as VS but for pixel shader
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawing
-	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
-	psoDesc.SampleDesc = tempSwapChainDesc.SampleDesc; // must be the same sample description as the swapchain and depth/stencil buffer
-	psoDesc.SampleMask = 0xffffffff; // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
-	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT); // a default rasterizer state.
-	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blent state.
-	psoDesc.NumRenderTargets = 1; // we are only binding one render target
-	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	m_psoDesc = {}; // a structure to define a pso
+	m_psoDesc.InputLayout = inputLayoutDesc; // the structure describing our input layout
+	m_psoDesc.pRootSignature = m_pRootSignature; // the root signature that describes the input data this pso needs
+	m_psoDesc.VS = vertexShaderBytecode; // structure describing where to find the vertex shader bytecode and how large it is
+	m_psoDesc.PS = pixelShaderBytecode; // same as VS but for pixel shader
+	m_psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE; // type of topology we are drawing
+	m_psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the render target
+	m_psoDesc.SampleDesc = tempSwapChainDesc.SampleDesc; // must be the same sample description as the swapchain and depth/stencil buffer
+	m_psoDesc.SampleMask = 0xffffffff; // sample mask has to do with multi-sampling. 0xffffffff means point sampling is done
+	m_psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT); // a default rasterizer state.
+	m_psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT); // a default blent state.
+	m_psoDesc.NumRenderTargets = 1; // we are only binding one render target
+	m_psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	m_psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
 	// create the pso
-	_pPSO = pPsoHandler->CreatePipelineStateObject(&psoDesc, D3DClass::GetDevice());
+	D3DClass::GetDevice()->CreateGraphicsPipelineState(&m_psoDesc, IID_PPV_ARGS(&m_pPSO));
 
 	//release after assigned to the pso?
 	SAFE_RELEASE(vertexShader);
@@ -289,7 +289,7 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 	
 
 	D3DClass::QueueGraphicsCommandList(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD));
-	//D3DClass::IncrementFenceValue();
+	D3DClass::IncrementFenceValue();
 	D3DClass::ExecuteGraphicsCommandLists();
 
 
@@ -302,8 +302,8 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	m_indexBufferView.SizeInBytes = iIndexBufferSize;
 
-	//SAFE_RELEASE(pVertexBufferUpploadHeap);
-	//SAFE_RELEASE(pIndexBufferUploadHeap);
+	SAFE_RELEASE(pVertexBufferUpploadHeap);
+	SAFE_RELEASE(pIndexBufferUploadHeap);
 }
 
 BoxObject::~BoxObject()
@@ -311,11 +311,10 @@ BoxObject::~BoxObject()
 	SAFE_RELEASE(m_pRootSignature);
 	SAFE_RELEASE(m_pVertexBuffer);
 	SAFE_RELEASE(m_pIndexBuffer);
+	SAFE_RELEASE(m_pPSO);
 	for (int i = 0; i < g_cFrameBufferCount; ++i)
 	{
 		SAFE_RELEASE(m_pWVPMatUpploadHeaps[i]);
-		
-		//delete m_pWVPGPUAdress[i];//...
 	}
 	
 }
@@ -345,7 +344,7 @@ void BoxObject::Update(Camera * cam)
 void BoxObject::Draw(FrameBuffer* pFrameBuffer, Camera * camera)
 {
 	
-	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->SetPipelineState(_pPSO);
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->SetPipelineState(m_pPSO);
 	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->SetGraphicsRootSignature(m_pRootSignature);
 
 	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->RSSetViewports(1, &camera->GetViewport());

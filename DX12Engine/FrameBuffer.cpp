@@ -68,14 +68,14 @@ void FrameBuffer::CleanUp()
 	for (ID3D12DescriptorHeap* dh : m_pDepthStencilsDescriptorHeaps)
 	{
 		SAFE_RELEASE(dh);
-		
 	}
-
+	for (ID3D12Resource* db : m_pDepthStencilsBuffers)
+	{
+		SAFE_RELEASE(db);
+	}
 
 	m_pDepthStencilsDescriptorHeaps.clear();
 	m_pDepthStencilsBuffers.clear();
-	m_pPSOs.clear();
-	m_pPSODescs.clear();
 	m_pGraphicsCommandLists.clear();
 }
 
