@@ -27,7 +27,7 @@ private:
 public:
 	D3DClass();
 	~D3DClass();
-	static bool Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPsoHandler);
+	static bool Initialize();
 	
 	static void Cleanup(); // release com ojects and clean up memory
 	static void WaitForPreviousFrame();
@@ -40,10 +40,8 @@ public:
 	static ID3D12CommandQueue* GetCommandQueue();
 	
 	static unsigned int GetFrameIndex();
-	static int GetRTVDescriptorSize();
-	static ID3D12DescriptorHeap* GetRTVDescriptorHeap();
 
-	
+	static D3D12_CPU_DESCRIPTOR_HANDLE* GetRTVDescriptorHandle();
 
 	static void IncrementFenceValue();
 	static ID3D12Fence* GetCurrentFence();
@@ -59,10 +57,10 @@ private:
 	static IDXGISwapChain3*				s_pSwapChain;
 	static ID3D12CommandQueue*			s_pCommandQueue;
 
-
+	static D3D12_CPU_DESCRIPTOR_HANDLE* s_pRTVHandle;//pointer to allocated memory for the GetRTVDescriptorHande() function.
 	//static ID3D12CommandList*			m_pClearColorBundle;
 
-	static std::vector<ID3D12CommandList*> _vGraphicsCommandLists;
+	static std::vector<ID3D12CommandList*> _pGraphicsCommandLists;
 
 	static ID3D12DescriptorHeap*		s_pRTVDescriptorHeap;
 	static ID3D12Resource*				s_pRenderTargets[g_cFrameBufferCount];//right now just for backbuffering

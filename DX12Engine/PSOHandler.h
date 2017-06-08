@@ -21,6 +21,5 @@ private:
 
 	std::vector<ID3D12PipelineState*> m_vPSOs;
 
-	
 };
 

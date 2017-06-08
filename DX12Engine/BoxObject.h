@@ -5,6 +5,7 @@
 #include "D3dClass.h"
 #include "PSOHandler.h"
 #include "Camera.h"
+#include "FrameBuffer.h"
 
 
 class BoxObject
@@ -25,25 +26,22 @@ private:
 	unsigned int m_iConstantBufferWVPAlignedSize = (sizeof(ConstantBufferWVP) + 255 & ~255);
 
 public:
-	BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* pPsoHandler);
+	BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* pPsoHandler, FrameBuffer* pFrameBuffer);
 	~BoxObject();
 
 	void Update(Camera* cam);
-	void Draw(D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, Camera* cam);
+	void Draw(FrameBuffer* pFrameBuffer, Camera* cam);
 
-	ID3D12CommandList* GetGraphicsCommandList();
 
 private:
 	ID3D12PipelineState*				_pPSO;
-	ID3D12GraphicsCommandList*			m_pCommandList;
+
 	ID3D12Resource*						m_pVertexBuffer;
 	D3D12_VERTEX_BUFFER_VIEW			m_vertexBufferView;
 
 	ID3D12Resource*						m_pIndexBuffer;
 	D3D12_INDEX_BUFFER_VIEW				m_indexBufferView;
 
-	ID3D12Resource*						m_pDepthStencilBuffer;
-	ID3D12DescriptorHeap*				m_pDepthStencilDescriptorHeap;
 
 	ConstantBufferWVP					m_cbWVP;
 

@@ -4,6 +4,7 @@
 bool SystemClass::s_bRunning;
 GameClass SystemClass::s_game;
 bool SystemClass::s_initialized;
+FrameBuffer SystemClass::s_frameBuffer;
 
 SystemClass::SystemClass()
 {
@@ -17,12 +18,26 @@ SystemClass::~SystemClass()
 
 bool SystemClass::Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance, int nCmdShow, LONG windowWidth, LONG windowHeight, LPWSTR title)
 {
-	if (s_initialized)
+	if (s_initialized)//already initialized
 	{
 		return false;
 	}
-	WindowClass::Initialize(hInstance, nCmdShow, windowWidth, windowHeight, title, false);
-	s_game.Initialize(3);
+	if (!WindowClass::Initialize(hInstance, nCmdShow, windowWidth, windowHeight, title, false))
+	{
+		return false;
+	}
+	if (!D3DClass::Initialize())
+	{
+		return false;
+	}
+	if (!s_frameBuffer.Initialize())
+	{
+		return false;
+	}
+	if (!s_game.Initialize(&s_frameBuffer))
+	{
+		return false;
+	}
 	
 	s_bRunning = true;
 	s_initialized = true;
@@ -49,13 +64,25 @@ void SystemClass::Run()
 				DispatchMessage(&msg);
 			}
 		}
-		else 
+		else //loop logics
 		{
-			// run game code
-			//Update(); // update the game logic
+			D3DClass::WaitForPreviousFrame();
+			DxAssert(D3DClass::GetCurrentCommandAllocator()->Reset(), S_OK);
+			
 
-			s_bRunning = s_game.Render();
-			//D3DClass::Render(); // execute the command queue (rendering the scene is the result of the gpu executing the command lists)
+
+			s_game.Update();
+
+
+
+			s_frameBuffer.ResetList(FrameBuffer::PIPELINES::STANDARD);
+			
+			s_bRunning = s_game.Render(&s_frameBuffer);
+
+			s_frameBuffer.CloseList(FrameBuffer::PIPELINES::STANDARD);
+
+			D3DClass::ExecuteGraphicsCommandLists();
+			DxAssert(D3DClass::GetSwapChain()->Present(0, 0), S_OK);
 		}
 	}
 	
@@ -73,8 +100,8 @@ void SystemClass::Stop()
 
 void SystemClass::CleanUp()
 {
-	
-	
 	s_game.CleanUp();
+	s_frameBuffer.CleanUp();
 	WindowClass::Destroy();
+	D3DClass::Cleanup();
 }

@@ -1,21 +1,12 @@
 #include "BoxObject.h"
 
 
-BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* pPsoHandler)
+BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* pPsoHandler, FrameBuffer* pFrameBuffer)
 {
 	HRESULT hr;
-	D3D12_INPUT_ELEMENT_DESC inputLayoutElementDesc[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
 
-	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
-	// we can get the number of elements in an array by "sizeof(array) / sizeof(arrayElementType)"
-	inputLayoutDesc.NumElements = sizeof(inputLayoutElementDesc) / sizeof(D3D12_INPUT_ELEMENT_DESC);
-	inputLayoutDesc.pInputElementDescs = inputLayoutElementDesc;
-
-	D3DClass::GetDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3DClass::GetCurrentCommandAllocator(), NULL, IID_PPV_ARGS(&m_pCommandList));
-
+	//hr = D3DClass::GetDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3DClass::GetCurrentCommandAllocator(), NULL, IID_PPV_ARGS(&m_pCommandList));
+	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Reset(D3DClass::GetCurrentCommandAllocator(), nullptr), S_OK);
 
 	D3D12_ROOT_DESCRIPTOR wvpRootDescriptor;
 	wvpRootDescriptor.RegisterSpace = 0;
@@ -94,6 +85,16 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 	//get the swapchaindesc to get its sample desc into the pso
 	D3DClass::GetSwapChain()->GetDesc(&tempSwapChainDesc);
 
+	D3D12_INPUT_ELEMENT_DESC inputLayoutElementDesc[] = {
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
+
+	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
+	// we can get the number of elements in an array by "sizeof(array) / sizeof(arrayElementType)"
+	inputLayoutDesc.NumElements = sizeof(inputLayoutElementDesc) / sizeof(D3D12_INPUT_ELEMENT_DESC);
+	inputLayoutDesc.pInputElementDescs = inputLayoutElementDesc;
+
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {}; // a structure to define a pso
 	psoDesc.InputLayout = inputLayoutDesc; // the structure describing our input layout
 	psoDesc.pRootSignature = m_pRootSignature; // the root signature that describes the input data this pso needs
@@ -115,38 +116,6 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 	//release after assigned to the pso?
 	SAFE_RELEASE(vertexShader);
 	SAFE_RELEASE(pixelShader);
-
-	//Create a descriptor heap for depthstencil
-	D3D12_DESCRIPTOR_HEAP_DESC depthStencilStateDescriptorHeadpDesc = {};
-	depthStencilStateDescriptorHeadpDesc.NumDescriptors = 1;
-	depthStencilStateDescriptorHeadpDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	depthStencilStateDescriptorHeadpDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAGS::D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	DxAssert(D3DClass::GetDevice()->CreateDescriptorHeap(&depthStencilStateDescriptorHeadpDesc, IID_PPV_ARGS(&m_pDepthStencilDescriptorHeap)), S_OK);
-
-
-	D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc = {};
-	depthStencilViewDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	depthStencilViewDesc.Flags = D3D12_DSV_FLAG_NONE;
-	depthStencilViewDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-
-	D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
-	depthOptimizedClearValue.Format = depthStencilViewDesc.Format;
-	depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
-	depthOptimizedClearValue.DepthStencil.Stencil = 0;
-
-
-
-	D3DClass::GetDevice()->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, WindowClass::GetWidth(), WindowClass::GetHeight(), 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-		D3D12_RESOURCE_STATE_DEPTH_WRITE,
-		&depthOptimizedClearValue,
-		IID_PPV_ARGS(&m_pDepthStencilBuffer)
-		);
-	m_pDepthStencilDescriptorHeap->SetName(L"Depth/Stencil Resource Heap");
-
-	D3DClass::GetDevice()->CreateDepthStencilView(m_pDepthStencilBuffer, &depthStencilViewDesc, m_pDepthStencilDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 
 	Vertex boxVertexList[] = {
@@ -212,9 +181,9 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 	vertexInitData.RowPitch = iVertexBufferSize;
 	vertexInitData.SlicePitch = iVertexBufferSize;
 
-	UpdateSubresources(m_pCommandList, m_pVertexBuffer, pVertexBufferUpploadHeap, 0, 0, 1, &vertexInitData);
+	UpdateSubresources(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD), m_pVertexBuffer, pVertexBufferUpploadHeap, 0, 0, 1, &vertexInitData);
 
-	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pVertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST,
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pVertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST,
 		D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 
 	DWORD boxIndexBufferList[] = {
@@ -272,9 +241,9 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 	indexData.RowPitch = iIndexBufferSize;
 	indexData.SlicePitch = iIndexBufferSize;
 
-	UpdateSubresources(m_pCommandList, m_pIndexBuffer, pIndexBufferUploadHeap, 0, 0, 1, &indexData);
+	UpdateSubresources(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD), m_pIndexBuffer, pIndexBufferUploadHeap, 0, 0, 1, &indexData);
 
-	m_pCommandList->ResourceBarrier(
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->ResourceBarrier(
 		1, 
 		&CD3DX12_RESOURCE_BARRIER::Transition(m_pIndexBuffer, 
 			D3D12_RESOURCE_STATE_COPY_DEST, 
@@ -315,11 +284,11 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 	
 
 
-	DxAssert(m_pCommandList->Close(), S_OK);
+	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Close(), S_OK);
 
 	
 
-	D3DClass::QueueGraphicsCommandList(m_pCommandList);
+	D3DClass::QueueGraphicsCommandList(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD));
 	//D3DClass::IncrementFenceValue();
 	D3DClass::ExecuteGraphicsCommandLists();
 
@@ -333,8 +302,8 @@ BoxObject::BoxObject(DirectX::XMFLOAT4 pos, DirectX::XMFLOAT4 rot, PSOHandler* p
 	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	m_indexBufferView.SizeInBytes = iIndexBufferSize;
 
-	SAFE_RELEASE(pVertexBufferUpploadHeap);
-	SAFE_RELEASE(pIndexBufferUploadHeap);
+	//SAFE_RELEASE(pVertexBufferUpploadHeap);
+	//SAFE_RELEASE(pIndexBufferUploadHeap);
 }
 
 BoxObject::~BoxObject()
@@ -342,8 +311,6 @@ BoxObject::~BoxObject()
 	SAFE_RELEASE(m_pRootSignature);
 	SAFE_RELEASE(m_pVertexBuffer);
 	SAFE_RELEASE(m_pIndexBuffer);
-	SAFE_RELEASE(m_pDepthStencilBuffer);
-	SAFE_RELEASE(m_pDepthStencilDescriptorHeap);
 	for (int i = 0; i < g_cFrameBufferCount; ++i)
 	{
 		SAFE_RELEASE(m_pWVPMatUpploadHeaps[i]);
@@ -351,7 +318,6 @@ BoxObject::~BoxObject()
 		//delete m_pWVPGPUAdress[i];//...
 	}
 	
-	SAFE_RELEASE(m_pCommandList);
 }
 
 void BoxObject::Update(Camera * cam)
@@ -374,50 +340,24 @@ void BoxObject::Update(Camera * cam)
 	DirectX::XMStoreFloat4x4(&m_cbWVP.wvpMat, xmTransposedTempWVPMat);
 
 	memcpy(m_pWVPGPUAdress[D3DClass::GetFrameIndex()], &m_cbWVP, sizeof(m_cbWVP));
+}
 
-
+void BoxObject::Draw(FrameBuffer* pFrameBuffer, Camera * camera)
+{
 	
-}
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->SetPipelineState(_pPSO);
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->SetGraphicsRootSignature(m_pRootSignature);
 
-void BoxObject::Draw(D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle, Camera * camera)
-{
-	DxAssert(m_pCommandList->Reset(D3DClass::GetCurrentCommandAllocator(), _pPSO), S_OK);
-
-	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(D3DClass::GetCurrentRenderTarget(), 
-		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-	// get a handle to the depth/stencil buffer
-	CD3DX12_CPU_DESCRIPTOR_HANDLE depthStencilDescriptorHandle(m_pDepthStencilDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-	m_pCommandList->OMSetRenderTargets(1, &rtvHandle, FALSE, &depthStencilDescriptorHandle);
-
-	m_pCommandList->ClearDepthStencilView(m_pDepthStencilDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0, 0, nullptr);
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->RSSetViewports(1, &camera->GetViewport());
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->RSSetScissorRects(1, &camera->GetScissorRect());
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->IASetIndexBuffer(&m_indexBufferView);
 
 
-	const float clearColor[] = { 0.4f, 0.4f, 0.4f, 1.0f };
-	m_pCommandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[D3DClass::GetFrameIndex()]->GetGPUVirtualAddress());
+
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->DrawIndexedInstanced(m_iNumCubeIndices, 1, 0, 0, 0);
 
 
-
-	m_pCommandList->SetGraphicsRootSignature(m_pRootSignature);
-
-	m_pCommandList->RSSetViewports(1, &camera->GetViewport());
-	m_pCommandList->RSSetScissorRects(1, &camera->GetScissorRect());
-	m_pCommandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_pCommandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	m_pCommandList->IASetIndexBuffer(&m_indexBufferView);
-
-
-	m_pCommandList->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[D3DClass::GetFrameIndex()]->GetGPUVirtualAddress());
-
-	m_pCommandList->DrawIndexedInstanced(m_iNumCubeIndices, 1, 0, 0, 0);
-
-
-	m_pCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(D3DClass::GetCurrentRenderTarget(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
-	DxAssert(m_pCommandList->Close(), S_OK);
-}
-
-ID3D12CommandList * BoxObject::GetGraphicsCommandList()
-{
-	return m_pCommandList;
 }

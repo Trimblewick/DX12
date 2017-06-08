@@ -10,54 +10,46 @@ GameClass::~GameClass()
 	
 }
 
-void GameClass::Initialize(int cFrameBufferCount)
+bool GameClass::Initialize(FrameBuffer* pFrameBuffer)
 {
 	m_pMainCamera = new Camera();
 	m_pPsoHandler = new PSOHandler();
-	D3DClass::Initialize(3, m_pPsoHandler);
-
-
 
 
 	//tri = new TriangleObject(m_pPsoHandler);
-	DirectX::XMFLOAT4 boxInitPos = DirectX::XMFLOAT4(0, 0, 0, 0);
-	box = new BoxObject(boxInitPos, boxInitPos, m_pPsoHandler);
+	DirectX::XMFLOAT4 boxInitPos = DirectX::XMFLOAT4(2, 2, 4, 1);
+	DirectX::XMFLOAT4 boxInitRot = DirectX::XMFLOAT4(0, 0, 0, 0);
+	DirectX::XMFLOAT4 box1InitPos = DirectX::XMFLOAT4(-2, -2, 4, 1);
+	box = new BoxObject(boxInitPos, boxInitRot, m_pPsoHandler, pFrameBuffer);
+	box1 = new BoxObject(box1InitPos, boxInitRot, m_pPsoHandler, pFrameBuffer);
+	
+	
+	
+	return true;
 }
 
 void GameClass::Update()
 {
-	//tri->Update();
 	box->Update(m_pMainCamera);
+	box1->Update(m_pMainCamera);
 }
 
-bool GameClass::Render()
+bool GameClass::Render(FrameBuffer* pFrameBuffer)
 {
-	D3DClass::WaitForPreviousFrame();
+	
+	box->Draw(pFrameBuffer, m_pMainCamera);
+	box1->Draw(pFrameBuffer, m_pMainCamera);
+	
+	//D3DClass::QueueGraphicsCommandList(box->GetGraphicsCommandList());
+	//D3DClass::QueueGraphicsCommandList(box1->GetGraphicsCommandList());
 
-	DxAssert(D3DClass::GetCurrentCommandAllocator()->Reset(), S_OK);
-	
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(D3DClass::GetRTVDescriptorHeap()->GetCPUDescriptorHandleForHeapStart(), D3DClass::GetFrameIndex(), D3DClass::GetRTVDescriptorSize());
-
-	this->Update();
-	
-	
-	//tri->Draw(&rtvHandle, m_pMainCamera);
-	box->Draw(rtvHandle, m_pMainCamera);
-	
-	D3DClass::QueueGraphicsCommandList(box->GetGraphicsCommandList());
-
-	D3DClass::ExecuteGraphicsCommandLists();
-	
-	DxAssert(D3DClass::GetSwapChain()->Present(0, 0), S_OK);
-	
 	
 	return true;
 }
 
 void GameClass::CleanUp()
 {
-	D3DClass::Cleanup();
 	if (m_pMainCamera)
 	{
 		delete m_pMainCamera;
@@ -77,5 +69,9 @@ void GameClass::CleanUp()
 	{
 		delete box;
 		box = nullptr;
+	}
+	if (box1)
+	{
+		delete box1;
 	}
 }

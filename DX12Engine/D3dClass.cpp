@@ -17,7 +17,8 @@ UINT64 D3DClass::s_ui64FenceValue[g_cFrameBufferCount];
 unsigned int D3DClass::s_uiFrameIndex;
 int D3DClass::s_iRTVDescriptorSize;
 
-std::vector<ID3D12CommandList*> D3DClass::_vGraphicsCommandLists;
+D3D12_CPU_DESCRIPTOR_HANDLE* D3DClass::s_pRTVHandle;
+std::vector<ID3D12CommandList*> D3DClass::_pGraphicsCommandLists;
 
 
 D3DClass::D3DClass()
@@ -29,7 +30,7 @@ D3DClass::~D3DClass()
 	
 }
 
-bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPsoHandler)
+bool D3DClass::Initialize()
 {
 	HRESULT hr;
 
@@ -112,7 +113,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 
 						  // Describe and create the swap chain.
 	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
-	swapChainDesc.BufferCount = cFrameBufferCount; // number of buffers we have
+	swapChainDesc.BufferCount = g_cFrameBufferCount; // number of buffers we have
 	swapChainDesc.BufferDesc = backBufferDesc; // our back buffer description
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // this says the pipeline will render to this swap chain
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // dxgi will discard the buffer (data) after we call present
@@ -136,7 +137,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 
 	// describe an rtv descriptor heap and create
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-	rtvHeapDesc.NumDescriptors = cFrameBufferCount; // number of descriptors for this heap.
+	rtvHeapDesc.NumDescriptors = g_cFrameBufferCount; // number of descriptors for this heap.
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV; // this heap is a render target view heap
 
 	// This heap will not be directly referenced by the shaders (not shader visible), as this will store the output from the pipeline
@@ -154,7 +155,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(s_pRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 	// Create a RTV for each buffer (double buffering is two buffers, tripple buffering is 3).
-	for (int i = 0; i < cFrameBufferCount; i++)
+	for (int i = 0; i < g_cFrameBufferCount; i++)
 	{
 		// first we get the n'th buffer in the swap chain and store it in the n'th
 		// position of our ID3D12Resource array
@@ -169,7 +170,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 
 	// -- Create the Command Allocators -- //
 
-	for (int i = 0; i < cFrameBufferCount; i++)
+	for (int i = 0; i < g_cFrameBufferCount; i++)
 	{
 		DxAssert(s_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&s_pCommandAllocator[i])), S_OK);
 	}
@@ -177,7 +178,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 	// -- Create a Fence & Fence Event -- //
 
 	// create the fences
-	for (int i = 0; i < cFrameBufferCount; i++)
+	for (int i = 0; i < g_cFrameBufferCount; i++)
 	{
 		hr = s_pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&s_pFence[i]));
 		if (FAILED(hr))
@@ -194,6 +195,7 @@ bool D3DClass::Initialize(const unsigned int cFrameBufferCount, PSOHandler* pPso
 		return false;
 	}
 
+	s_pRTVHandle = new D3D12_CPU_DESCRIPTOR_HANDLE();
 	
 	return true;
 }
@@ -233,12 +235,16 @@ void D3DClass::Cleanup()
 		SAFE_RELEASE(s_pCommandAllocator[i]);
 		SAFE_RELEASE(s_pFence[i]);
 	}
-
+	if (s_pRTVHandle)
+	{
+		delete s_pRTVHandle;
+		s_pRTVHandle = nullptr;
+	}
 	//WIERDEST LEAK EUW
 	//std::vector <ID3D12CommandList*> temp;
-	_vGraphicsCommandLists.clear();
+	_pGraphicsCommandLists.clear();
 	//_vGraphicsCommandLists.swap(temp);
-	_vGraphicsCommandLists.shrink_to_fit();
+	_pGraphicsCommandLists.shrink_to_fit();
 	
 }
 
@@ -296,14 +302,11 @@ unsigned int D3DClass::GetFrameIndex()
 	return s_uiFrameIndex;
 }
 
-int D3DClass::GetRTVDescriptorSize()
+D3D12_CPU_DESCRIPTOR_HANDLE* D3DClass::GetRTVDescriptorHandle()
 {
-	return s_iRTVDescriptorSize;
-}
+	*s_pRTVHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(s_pRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), s_uiFrameIndex, s_iRTVDescriptorSize);
 
-ID3D12DescriptorHeap * D3DClass::GetRTVDescriptorHeap()
-{
-	return s_pRTVDescriptorHeap;
+	return s_pRTVHandle;
 }
 
 void D3DClass::IncrementFenceValue()
@@ -323,18 +326,18 @@ UINT64 D3DClass::GetCurrentFenceValue()
 
 void D3DClass::QueueGraphicsCommandList(ID3D12CommandList* pCL)
 {
-	_vGraphicsCommandLists.push_back(pCL);
+	_pGraphicsCommandLists.push_back(pCL);
 }
 
 void D3DClass::ExecuteGraphicsCommandLists()
 {
 	// execute the array of command lists
-	s_pCommandQueue->ExecuteCommandLists(_vGraphicsCommandLists.size(), _vGraphicsCommandLists.data());
+	s_pCommandQueue->ExecuteCommandLists(_pGraphicsCommandLists.size(), _pGraphicsCommandLists.data());
 
 	// this command goes in at the end of our command queue. we will know when our command queue 
 	// has finished because the fence value will be set to "fenceValue" from the GPU since the command
 	// queue is being executed on the GPU
 	s_pCommandQueue->Signal(s_pFence[s_uiFrameIndex], s_ui64FenceValue[s_uiFrameIndex]);
 	
-	_vGraphicsCommandLists.clear();
+	_pGraphicsCommandLists.clear();
 }

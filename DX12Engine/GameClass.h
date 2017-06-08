@@ -4,6 +4,7 @@
 #include "Camera.h"
 #include "TriangleObject.h"
 #include "BoxObject.h"
+#include "FrameBuffer.h"
 
 class GameClass
 {
@@ -11,9 +12,9 @@ public:
 	GameClass();
 	~GameClass();
 
-	void Initialize(int cFrameBufferCount);
+	bool Initialize(FrameBuffer* pFrameBuffer);
 	void Update();
-	bool Render();
+	bool Render(FrameBuffer* pFrameBuffer);
 	void CleanUp();
 
 
@@ -22,5 +23,8 @@ private:
 	PSOHandler* m_pPsoHandler;
 	TriangleObject* tri;
 	BoxObject* box;
+	BoxObject* box1;
+
+	
 };
 
