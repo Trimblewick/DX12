@@ -2,9 +2,11 @@
 
 #include "D3dClass.h"
 #include "Camera.h"
-#include "TriangleObject.h"
-#include "BoxObject.h"
 #include "FrameBuffer.h"
+
+
+#include "BoxObject.h"
+#include "Plane.h"
 
 class GameClass
 {
@@ -24,6 +26,6 @@ private:
 	BoxObject* box;
 	BoxObject* box1;
 
-	
+	Plane* planeObject;
 };
 
