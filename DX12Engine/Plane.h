@@ -23,7 +23,9 @@ public:
 	Plane(FrameBuffer* pFrameBuffer);
 	~Plane();
 
+	void Update(Camera* camera);
 	void Draw(FrameBuffer* pFrameBuffer, Camera* camera);
+
 
 private:
 	ID3D12RootSignature*					m_pRootSignature;

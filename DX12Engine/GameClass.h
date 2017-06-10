@@ -23,9 +23,6 @@ public:
 private:
 	Camera* m_pMainCamera;
 
-	BoxObject* box;
-	BoxObject* box1;
-
 	Plane* planeObject;
 };
 

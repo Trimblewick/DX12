@@ -26,6 +26,11 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	D3D12_ROOT_PARAMETER rootparameters[1];
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 
+	ID3D12Resource* pVertexBufferUpploadHeap;
+
+	ID3D12Fence* pUploadBufferFence;
+	HANDLE fenceHandle;
+
 	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Reset(D3DClass::GetCurrentCommandAllocator(), nullptr), S_OK);
 
 	//compile vertexshader
@@ -140,7 +145,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 		IID_PPV_ARGS(&m_pVertexBuffer)), S_OK);
 	m_pVertexBuffer->SetName(L"BOX - VERTEX BUFFER RESOURECE HEAP");
 
-	ID3D12Resource* pVertexBufferUpploadHeap;
+	
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
@@ -197,8 +202,15 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 		memcpy(m_pWVPGPUAdress[i], &m_wvpMat, sizeof(m_wvpMat));
 
 	}
-
-	//saferelease upploadheap
+	//release vertexbuffer upload heap
+	DxAssert(D3DClass::GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&pUploadBufferFence)), S_OK);
+	fenceHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+	DxAssert(pUploadBufferFence->Signal(1), S_OK);
+	DxAssert(pUploadBufferFence->SetEventOnCompletion(1, fenceHandle), S_OK);
+	WaitForSingleObject(fenceHandle, INFINITE);
+	
+	SAFE_RELEASE(pVertexBufferUpploadHeap);
+	SAFE_RELEASE(pUploadBufferFence);
 
 }
 
@@ -214,16 +226,19 @@ Plane::~Plane()
 }
 
 
-void Plane::Draw(FrameBuffer * pFrameBuffer, Camera * camera)
+
+void Plane::Update(Camera * camera)
 {
-	ID3D12GraphicsCommandList* pCL = pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD);
-
-	//Update wvpMatrix
-
 	DirectX::XMMATRIX transposedWVPMat = DirectX::XMMatrixTranspose(camera->GetVPMatrix());
 	DirectX::XMStoreFloat4x4(&m_wvpMat.wvpMat, transposedWVPMat);
 	memcpy(m_pWVPGPUAdress[D3DClass::GetFrameIndex()], &m_wvpMat, sizeof(m_wvpMat));
 
+}
+
+void Plane::Draw(FrameBuffer * pFrameBuffer, Camera * camera)
+{
+	ID3D12GraphicsCommandList* pCL = pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD);
+	
 	pCL->SetPipelineState(m_pPSO);
 	pCL->SetGraphicsRootSignature(m_pRootSignature);
 
@@ -239,5 +254,6 @@ void Plane::Draw(FrameBuffer * pFrameBuffer, Camera * camera)
 
 	return;
 }
+
 
 
