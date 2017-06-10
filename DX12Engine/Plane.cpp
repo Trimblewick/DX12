@@ -22,6 +22,10 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 
+	D3D12_ROOT_DESCRIPTOR wvpRootDescriptor;
+	D3D12_ROOT_PARAMETER rootparameters[1];
+	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+
 	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Reset(D3DClass::GetCurrentCommandAllocator(), nullptr), S_OK);
 
 	//compile vertexshader
@@ -65,21 +69,33 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	psByteCode.BytecodeLength = pPSblob->GetBufferSize();
 	psByteCode.pShaderBytecode = pPSblob->GetBufferPointer();
 
-	//fetch the swapchain desc
-	DXGI_SWAP_CHAIN_DESC tempSwapChainDesc;
-	D3DClass::GetSwapChain()->GetDesc(&tempSwapChainDesc);
+	
+
+	wvpRootDescriptor.RegisterSpace = 0;
+	wvpRootDescriptor.ShaderRegister = 0;
+
+	rootparameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+	rootparameters[0].Descriptor = wvpRootDescriptor;
+	rootparameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
 	
-	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Init(0,
-		nullptr,
+	rootSignatureDesc.Init(_countof(rootparameters),
+		rootparameters,
 		0,
 		nullptr,
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS);
 	ID3DBlob* sig;
 	DxAssert(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &sig, nullptr), S_OK);
 
 	DxAssert(D3DClass::GetDevice()->CreateRootSignature(0, sig->GetBufferPointer(), sig->GetBufferSize(), IID_PPV_ARGS(&m_pRootSignature)), S_OK);
+
+	//fetch the swapchain desc
+	DXGI_SWAP_CHAIN_DESC tempSwapChainDesc;
+	D3DClass::GetSwapChain()->GetDesc(&tempSwapChainDesc);
 
 	//ooh here we go, pso
 	psoDesc.InputLayout = inputLayoutDesc;
@@ -104,17 +120,14 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 	//create vertex buffer and its initdata
 	PlaneVertex singlePlane[] = {
-		{-10, 0, -10},
-		{10, 0, -10},
-		{10, 0, 10},
+		{5, 0, 5},
+		{5, 0, -5},
+		{-5, 0, -5},
 
-		{-10, 0, -10},
-		{10, 0, 10},
-		{10, 0, -10},
+		{-5, 0, 5},
+		{5, 0, 5},
+		{-5, 0, -5}
 
-		{0.5, 0.5, 0.5},
-		{0.5, -0.5, 0.5},
-		{-0.5, 0.5, 0.5}
 	};
 	int iVertexBufferSize = sizeof(singlePlane);
 
@@ -161,18 +174,55 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	m_vertexBufferView.SizeInBytes = iVertexBufferSize;
 	m_vertexBufferView.StrideInBytes = sizeof(PlaneVertex);
 
-	//saferelease upploadheap??;
+
+	//create matrix buffer
+	for (unsigned int i = 0; i < g_cFrameBufferCount; ++i)
+	{
+		DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Buffer(1024 * 64),
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&m_pWVPMatUpploadHeaps[i])), S_OK);
+
+		m_pWVPMatUpploadHeaps[i]->SetName(L"WVP uppload resource heap");
+
+		ZeroMemory(&m_wvpMat, sizeof(m_wvpMat));
+
+		CD3DX12_RANGE readRange(0, 0);
+
+		DxAssert(m_pWVPMatUpploadHeaps[i]->Map(0, &readRange, reinterpret_cast<void**>(&m_pWVPGPUAdress[i])), S_OK);
+
+		memcpy(m_pWVPGPUAdress[i], &m_wvpMat, sizeof(m_wvpMat));
+
+	}
+
+	//saferelease upploadheap
 
 }
 
 Plane::~Plane()
 {
-
+	for (int i = 0; i < g_cFrameBufferCount; ++i)
+	{
+		SAFE_RELEASE(m_pWVPMatUpploadHeaps[i]);
+	}
+	SAFE_RELEASE(m_pVertexBuffer);
+	SAFE_RELEASE(m_pPSO);
+	SAFE_RELEASE(m_pRootSignature);
 }
+
 
 void Plane::Draw(FrameBuffer * pFrameBuffer, Camera * camera)
 {
 	ID3D12GraphicsCommandList* pCL = pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD);
+
+	//Update wvpMatrix
+
+	DirectX::XMMATRIX transposedWVPMat = DirectX::XMMatrixTranspose(camera->GetVPMatrix());
+	DirectX::XMStoreFloat4x4(&m_wvpMat.wvpMat, transposedWVPMat);
+	memcpy(m_pWVPGPUAdress[D3DClass::GetFrameIndex()], &m_wvpMat, sizeof(m_wvpMat));
 
 	pCL->SetPipelineState(m_pPSO);
 	pCL->SetGraphicsRootSignature(m_pRootSignature);
@@ -183,9 +233,11 @@ void Plane::Draw(FrameBuffer * pFrameBuffer, Camera * camera)
 	pCL->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	pCL->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	
-	pCL->DrawInstanced(9, 1, 0, 0);
+	pCL->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[D3DClass::GetFrameIndex()]->GetGPUVirtualAddress());
 
+	pCL->DrawInstanced(6, 1, 0, 0);
 
+	return;
 }
 
 

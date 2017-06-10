@@ -52,7 +52,11 @@ void GameClass::CleanUp()
 		delete m_pMainCamera;
 		m_pMainCamera = nullptr;
 	}
-	
+	if (planeObject)
+	{
+		delete planeObject;
+		planeObject = nullptr;
+	}
 	if (box)
 	{
 		delete box;
