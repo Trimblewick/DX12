@@ -3,21 +3,24 @@
 #include "D3dClass.h"
 #include <DirectXMath.h>
 #include "FrameBuffer.h"
-
+#include "Texture.h"
 
 class Plane
 {
 public:
 	struct PlaneVertex
 	{
-		PlaneVertex(float x, float y, float z) : position(x, y, z) {}
+		PlaneVertex(float x, float y, float z, float u, float v) : position(x, y, z), uv(u, v) {}
 		DirectX::XMFLOAT3 position;
+		DirectX::XMFLOAT2 uv;
 	};
 
 	struct WVPMatrixBufferStruct
 	{
 		DirectX::XMFLOAT4X4 wvpMat;
 	};
+
+
 
 public:
 	Plane(FrameBuffer* pFrameBuffer);
@@ -38,5 +41,9 @@ private:
 	WVPMatrixBufferStruct					m_wvpMat;
 	ID3D12Resource*							m_pWVPMatUpploadHeaps[g_cFrameBufferCount];
 	UINT8*									m_pWVPGPUAdress[g_cFrameBufferCount];
+
+	Texture*								m_pGrassTexture;
+	ID3D12Resource*							m_pGrassTextureBuffer;
+	ID3D12DescriptorHeap*					m_pTextureDH;
 };
 

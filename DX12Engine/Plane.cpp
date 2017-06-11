@@ -13,7 +13,8 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	ID3DBlob* pEblob = nullptr;
 
 	D3D12_INPUT_ELEMENT_DESC inputLayoutElementDesc[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 	//fill input layout desc
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
@@ -22,11 +23,21 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 
+	int iVertexBufferSize;
+
 	D3D12_ROOT_DESCRIPTOR wvpRootDescriptor;
-	D3D12_ROOT_PARAMETER rootparameters[1];
+	D3D12_DESCRIPTOR_RANGE planeDescriptorRanges[1];//for texture
+	D3D12_ROOT_DESCRIPTOR_TABLE planeDescriptorTable;
+
+	D3D12_STATIC_SAMPLER_DESC sampler = {};
+
+	D3D12_ROOT_PARAMETER rootparameters[2];
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 
 	ID3D12Resource* pVertexBufferUpploadHeap;
+	ID3D12Resource* pGrassTextureBufferUpploadHeap;
+	D3D12_DESCRIPTOR_HEAP_DESC textureDescriptorHeapDesc = {};
+	D3D12_SHADER_RESOURCE_VIEW_DESC grassTextureSRVDesc = {};
 
 	ID3D12Fence* pUploadBufferFence;
 	HANDLE fenceHandle;
@@ -79,20 +90,46 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	wvpRootDescriptor.RegisterSpace = 0;
 	wvpRootDescriptor.ShaderRegister = 0;
 
+	planeDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	planeDescriptorRanges[0].NumDescriptors = 1;
+	planeDescriptorRanges[0].BaseShaderRegister = 0;
+	planeDescriptorRanges[0].RegisterSpace = 0;
+	planeDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+
+	planeDescriptorTable.NumDescriptorRanges = _countof(planeDescriptorRanges);
+	planeDescriptorTable.pDescriptorRanges = &planeDescriptorRanges[0];
+
 	rootparameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootparameters[0].Descriptor = wvpRootDescriptor;
 	rootparameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
 
+	rootparameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rootparameters[1].DescriptorTable = planeDescriptorTable;
+	rootparameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+
+	// create a static sampler
+	sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.MipLODBias = 0;
+	sampler.MaxAnisotropy = 0;
+	sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	sampler.MinLOD = 0.0f;
+	sampler.MaxLOD = D3D12_FLOAT32_MAX;
+	sampler.ShaderRegister = 0;
+	sampler.RegisterSpace = 0;
+	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 	
 	rootSignatureDesc.Init(_countof(rootparameters),
 		rootparameters,
-		0,
-		nullptr,
+		1,
+		&sampler,
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS);
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS);
 	ID3DBlob* sig;
 	DxAssert(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &sig, nullptr), S_OK);
 
@@ -125,16 +162,16 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 	//create vertex buffer and its initdata
 	PlaneVertex singlePlane[] = {
-		{5, 0, 5},
-		{5, 0, -5},
-		{-5, 0, -5},
+		{5, 0, 5, 1, 1},
+		{5, 0, -5, 1, 0},
+		{-5, 0, -5, 0, 0},
 
-		{-5, 0, 5},
-		{5, 0, 5},
-		{-5, 0, -5}
+		{-5, 0, 5, 0, 1},
+		{5, 0, 5, 1, 1},
+		{-5, 0, -5, 0, 0}
 
 	};
-	int iVertexBufferSize = sizeof(singlePlane);
+	iVertexBufferSize = sizeof(singlePlane);
 
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -169,16 +206,60 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 
+
+
+	m_pGrassTexture = new Texture(L"../Resources/grasstexture.png");
+
+	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE,
+		m_pGrassTexture->GetTextureDesc(),
+		D3D12_RESOURCE_STATE_COPY_DEST,
+		nullptr,
+		IID_PPV_ARGS(&m_pGrassTextureBuffer)), S_OK);
+	m_pGrassTextureBuffer->SetName(L"Grass texture buffer resource heap");
+
+	UINT64 uploadBufferSize;
+	D3DClass::GetDevice()->GetCopyableFootprints(m_pGrassTexture->GetTextureDesc(), 0, 1, 0, nullptr, nullptr, nullptr, &uploadBufferSize);
+
+	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(uploadBufferSize),
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&pGrassTextureBufferUpploadHeap)), S_OK);
+	pGrassTextureBufferUpploadHeap->SetName(L"Grass Texture upload heap");
+
+	D3D12_SUBRESOURCE_DATA textureInitData = {};
+	textureInitData.pData = m_pGrassTexture->GetTextureData();
+	textureInitData.RowPitch = m_pGrassTexture->GetBytersPerRow();
+	textureInitData.SlicePitch = m_pGrassTexture->GetBytersPerRow() * m_pGrassTexture->GetTextureHeight();
+
+	UpdateSubresources(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD), m_pGrassTextureBuffer, pGrassTextureBufferUpploadHeap, 0, 0, 1, &textureInitData);
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pGrassTextureBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+	textureDescriptorHeapDesc.NumDescriptors = 1;
+	textureDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	textureDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	DxAssert(D3DClass::GetDevice()->CreateDescriptorHeap(&textureDescriptorHeapDesc, IID_PPV_ARGS(&m_pTextureDH)), S_OK);
+	
+
 	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Close(), S_OK);
 
 	D3DClass::QueueGraphicsCommandList(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD));
-
 	D3DClass::ExecuteGraphicsCommandLists();
+
 
 	m_vertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
 	m_vertexBufferView.SizeInBytes = iVertexBufferSize;
 	m_vertexBufferView.StrideInBytes = sizeof(PlaneVertex);
 
+	grassTextureSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	grassTextureSRVDesc.Format = m_pGrassTexture->GetTextureDesc()->Format;
+	grassTextureSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	grassTextureSRVDesc.Texture2D.MipLevels = 1;
+	D3DClass::GetDevice()->CreateShaderResourceView(m_pGrassTextureBuffer, &grassTextureSRVDesc, m_pTextureDH->GetCPUDescriptorHandleForHeapStart());
 
 	//create matrix buffer
 	for (unsigned int i = 0; i < g_cFrameBufferCount; ++i)
@@ -202,6 +283,12 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 		memcpy(m_pWVPGPUAdress[i], &m_wvpMat, sizeof(m_wvpMat));
 
 	}
+
+	
+
+
+
+
 	//release vertexbuffer upload heap
 	DxAssert(D3DClass::GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&pUploadBufferFence)), S_OK);
 	fenceHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
@@ -210,12 +297,19 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	WaitForSingleObject(fenceHandle, INFINITE);
 	
 	SAFE_RELEASE(pVertexBufferUpploadHeap);
+	SAFE_RELEASE(pGrassTextureBufferUpploadHeap);
 	SAFE_RELEASE(pUploadBufferFence);
-
+	if (m_pGrassTexture)
+	{
+		delete m_pGrassTexture;
+		m_pGrassTexture = nullptr;
+	}
 }
 
 Plane::~Plane()
 {
+	SAFE_RELEASE(m_pGrassTextureBuffer);
+	SAFE_RELEASE(m_pTextureDH);
 	for (int i = 0; i < g_cFrameBufferCount; ++i)
 	{
 		SAFE_RELEASE(m_pWVPMatUpploadHeaps[i]);
@@ -223,6 +317,11 @@ Plane::~Plane()
 	SAFE_RELEASE(m_pVertexBuffer);
 	SAFE_RELEASE(m_pPSO);
 	SAFE_RELEASE(m_pRootSignature);
+	if (m_pGrassTexture)
+	{
+		delete m_pGrassTexture;
+		m_pGrassTexture = nullptr;
+	}
 }
 
 
@@ -237,11 +336,15 @@ void Plane::Update(Camera * camera)
 
 void Plane::Draw(FrameBuffer * pFrameBuffer, Camera * camera)
 {
+	ID3D12DescriptorHeap* ppDescriptorHeaps[] = { m_pTextureDH };
 	ID3D12GraphicsCommandList* pCL = pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD);
 	
-	pCL->SetPipelineState(m_pPSO);
 	pCL->SetGraphicsRootSignature(m_pRootSignature);
+	pCL->SetPipelineState(m_pPSO);
 
+	pCL->SetDescriptorHeaps(_countof(ppDescriptorHeaps), ppDescriptorHeaps);
+	pCL->SetGraphicsRootDescriptorTable(1, m_pTextureDH->GetGPUDescriptorHandleForHeapStart());
+	
 	pCL->RSSetViewports(1, &camera->GetViewport());
 	pCL->RSSetScissorRects(1, &camera->GetScissorRect());
 

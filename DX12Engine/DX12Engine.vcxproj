@@ -169,6 +169,7 @@
     <ClCompile Include="PSOHandler.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="SystemClass.cpp" />
+    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="TriangleObject.cpp" />
     <ClCompile Include="WindowClass.cpp" />
   </ItemGroup>
@@ -186,6 +187,7 @@
     <ClInclude Include="PSOHandler.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="SystemClass.h" />
+    <ClInclude Include="Texture.h" />
     <ClInclude Include="TriangleObject.h" />
     <ClInclude Include="WindowClass.h" />
   </ItemGroup>
