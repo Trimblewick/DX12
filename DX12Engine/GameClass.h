@@ -4,7 +4,7 @@
 #include "Camera.h"
 #include "FrameBuffer.h"
 
-
+#include "Input.h"
 #include "BoxObject.h"
 #include "Plane.h"
 
@@ -15,7 +15,7 @@ public:
 	~GameClass();
 
 	bool Initialize(FrameBuffer* pFrameBuffer);
-	void Update();
+	void Update(Input* input);
 	bool Render(FrameBuffer* pFrameBuffer);
 	void CleanUp();
 

@@ -12,7 +12,7 @@ GameClass::~GameClass()
 
 bool GameClass::Initialize(FrameBuffer* pFrameBuffer)
 {
-	m_pMainCamera = new Camera(DirectX::XMFLOAT3(10.0f, 10.0f, 10.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
+	m_pMainCamera = new Camera(DirectX::XMFLOAT3(-3.0f, 10.0f, -10.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
 
 	planeObject = new Plane(pFrameBuffer);
 
@@ -20,8 +20,10 @@ bool GameClass::Initialize(FrameBuffer* pFrameBuffer)
 	return true;
 }
 
-void GameClass::Update()
+void GameClass::Update(Input* input)
 {
+	m_pMainCamera->Update(input);
+
 	planeObject->Update(m_pMainCamera);
 }
 

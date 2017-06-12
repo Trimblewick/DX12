@@ -133,7 +133,7 @@ void SystemClass::Run()
 			
 			
 
-			s_game.Update();
+			s_game.Update(&s_input);
 
 
 
