@@ -52,16 +52,14 @@ void Camera::Update(Input * input)
 	float offsY = 0;
 	float offsZ = 0;
 
-	
+	DirectX::XMFLOAT3 distanceVec;
+	DirectX::XMStoreFloat3(&distanceVec, DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_position)));
+	float distance = std::sqrt(distanceVec.x * distanceVec.x + distanceVec.y * distanceVec.y + distanceVec.z * distanceVec.z);
 	
 	if (input->IsKeyDown(Input::LEFT_ARROW))
 	{
 		if (!input->IsKeyDown(Input::RIGHT_ARROW))
 		{
-			DirectX::XMFLOAT3 distanceVec;
-			DirectX::XMStoreFloat3(&distanceVec, DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_position)));
-			float distance = std::sqrt(distanceVec.x * distanceVec.x + distanceVec.y * distanceVec.y + distanceVec.z * distanceVec.z);
-
 			DirectX::XMVECTOR tempForward = DirectX::XMLoadFloat3(&m_forward);
 			DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(0.001);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
 			tempForward = DirectX::XMVector3Transform(tempForward, rotMat);
@@ -76,10 +74,6 @@ void Camera::Update(Input * input)
 	}
 	else if (input->IsKeyDown(Input::RIGHT_ARROW))
 	{
-		DirectX::XMFLOAT3 distanceVec;
-		DirectX::XMStoreFloat3(&distanceVec, DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_position)));
-		float distance = std::sqrt(distanceVec.x * distanceVec.x + distanceVec.y * distanceVec.y + distanceVec.z * distanceVec.z);
-
 		DirectX::XMVECTOR tempForward = DirectX::XMLoadFloat3(&m_forward);
 		DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(-0.001);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
 		tempForward = DirectX::XMVector3Transform(tempForward, rotMat);
@@ -92,13 +86,13 @@ void Camera::Update(Input * input)
 
 
 	}
-	if (input->IsKeyDown(Input::UP_ARROW))
+	if (input->IsKeyDown(Input::UP_ARROW) && distance > 3)
 	{	
 		offsX += m_forward.x * 0.01;
 		offsY += m_forward.y * 0.01;
 		offsZ += m_forward.z * 0.01;
 	}
-	if (input->IsKeyDown(Input::DOWN_ARROW))
+	if (input->IsKeyDown(Input::DOWN_ARROW) && distance < 100)
 	{
 		offsX -= m_forward.x * 0.01;
 		offsY -= m_forward.y * 0.01;
@@ -117,7 +111,11 @@ void Camera::Update(Input * input)
 		//recalc point
 		DirectX::XMStoreFloat3(&m_position, DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(m_position.x + offsX, m_position.y + offsY, m_position.z + offsZ)));
 		//recalc forward
-		DirectX::XMStoreFloat3(&m_forward, DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_position))));
+		DirectX::XMVECTOR f = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_position)));
+		DirectX::XMStoreFloat3(&m_forward, f);
+		//recalc up
+		DirectX::XMVECTOR tempRight = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(f, DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(0, 1, 0))));
+		DirectX::XMStoreFloat3(&m_up, DirectX::XMVector3Normalize(DirectX::XMVector3Cross(tempRight, f)));
 		//recalc viewmatrix
 		DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_up));
 		DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);

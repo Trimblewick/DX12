@@ -109,9 +109,9 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 	// create a static sampler
 	sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
-	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
-	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	sampler.MipLODBias = 0;
 	sampler.MaxAnisotropy = 0;
 	sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
@@ -162,12 +162,12 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 	//create vertex buffer and its initdata
 	PlaneVertex singlePlane[] = {
-		{5, 0, 5, 1, 1},
-		{5, 0, -5, 1, 0},
+		{5, 0, 5, 2, 2},
+		{5, 0, -5, 2, 0},
 		{-5, 0, -5, 0, 0},
 
-		{-5, 0, 5, 0, 1},
-		{5, 0, 5, 1, 1},
+		{-5, 0, 5, 0, 2},
+		{5, 0, 5, 2, 2},
 		{-5, 0, -5, 0, 0}
 
 	};
