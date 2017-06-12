@@ -1,8 +1,6 @@
 #include "Camera.h"
 
-
-
-Camera::Camera()
+Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 {
 	// Fill out the Viewport
 	m_viewport.TopLeftX = 0;
@@ -20,14 +18,23 @@ Camera::Camera()
 
 
 	DirectX::XMMATRIX tempProjMat = DirectX::XMMatrixPerspectiveFovLH(45.0f*(3.14f / 180.0f), WindowClass::GetWidth() / WindowClass::GetHeight(), 0.1f, 1000.0f);
-	DirectX::XMStoreFloat4x4(&m_dxProjMatrix, tempProjMat);
+	DirectX::XMStoreFloat4x4(&m_projMatrix, tempProjMat);
 
-	DirectX::XMFLOAT4 pos = DirectX::XMFLOAT4(0.0f, 5.0f, -10.0f, 0.0f);
-	DirectX::XMFLOAT4 lookAt = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 0.0f);
-	DirectX::XMFLOAT4 upDir = DirectX::XMFLOAT4(0.0f, 1.0f, 0.0f, 0.0f);
+	DirectX::XMVECTOR forward = DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&initPosition), DirectX::XMLoadFloat3(&initLookAt));
+	DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));
+	DirectX::XMVECTOR right = DirectX::XMVector3Cross(forward, up);
+	up = DirectX::XMVector3Cross(right, forward);
+	/*
+	WILL THIS BE NEEDED? ARE YOU RETARDED?
+	DirectX::XMFLOAT3 sUp;
+	DirectX::XMStoreFloat3(&sUp, up);
+	if (sUp.y < 0.0f)
+	{
+		up = DirectX::XMVector3Cross(forward, right);
+	}*/
 	
-	DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat4(&pos), DirectX::XMLoadFloat4(&lookAt), DirectX::XMLoadFloat4(&upDir));
-	DirectX::XMStoreFloat4x4(&m_dxViewMatrix, tempViewMatrix);
+	DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&initPosition), DirectX::XMLoadFloat3(&initLookAt), up);
+	DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);
 }
 
 Camera::~Camera()
@@ -46,5 +53,5 @@ D3D12_RECT Camera::GetScissorRect()
 
 DirectX::XMMATRIX Camera::GetVPMatrix()
 {
-	return DirectX::XMLoadFloat4x4(&m_dxViewMatrix) * DirectX::XMLoadFloat4x4(&m_dxProjMatrix);
+	return DirectX::XMLoadFloat4x4(&m_viewMatrix) * DirectX::XMLoadFloat4x4(&m_projMatrix);
 }

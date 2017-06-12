@@ -1,7 +1,4 @@
-#ifndef INPUT_H
-#define INPUT_H
-
-#include <iostream>
+#pragma once
 
 class Input 
 {
@@ -10,7 +7,7 @@ public:
 	Input();
 	~Input();
 
-	void Initialize();
+	bool Initialize();
 
 	void KeyDown(unsigned int const keyIndex);
 	void KeyUp(unsigned int const keyIndex);
@@ -18,7 +15,6 @@ public:
 	bool IsKeyDown(unsigned int const keyIndex);
 
 private:
+
 	bool m_bKeys[256];
 };
-
-#endif

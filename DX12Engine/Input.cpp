@@ -9,15 +9,15 @@ Input::~Input()
 }
 
 
-void Input::Initialize()
+bool Input::Initialize()
 {
 	// Initialize all the keys to being released and not pressed.
-	for (unsigned int i = 0; i < 256; i++)
+	for (unsigned int i = 0; i < 256; ++i)
 	{
 		m_bKeys[i] = false;
 	}
 
-	return;
+	return true;
 }
 
 
@@ -33,6 +33,7 @@ void Input::KeyDown(unsigned int const keyIndex)
 void Input::KeyUp(unsigned int const keyIndex)
 {
 	// If a key is released then clear that state in the key array.
+	int test = keyIndex;
 	m_bKeys[keyIndex] = false;
 	
 	return;

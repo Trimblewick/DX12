@@ -5,6 +5,7 @@ LONG WindowClass::s_height;
 float WindowClass::s_aspectRatio;
 WNDCLASSEX WindowClass::s_windowClassInfo;
 HWND WindowClass::s_windowHandler;
+HINSTANCE WindowClass::s_hinstance;
 RECT WindowClass::s_windowRectangle;
 LPWSTR WindowClass::s_title;
 bool WindowClass::s_initialized;
@@ -22,55 +23,6 @@ WindowClass::~WindowClass()
 }
 
 
-LRESULT CALLBACK WindowClass::EventHandler(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	//If one case is hit the code will execute everything down until a break;
-	switch (message)
-	{
-
-	case WM_SETFOCUS:
-	case WM_KILLFOCUS:
-		//Input::ProcessGamePad(message, wParam, lParam);
-		//break;
-	case WM_ACTIVATEAPP:
-		/*Input::ProcessKeyboard(message, wParam, lParam);
-		Input::ProcessMouse(message, wParam, lParam);
-		break;*/
-	case WM_INPUT:
-	case WM_MOUSEMOVE:
-	case WM_LBUTTONDOWN:
-	case WM_LBUTTONUP:
-	case WM_RBUTTONDOWN:
-	case WM_RBUTTONUP:
-	case WM_MBUTTONDOWN:
-	case WM_MBUTTONUP:
-	case WM_MOUSEWHEEL:
-	case WM_XBUTTONDOWN:
-	case WM_XBUTTONUP:
-	case WM_MOUSEHOVER:
-		/*Input::ProcessMouse(message, wParam, lParam);
-		break;*/
-	case WM_KEYDOWN:
-		if (wParam == VK_ESCAPE) {
-			if (MessageBox(0, L"Are you sure you want to exit?",
-				L"Really?", MB_YESNO | MB_ICONQUESTION) == IDYES)
-			{
-				DestroyWindow(hWnd);
-			}
-		}
-		return 0;
-	case WM_SYSKEYDOWN:
-	case WM_KEYUP:
-	case WM_SYSKEYUP:
-		/*Input::ProcessKeyboard(message, wParam, lParam);
-		break;*/
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		break;
-	}
-
-	return DefWindowProc(hWnd, message, wParam, lParam);
-}
 
 bool WindowClass::UpdateWindow()
 {
@@ -79,7 +31,7 @@ bool WindowClass::UpdateWindow()
 
 
 
-bool WindowClass::Initialize(HINSTANCE hInstance, int nCmdShow, LONG width, LONG height, LPWSTR title, bool bFullscreen)
+bool WindowClass::Initialize(HINSTANCE hInstance, int nCmdShow, LONG width, LONG height, LPWSTR title, bool bFullscreen, WNDPROC EventHandler)
 {
 	if (s_initialized)
 		return false;
@@ -184,6 +136,11 @@ WindowClass::Ratio WindowClass::GetAspectRatio()
 HWND WindowClass::GetWindowHandler()
 {
 	return s_windowHandler;
+}
+
+HINSTANCE WindowClass::GetHinstance()
+{
+	return s_hinstance;
 }
 
 LONG WindowClass::GetHorizontalResolution()

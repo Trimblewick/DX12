@@ -5,6 +5,7 @@ bool SystemClass::s_bRunning;
 GameClass SystemClass::s_game;
 bool SystemClass::s_initialized;
 FrameBuffer SystemClass::s_frameBuffer;
+Input SystemClass::s_input;
 
 SystemClass::SystemClass()
 {
@@ -16,13 +17,70 @@ SystemClass::~SystemClass()
 {
 }
 
+
+LRESULT CALLBACK SystemClass::EventHandler(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	//If one case is hit the code will execute everything down until a break;
+	switch (message)
+	{
+
+	case WM_SETFOCUS:
+	case WM_KILLFOCUS:
+		//Input::ProcessGamePad(message, wParam, lParam);
+		//break;
+	case WM_ACTIVATEAPP:
+		/*Input::ProcessKeyboard(message, wParam, lParam);
+		Input::ProcessMouse(message, wParam, lParam);
+		break;*/
+	case WM_INPUT:
+	case WM_MOUSEMOVE:
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+	case WM_MOUSEWHEEL:
+	case WM_XBUTTONDOWN:
+	case WM_XBUTTONUP:
+	case WM_MOUSEHOVER:
+		/*Input::ProcessMouse(message, wParam, lParam);
+		break;*/
+	case WM_KEYDOWN:
+		if (wParam == VK_ESCAPE) {
+			if (MessageBox(0, L"Are you sure you want to exit?",
+				L"Really?", MB_YESNO | MB_ICONQUESTION) == IDYES)
+			{
+				DestroyWindow(hWnd);
+			}
+		}
+		else
+		{
+			s_input.KeyDown((unsigned int)wParam);
+		}
+		return 0;
+	case WM_SYSKEYDOWN:
+	case WM_KEYUP:
+		s_input.KeyUp((unsigned int)wParam);
+		return 0;
+	case WM_SYSKEYUP:
+		/*Input::ProcessKeyboard(message, wParam, lParam);
+		break;*/
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		break;
+	}
+
+	return DefWindowProc(hWnd, message, wParam, lParam);
+}
+
 bool SystemClass::Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance, int nCmdShow, LONG windowWidth, LONG windowHeight, LPWSTR title)
 {
 	if (s_initialized)//already initialized
 	{
 		return false;
 	}
-	if (!WindowClass::Initialize(hInstance, nCmdShow, windowWidth, windowHeight, title, false))
+	if (!WindowClass::Initialize(hInstance, nCmdShow, windowWidth, windowHeight, title, false, EventHandler))
 	{
 		return false;
 	}
@@ -35,6 +93,10 @@ bool SystemClass::Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance, int n
 		return false;
 	}
 	if (!s_game.Initialize(&s_frameBuffer))
+	{
+		return false;
+	}
+	if (!s_input.Initialize())
 	{
 		return false;
 	}
@@ -69,7 +131,7 @@ void SystemClass::Run()
 			D3DClass::WaitForPreviousFrame();
 			DxAssert(D3DClass::GetCurrentCommandAllocator()->Reset(), S_OK);
 			
-
+			
 
 			s_game.Update();
 

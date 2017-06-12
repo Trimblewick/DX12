@@ -20,9 +20,12 @@
 #include "D3dClass.h"
 #include "GameClass.h"
 #include "Camera.h"
+#include "Input.h"
 
 class SystemClass
 {
+private:
+	static LRESULT CALLBACK EventHandler(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 public:
 	SystemClass();
 	~SystemClass();
@@ -38,5 +41,7 @@ private:
 	static FrameBuffer s_frameBuffer;
 	static GameClass s_game;
 	static bool s_bRunning;
+	static Input s_input;
 	static bool s_initialized;
+	
 };
