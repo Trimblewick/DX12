@@ -52,13 +52,45 @@ void Camera::Update(Input * input)
 	float offsY = 0;
 	float offsZ = 0;
 
+	
+	
 	if (input->IsKeyDown(Input::LEFT_ARROW))
 	{
-		
+		if (!input->IsKeyDown(Input::RIGHT_ARROW))
+		{
+			DirectX::XMFLOAT3 distanceVec;
+			DirectX::XMStoreFloat3(&distanceVec, DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_position)));
+			float distance = std::sqrt(distanceVec.x * distanceVec.x + distanceVec.y * distanceVec.y + distanceVec.z * distanceVec.z);
+
+			DirectX::XMVECTOR tempForward = DirectX::XMLoadFloat3(&m_forward);
+			DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(0.001);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
+			tempForward = DirectX::XMVector3Transform(tempForward, rotMat);
+			DirectX::XMFLOAT3 p;
+			DirectX::XMStoreFloat3(&p, tempForward);
+			DirectX::XMFLOAT3 newPos = DirectX::XMFLOAT3(m_focusPoint.x - p.x * distance, m_focusPoint.y - p.y * distance, m_focusPoint.z - p.z*distance);
+			offsX = newPos.x - m_position.x;
+			offsY = newPos.y - m_position.y;
+			offsZ = newPos.z - m_position.z;
+			
+		}
 	}
-	if (input->IsKeyDown(Input::RIGHT_ARROW))
+	else if (input->IsKeyDown(Input::RIGHT_ARROW))
 	{
-		
+		DirectX::XMFLOAT3 distanceVec;
+		DirectX::XMStoreFloat3(&distanceVec, DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_position)));
+		float distance = std::sqrt(distanceVec.x * distanceVec.x + distanceVec.y * distanceVec.y + distanceVec.z * distanceVec.z);
+
+		DirectX::XMVECTOR tempForward = DirectX::XMLoadFloat3(&m_forward);
+		DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(-0.001);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
+		tempForward = DirectX::XMVector3Transform(tempForward, rotMat);
+		DirectX::XMFLOAT3 p;
+		DirectX::XMStoreFloat3(&p, tempForward);
+		DirectX::XMFLOAT3 newPos = DirectX::XMFLOAT3(m_focusPoint.x - p.x * distance, m_focusPoint.y - p.y * distance, m_focusPoint.z - p.z*distance);
+		offsX = newPos.x - m_position.x;
+		offsY = newPos.y - m_position.y;
+		offsZ = newPos.z - m_position.z;
+
+
 	}
 	if (input->IsKeyDown(Input::UP_ARROW))
 	{	
