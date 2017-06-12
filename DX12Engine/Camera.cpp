@@ -27,6 +27,7 @@ Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 	DirectX::XMVECTOR right = DirectX::XMVector3Cross(forward, up);
 	up = DirectX::XMVector3Cross(right, forward);
 	DirectX::XMStoreFloat3(&m_up, up);
+	m_focusPoint = initLookAt;
 	/*
 	WILL THIS BE NEEDED? ARE YOU RETARDED?
 	DirectX::XMFLOAT3 sUp;
@@ -47,44 +48,48 @@ Camera::~Camera()
 
 void Camera::Update(Input * input)
 {
-	DirectX::XMVECTOR worldRight = DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(1, 0, 0));
-	DirectX::XMVECTOR worldForward = DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(0, 0, 1));
+	float offsX = 0;
+	float offsY = 0;
+	float offsZ = 0;
 
-	DirectX::XMVECTOR rightVec = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(DirectX::XMLoadFloat3(&m_forward), DirectX::XMLoadFloat3(&m_up)));
-	DirectX::XMFLOAT3 test;
-	DirectX::XMStoreFloat3(&test, rightVec);
-	
-	float cosAngle = DirectX::XMVectorGetX(DirectX::XMVector3Dot(worldRight, rightVec));
-	
-	int sign = cosAngle / std::abs(cosAngle);
-	float otherAngle = std::sqrt(1 - cosAngle * cosAngle) * sign;
-	
-
-	if (input->IsKeyDown(input->KEYS::LEFT_ARROW))
+	if (input->IsKeyDown(Input::LEFT_ARROW))
 	{
-		m_position.z += 0.01 * otherAngle;
-		m_position.x += 0.01 * cosAngle;
+		
 	}
-	if (input->IsKeyDown(input->KEYS::RIGHT_ARROW))
+	if (input->IsKeyDown(Input::RIGHT_ARROW))
 	{
-		m_position.z -= 0.01 * otherAngle;
-		m_position.x -= 0.01 * cosAngle;
+		
 	}
-	if (input->IsKeyDown(input->KEYS::UP_ARROW))
+	if (input->IsKeyDown(Input::UP_ARROW))
+	{	
+		offsX += m_forward.x * 0.01;
+		offsY += m_forward.y * 0.01;
+		offsZ += m_forward.z * 0.01;
+	}
+	if (input->IsKeyDown(Input::DOWN_ARROW))
 	{
-		m_position.z -= 0.01 * cosAngle;
-		m_position.x += 0.01 * otherAngle;
+		offsX -= m_forward.x * 0.01;
+		offsY -= m_forward.y * 0.01;
+		offsZ -= m_forward.z * 0.01;
 	}
-	if (input->IsKeyDown(input->KEYS::DOWN_ARROW))
+	if (input->IsKeyDown(Input::SPACE))
 	{
-		m_position.z += 0.01 * cosAngle;
-		m_position.x -= 0.01 * otherAngle;
+		offsY += 0.01;
 	}
-
-
-	DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookToLH(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&m_forward), DirectX::XMLoadFloat3(&m_up));
-	DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);
-
+	if (input->IsKeyDown(Input::CTRL))
+	{
+		offsY -= 0.01;
+	}
+	if (offsX != 0 || offsY != 0 || offsZ != 0)
+	{
+		//recalc point
+		DirectX::XMStoreFloat3(&m_position, DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(m_position.x + offsX, m_position.y + offsY, m_position.z + offsZ)));
+		//recalc forward
+		DirectX::XMStoreFloat3(&m_forward, DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_position))));
+		//recalc viewmatrix
+		DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_up));
+		DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);
+	}
 	return;
 }
 
