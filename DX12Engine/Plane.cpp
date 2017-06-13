@@ -164,11 +164,15 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	PlaneVertex singlePlane[] = {
 		{5, 0, 5, 2, 2},
 		{5, 0, -5, 2, 0},
-		{-5, 0, -5, 0, 0},
-
-		{-5, 0, 5, 0, 2},
-		{5, 0, 5, 2, 2},
-		{-5, 0, -5, 0, 0}
+		{ -5, 0, 5, 0, 2 },
+		{-5, 0, -5, 0, 0}//,
+		//{ -5, 0, 5, 0, 2 },
+		//{ 5, 0, -5, 2, 0 },
+		//{ 5, 0, 5, 2, 2 }
+		
+		//{-5, 0, 5, 0, 2},
+		//{5, 0, 5, 2, 2},
+		//{-5, 0, -5, 0, 0}
 
 	};
 	iVertexBufferSize = sizeof(singlePlane);
@@ -180,7 +184,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 		D3D12_RESOURCE_STATE_COPY_DEST,
 		nullptr,
 		IID_PPV_ARGS(&m_pVertexBuffer)), S_OK);
-	m_pVertexBuffer->SetName(L"BOX - VERTEX BUFFER RESOURECE HEAP");
+	m_pVertexBuffer->SetName(L"PLANE - VERTEX BUFFER RESOURECE HEAP");
 
 	
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
@@ -190,7 +194,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(&pVertexBufferUpploadHeap)), S_OK);
-	pVertexBufferUpploadHeap->SetName(L"BOX - VERTEX BUFFER UPLOAD HEAP");
+	pVertexBufferUpploadHeap->SetName(L"PLANE - VERTEX BUFFER UPLOAD HEAP");
 
 	D3D12_SUBRESOURCE_DATA vertexInitData = {};
 	vertexInitData.pData = reinterpret_cast<BYTE*>(singlePlane);
@@ -348,12 +352,12 @@ void Plane::Draw(FrameBuffer * pFrameBuffer, Camera * camera)
 	pCL->RSSetViewports(1, &camera->GetViewport());
 	pCL->RSSetScissorRects(1, &camera->GetScissorRect());
 
-	pCL->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	pCL->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 	pCL->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	
 	pCL->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[D3DClass::GetFrameIndex()]->GetGPUVirtualAddress());
 
-	pCL->DrawInstanced(6, 1, 0, 0);
+	pCL->DrawInstanced(4, 1, 0, 0);
 
 	return;
 }

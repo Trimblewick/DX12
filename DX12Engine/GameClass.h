@@ -7,6 +7,7 @@
 #include "Input.h"
 #include "BoxObject.h"
 #include "Plane.h"
+#include "GrassBlades.h"
 
 class GameClass
 {
@@ -21,8 +22,9 @@ public:
 
 
 private:
-	Camera* m_pMainCamera;
+	Camera*					m_pMainCamera;
 
-	Plane* planeObject;
+	Plane*					m_pPlaneObject;
+	GrassBlades*			m_pGrassBlades;
 };
 
