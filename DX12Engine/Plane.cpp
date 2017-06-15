@@ -24,6 +24,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 
 	int iVertexBufferSize;
+	int iIndexBufferSize;
 
 	D3D12_ROOT_DESCRIPTOR wvpRootDescriptor;
 	D3D12_DESCRIPTOR_RANGE planeDescriptorRanges[1];//for texture
@@ -159,13 +160,40 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	SAFE_RELEASE(pVSblob);
 	SAFE_RELEASE(pPSblob);
 
+	Texture* heightMap = new Texture(L"../Resources/h.png");
+	BYTE* data = heightMap->GetTextureData();
+	
+	int height = heightMap->GetTextureHeight();
+	int width = heightMap->GetTextureWidth();
+	int size = height * width;
+	PlaneVertex* planeVertices = new PlaneVertex[size];
+	int heightMapIndex = 0;
+	float u = 0.0f;
+	float v = 0.0f;
+	int dataIndex = 0;
 
+	for (int x = 0; x < width; ++x)
+	{
+		u = (float)x * 10.0f / (float)width;
+		for (int z = 0; z < height; ++z)
+		{
+			v = (float)z * 10.0f / (float)height;
+			planeVertices[heightMapIndex] = PlaneVertex((float)x * 0.1f, data[dataIndex] * 0.1, (float)z * 0.1f, u, v);
+
+			heightMapIndex++;
+			dataIndex += 4;
+		}
+	}
+	iVertexBufferSize = size * sizeof(PlaneVertex);
+	
+	
 	//create vertex buffer and its initdata
-	PlaneVertex singlePlane[] = {
+	/*PlaneVertex planeVertices[] = {
 		{5, 0, 5, 2, 2},
 		{5, 0, -5, 2, 0},
 		{ -5, 0, 5, 0, 2 },
-		{-5, 0, -5, 0, 0}//,
+		{ -5, 0, -5, 0, 0 }
+		//,
 		//{ -5, 0, 5, 0, 2 },
 		//{ 5, 0, -5, 2, 0 },
 		//{ 5, 0, 5, 2, 2 }
@@ -175,7 +203,8 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 		//{-5, 0, -5, 0, 0}
 
 	};
-	iVertexBufferSize = sizeof(singlePlane);
+	iVertexBufferSize = sizeof(planeVertices);
+	*/
 
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -197,7 +226,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	pVertexBufferUpploadHeap->SetName(L"PLANE - VERTEX BUFFER UPLOAD HEAP");
 
 	D3D12_SUBRESOURCE_DATA vertexInitData = {};
-	vertexInitData.pData = reinterpret_cast<BYTE*>(singlePlane);
+	vertexInitData.pData = reinterpret_cast<BYTE*>(planeVertices);
 	vertexInitData.RowPitch = iVertexBufferSize;
 	vertexInitData.SlicePitch = iVertexBufferSize;
 
@@ -207,6 +236,65 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 		1, 
 		&CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pVertexBuffer, 
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+
+
+	m_iNrOfIndices = (width - 1) * (height - 1) * 6;
+	DWORD* indices = new DWORD[m_iNrOfIndices];
+	int squareIndex = 0;
+	for (int i = 1; i < (width - 1)*(height - 1) + 1; ++i)
+	{
+		if (i % width == 0)
+		{
+			i++;
+		}
+		indices[squareIndex + 1] = i - 1;
+		indices[squareIndex] = i + width - 1;
+		indices[squareIndex + 2] = i;
+		indices[squareIndex + 4] = i + width - 1;
+		indices[squareIndex + 3] = i + width;
+		indices[squareIndex + 5] = i;
+		squareIndex += 6;
+	}
+
+/*	DWORD indices[] = {
+		0, 1, 2,
+		2, 3, 1
+	};*/
+	iIndexBufferSize = m_iNrOfIndices * sizeof(DWORD);
+
+	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(iIndexBufferSize),
+		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_COPY_DEST,
+		nullptr,
+		IID_PPV_ARGS(&m_pIndexBuffer)), S_OK);
+
+	m_pIndexBuffer->SetName(L"Plane- INDEXBUFFER RESOURCE HEAP");
+
+	ID3D12Resource* pIndexBufferUploadHeap;
+	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+		D3D12_HEAP_FLAGS::D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(iIndexBufferSize),
+		D3D12_RESOURCE_STATES::D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&pIndexBufferUploadHeap)), S_OK);
+
+	pIndexBufferUploadHeap->SetName(L"Plane- INDEX BUFFER UPLOAD HEAP");
+
+	D3D12_SUBRESOURCE_DATA indexData{};
+	indexData.pData = reinterpret_cast<BYTE*>(indices);
+	indexData.RowPitch = iIndexBufferSize;
+	indexData.SlicePitch = iIndexBufferSize;
+
+	UpdateSubresources(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD), m_pIndexBuffer, pIndexBufferUploadHeap, 0, 0, 1, &indexData);
+
+	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->ResourceBarrier(
+		1,
+		&CD3DX12_RESOURCE_BARRIER::Transition(m_pIndexBuffer,
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 
@@ -259,6 +347,10 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	m_vertexBufferView.SizeInBytes = iVertexBufferSize;
 	m_vertexBufferView.StrideInBytes = sizeof(PlaneVertex);
 
+	m_indexBufferView.BufferLocation = m_pIndexBuffer->GetGPUVirtualAddress();
+	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
+	m_indexBufferView.SizeInBytes = iIndexBufferSize;
+
 	grassTextureSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	grassTextureSRVDesc.Format = m_pGrassTexture->GetTextureDesc()->Format;
 	grassTextureSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
@@ -298,10 +390,12 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	fenceHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 	DxAssert(pUploadBufferFence->Signal(1), S_OK);
 	DxAssert(pUploadBufferFence->SetEventOnCompletion(1, fenceHandle), S_OK);
+	
 	WaitForSingleObject(fenceHandle, INFINITE);
 	
-	SAFE_RELEASE(pVertexBufferUpploadHeap);
-	SAFE_RELEASE(pGrassTextureBufferUpploadHeap);
+	//SAFE_RELEASE(pVertexBufferUpploadHeap);
+	//SAFE_RELEASE(pIndexBufferUploadHeap);
+	//SAFE_RELEASE(pGrassTextureBufferUpploadHeap);
 	SAFE_RELEASE(pUploadBufferFence);
 	if (m_pGrassTexture)
 	{
@@ -319,6 +413,7 @@ Plane::~Plane()
 		SAFE_RELEASE(m_pWVPMatUpploadHeaps[i]);
 	}
 	SAFE_RELEASE(m_pVertexBuffer);
+	SAFE_RELEASE(m_pIndexBuffer);
 	SAFE_RELEASE(m_pPSO);
 	SAFE_RELEASE(m_pRootSignature);
 	if (m_pGrassTexture)
@@ -352,12 +447,13 @@ void Plane::Draw(FrameBuffer * pFrameBuffer, Camera * camera)
 	pCL->RSSetViewports(1, &camera->GetViewport());
 	pCL->RSSetScissorRects(1, &camera->GetScissorRect());
 
-	pCL->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	pCL->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	pCL->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	pCL->IASetIndexBuffer(&m_indexBufferView);
 	
 	pCL->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[D3DClass::GetFrameIndex()]->GetGPUVirtualAddress());
 
-	pCL->DrawInstanced(4, 1, 0, 0);
+	pCL->DrawIndexedInstanced(m_iNrOfIndices, 1, 0, 0, 0);
 
 	return;
 }

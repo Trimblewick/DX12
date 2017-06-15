@@ -3,12 +3,14 @@
 #include "D3dClass.h"
 #include "FrameBuffer.h"
 #include "Camera.h"
+#include <random>
 
 class GrassBlades
 {
 private:
 	struct Vertex 
 	{
+		Vertex() : position(0, 0, 0) {}
 		Vertex(float x, float y, float z) : position(x, y, z) {}
 		DirectX::XMFLOAT3 position;
 	};

@@ -5,8 +5,10 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 {
 	HRESULT hr;
 	D3D12_SHADER_BYTECODE vsByteCode = {};
+	D3D12_SHADER_BYTECODE gsByteCode = {};
 	D3D12_SHADER_BYTECODE psByteCode = {};
 	ID3DBlob* pVSblob = nullptr;
+	ID3DBlob* pGSblob = nullptr;
 	ID3DBlob* pPSblob = nullptr;
 	ID3DBlob* pEblob = nullptr;
 
@@ -56,6 +58,25 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 	vsByteCode.BytecodeLength = pVSblob->GetBufferSize();
 	vsByteCode.pShaderBytecode = pVSblob->GetBufferPointer();
 
+	hr = D3DCompileFromFile(
+		L"GrassGS.hlsl",
+		nullptr,
+		nullptr,
+		"main",
+		"gs_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&pGSblob,
+		&pEblob);
+	if (FAILED(hr))
+	{
+		OutputDebugStringA((char*)pEblob->GetBufferPointer());
+		return;
+	}
+
+	gsByteCode.BytecodeLength = pGSblob->GetBufferSize();
+	gsByteCode.pShaderBytecode = pGSblob->GetBufferPointer();
+
 	//compile pixelshader
 	hr = D3DCompileFromFile(
 		L"GrassPS.hlsl",
@@ -81,7 +102,7 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 
 	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	rootParameters[0].Descriptor = wvpRootDescriptor;
-	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
+	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_GEOMETRY;
 
 	/*grassBladesDescriptorTable.NumDescriptorRanges = 
 
@@ -95,8 +116,7 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 		nullptr,
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS);
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS);
 
 	ID3DBlob* signature;
 	DxAssert(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, nullptr), S_OK);
@@ -110,6 +130,7 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 	psoDesc.InputLayout = inputLayoutDesc;
 	psoDesc.pRootSignature = m_pRootSignature;
 	psoDesc.VS = vsByteCode;
+	psoDesc.GS = gsByteCode;
 	psoDesc.PS = psByteCode;
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -126,21 +147,37 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 	SAFE_RELEASE(pVSblob);
 	SAFE_RELEASE(pPSblob);
 
+	const int nrOfStraws = 2;
+	const int nrOfSectionsInStraw = 3;
+	Vertex patch[nrOfStraws * nrOfSectionsInStraw];
+	for (int i = 0; i < nrOfStraws * nrOfSectionsInStraw; i += nrOfSectionsInStraw)
+	{
+		float x = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+		float y = 0.0f;
+		float z = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+		patch[i] = { x, y, z };
+		for (int k = 1; k < nrOfSectionsInStraw; ++k)
+		{
+			y += static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+			patch[i + k] = { x, y, z };
+		}
+	}
+
 	//11
 	Vertex test[] = {
-		{ 0, 2, 2 },
-		{ 2, 2, 2 },
-		{ 0, 4, 2 },
-		{ 2, 4, 2 },
-		{ 0, 6, 2 },
-		{ 2, 6, 2 },
-		{ 0, 6, 2 },
-		{ 2, 4, 2 },
-		{ 0, 4, 2 },
-		{ 2, 2, 2 },
-		{ 0, 2, 2 }
+		{ 0.0f, 2, 2 },
+		{ 2.0f, 2, 2 },
+		{ 0.5f, 4, 2 },
+		{ 1.5f, 4, 2 },
+		{ 1.0f, 6, 2 },
+		{ 1.0f, 6, 2 },
+		{ 1.0f, 6, 2 },
+		{ 1.5f, 4, 2 },
+		{ 0.5f, 4, 2 },
+		{ 2.0f, 2, 2 },
+		{ 0.0f, 2, 2 }
 	};
-	iVertexBufferSize = sizeof(test);
+	iVertexBufferSize = sizeof(patch);
 
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -162,7 +199,7 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 	pGrassBladesVertexBufferUploadHeap->SetName(L"GRASS BLADE INSTANCES - VERTEX BUFFER UPLOAD HEAP");
 
 	D3D12_SUBRESOURCE_DATA vertexInitData = {};
-	vertexInitData.pData = reinterpret_cast<BYTE*>(test);
+	vertexInitData.pData = reinterpret_cast<BYTE*>(patch);
 	vertexInitData.RowPitch = iVertexBufferSize;
 	vertexInitData.SlicePitch = iVertexBufferSize;
 
@@ -251,13 +288,12 @@ void GrassBlades::Draw(FrameBuffer * pFrameBuffer, Camera* camera)
 	pCL->RSSetViewports(1, &camera->GetViewport());
 	pCL->RSSetScissorRects(1, &camera->GetScissorRect());
 
-	pCL->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	pCL->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	pCL->IASetVertexBuffers(0, 1, &m_grassBladesListVertexBufferView);
 
 	pCL->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[D3DClass::GetFrameIndex()]->GetGPUVirtualAddress());
 
-	pCL->DrawInstanced(11, 1, 0, 0);
-
+	pCL->DrawInstanced(6, 1, 0, 0);
 
 	return;
 }
