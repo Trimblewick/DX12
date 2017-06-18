@@ -47,6 +47,7 @@ public:
 	static ID3D12Fence* GetCurrentFence();
 	static UINT64 GetCurrentFenceValue();
 
+	static ID3D12GraphicsCommandList* GetNewOffGraphicsCommandList(_In_opt_ ID3D12PipelineState* pso);
 
 	static void QueueGraphicsCommandList(ID3D12CommandList* pCL);
 	static void ExecuteGraphicsCommandLists();

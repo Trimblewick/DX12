@@ -324,6 +324,13 @@ UINT64 D3DClass::GetCurrentFenceValue()
 	return s_ui64FenceValue[s_uiFrameIndex];
 }
 
+ID3D12GraphicsCommandList* D3DClass::GetNewOffGraphicsCommandList(_In_opt_ ID3D12PipelineState* pso = nullptr)
+{
+	ID3D12GraphicsCommandList* pCL;
+	DxAssert(s_pDevice->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, s_pCommandAllocator[s_uiFrameIndex], pso, IID_PPV_ARGS(&pCL)), S_OK);
+	return pCL;
+}
+
 void D3DClass::QueueGraphicsCommandList(ID3D12CommandList* pCL)
 {
 	_pGraphicsCommandLists.push_back(pCL);

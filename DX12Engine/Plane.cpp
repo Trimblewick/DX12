@@ -108,20 +108,22 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	rootparameters[1].DescriptorTable = planeDescriptorTable;
 	rootparameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
 
+	
 	// create a static sampler
-	sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_POINT;
+	sampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
 	sampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	sampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	sampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	sampler.MipLODBias = 0;
-	sampler.MaxAnisotropy = 0;
+	sampler.MaxAnisotropy = 1;
 	sampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
 	sampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
 	sampler.MinLOD = 0.0f;
 	sampler.MaxLOD = D3D12_FLOAT32_MAX;
 	sampler.ShaderRegister = 0;
 	sampler.RegisterSpace = 0;
-	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+	sampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
 	
 	rootSignatureDesc.Init(_countof(rootparameters),
 		rootparameters,
@@ -300,7 +302,8 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 
 
-	m_pGrassTexture = new Texture(L"../Resources/grasstexture.png");
+	m_pGrassTexture = new Texture(L"../Resources/dirt1024texture.jpg");//dirtMIP.png", 2);
+
 
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -323,6 +326,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 		IID_PPV_ARGS(&pGrassTextureBufferUpploadHeap)), S_OK);
 	pGrassTextureBufferUpploadHeap->SetName(L"Grass Texture upload heap");
 
+
 	D3D12_SUBRESOURCE_DATA textureInitData = {};
 	textureInitData.pData = m_pGrassTexture->GetTextureData();
 	textureInitData.RowPitch = m_pGrassTexture->GetBytersPerRow();
@@ -331,11 +335,13 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	UpdateSubresources(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD), m_pGrassTextureBuffer, pGrassTextureBufferUpploadHeap, 0, 0, 1, &textureInitData);
 	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pGrassTextureBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
+	m_pGrassTexture->GenerateMipMaps(m_pGrassTextureBuffer, 10, pFrameBuffer);
+
+
 	textureDescriptorHeapDesc.NumDescriptors = 1;
 	textureDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	textureDescriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	DxAssert(D3DClass::GetDevice()->CreateDescriptorHeap(&textureDescriptorHeapDesc, IID_PPV_ARGS(&m_pTextureDH)), S_OK);
-	
 
 	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Close(), S_OK);
 
@@ -351,10 +357,15 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	m_indexBufferView.Format = DXGI_FORMAT_R32_UINT;
 	m_indexBufferView.SizeInBytes = iIndexBufferSize;
 
+
 	grassTextureSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	grassTextureSRVDesc.Format = m_pGrassTexture->GetTextureDesc()->Format;
 	grassTextureSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	grassTextureSRVDesc.Texture2D.MipLevels = 1;
+	grassTextureSRVDesc.Texture2D.MipLevels = 7;
+	grassTextureSRVDesc.Texture2D.MostDetailedMip = 0;
+	//grassTextureSRVDesc.Texture2D.ResourceMinLODClamp = 0;
+	
+	
 	D3DClass::GetDevice()->CreateShaderResourceView(m_pGrassTextureBuffer, &grassTextureSRVDesc, m_pTextureDH->GetCPUDescriptorHandleForHeapStart());
 
 	//create matrix buffer

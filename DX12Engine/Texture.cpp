@@ -258,13 +258,153 @@ int Texture::LoadImageDataFromFile()
 	m_textureDesc.Width = m_uiWidth; // width of the texture
 	m_textureDesc.Height = m_uiHeight; // height of the texture
 	m_textureDesc.DepthOrArraySize = 1; // if 3d image, depth of 3d image. Otherwise an array of 1D or 2D textures (we only have one image, so we set 1)
-	m_textureDesc.MipLevels = 1; // Number of mipmaps. We are not generating mipmaps for this texture, so we have only one level
+	m_textureDesc.MipLevels = 10; // Number of mipmaps. We are not generating mipmaps for this texture, so we have only one level
 	m_textureDesc.Format = dxgiFormat; // This is the dxgi format of the image (format of the pixels)
 	m_textureDesc.SampleDesc.Count = 1; // This is the number of samples per pixel, we just want 1 sample
 	m_textureDesc.SampleDesc.Quality = 0; // The quality level of the samples. Higher is better quality, but worse performance
 	m_textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN; // The arrangement of the pixels. Setting to unknown lets the driver choose the most efficient one
-	m_textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE; // no flags
+	m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS; // no flags
 
 	m_iTextureSize = imageSize;				// return the size of the image. remember to delete the image once your done with it (in this tutorial once its uploaded to the gpu)
 	return imageSize;
+}
+
+void Texture::GenerateMipMaps(ID3D12Resource* pGPUresource, int mipLevels, FrameBuffer* pFrameBuffer)
+{
+	m_pMipmapCbvRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
+	m_pMipmapCbvRange[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);
+
+	m_pRootParameters[0].InitAsConstants(2, 0);
+	m_pRootParameters[1].InitAsDescriptorTable(1, &m_pMipmapCbvRange[0]);
+	m_pRootParameters[2].InitAsDescriptorTable(1, &m_pMipmapCbvRange[1]);
+
+	m_mipmapGenSamplerDesc.Filter = D3D12_FILTER::D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT;
+	m_mipmapGenSamplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	m_mipmapGenSamplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	m_mipmapGenSamplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	m_mipmapGenSamplerDesc.MipLODBias = 0.0f;
+	m_mipmapGenSamplerDesc.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	m_mipmapGenSamplerDesc.MinLOD = 0.0f;
+	m_mipmapGenSamplerDesc.MaxLOD = D3D12_FLOAT32_MAX;
+	m_mipmapGenSamplerDesc.MaxAnisotropy = 0;
+	m_mipmapGenSamplerDesc.BorderColor = D3D12_STATIC_BORDER_COLOR_OPAQUE_BLACK;
+	m_mipmapGenSamplerDesc.ShaderRegister = 0;
+	m_mipmapGenSamplerDesc.RegisterSpace = 0;
+	m_mipmapGenSamplerDesc.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	ID3DBlob* signature;
+	ID3DBlob* pEblob;
+
+	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc(_countof(m_pRootParameters), m_pRootParameters, 1, &m_mipmapGenSamplerDesc, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	DxAssert(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &pEblob), S_OK);
+	DxAssert(D3DClass::GetDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_pMipMapRootSignature)), S_OK);
+
+
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAGS::D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	heapDesc.NodeMask = 0;
+	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	heapDesc.NumDescriptors = 2 * (mipLevels - 1);
+	ID3D12DescriptorHeap* pDH;
+	DxAssert(D3DClass::GetDevice()->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&pDH)), S_OK);
+	UINT uiDescriptorSize = D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	ID3DBlob* pCSblob;
+	D3D12_SHADER_BYTECODE csByteCode;
+
+	HRESULT hr = D3DCompileFromFile(
+		L"MipCS.hlsl",
+		nullptr,
+		nullptr,
+		"main",
+		"cs_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&pCSblob,
+		&pEblob);
+	if (FAILED(hr))
+	{
+		OutputDebugStringA((char*)pEblob->GetBufferPointer());
+		return;
+	}
+
+	csByteCode.BytecodeLength = pCSblob->GetBufferSize();
+	csByteCode.pShaderBytecode = pCSblob->GetBufferPointer();
+
+	D3D12_COMPUTE_PIPELINE_STATE_DESC psoDesc = {};
+	psoDesc.pRootSignature = m_pMipMapRootSignature;
+	psoDesc.CS = csByteCode;
+	ID3D12PipelineState* pPSOMipMaps;
+	DxAssert(D3DClass::GetDevice()->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&pPSOMipMaps)), S_OK);
+
+	D3D12_SHADER_RESOURCE_VIEW_DESC srcTextureSRVdesc = {};
+	srcTextureSRVdesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srcTextureSRVdesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC destTextureUAVdesc = {};
+	destTextureUAVdesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+
+	ID3D12GraphicsCommandList* pCL = pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD);//D3DClass::GetNewOffGraphicsCommandList(pPSOMipMaps);
+	pCL->SetComputeRootSignature(m_pMipMapRootSignature);
+	pCL->SetPipelineState(pPSOMipMaps);
+	pCL->SetDescriptorHeaps(1, &pDH);
+
+	pCL->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pGPUresource, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE currentCPUHandle(pDH->GetCPUDescriptorHandleForHeapStart());
+	CD3DX12_GPU_DESCRIPTOR_HANDLE currentGPUHandle(pDH->GetGPUDescriptorHandleForHeapStart());
+
+	//Union used for shader constants
+	struct DWParam
+	{
+		DWParam(FLOAT f) : Float(f) {}
+		DWParam(UINT u) : Uint(u) {}
+
+		void operator= (FLOAT f) { Float = f; }
+		void operator= (UINT u) { Uint = u; }
+
+		union
+		{
+			FLOAT Float;
+			UINT Uint;
+		};
+	};
+
+	for (uint32_t i = 0; i < mipLevels - 1; ++i)
+	{
+		//assuming textures are squared, make bit shift to get lesser dim.
+		unsigned int destWidth = (m_uiWidth >> (i + 1)) > 1 ? m_uiWidth >> (i + 1) : 1;
+		unsigned int destHeight = (m_uiHeight >> (i + 1)) > 1 ? m_uiHeight >> (i + 1) : 1;
+
+		srcTextureSRVdesc.Format = m_textureDesc.Format;
+		srcTextureSRVdesc.Texture2D.MipLevels = 1;
+		srcTextureSRVdesc.Texture2D.MostDetailedMip = i;
+		D3DClass::GetDevice()->CreateShaderResourceView(pGPUresource, &srcTextureSRVdesc, currentCPUHandle);
+		currentCPUHandle.Offset(1, uiDescriptorSize);
+
+		destTextureUAVdesc.Format = m_textureDesc.Format;
+		destTextureUAVdesc.Texture2D.MipSlice = i + 1;
+		D3DClass::GetDevice()->CreateUnorderedAccessView(pGPUresource, nullptr, &destTextureUAVdesc, currentCPUHandle);
+		currentCPUHandle.Offset(1, uiDescriptorSize);
+
+		pCL->SetComputeRoot32BitConstant(0, DWParam(1.0f / destWidth).Uint, 0);
+		pCL->SetComputeRoot32BitConstant(0, DWParam(1.0f / destHeight).Uint, 1);
+
+		pCL->SetComputeRootDescriptorTable(1, currentGPUHandle);
+		currentGPUHandle.Offset(1, uiDescriptorSize);
+		pCL->SetComputeRootDescriptorTable(2, currentGPUHandle);
+		currentGPUHandle.Offset(1, uiDescriptorSize);
+
+		unsigned int dx = destWidth / 8 > 1u ? destWidth / 8 : 1u;
+		unsigned int dy = destHeight / 8 > 1u ? destHeight / 8 : 1u;
+
+
+		pCL->Dispatch(dx, dy, 1);
+
+		pCL->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::UAV(pGPUresource));
+	}
+	pCL->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pGPUresource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+	//pCL->Close();
+	//D3DClass::QueueGraphicsCommandList(pCL);
 }

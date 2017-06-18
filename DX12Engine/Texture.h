@@ -3,7 +3,8 @@
 #include "d3dx12.h"
 #include <d3d12.h>
 #include <wincodec.h>
-
+#include "D3dClass.h"
+#include "FrameBuffer.h"
 
 class Texture
 {
@@ -13,10 +14,12 @@ private:
 	WICPixelFormatGUID GetConvertToWICFormat(WICPixelFormatGUID& wicFormatGUID);
 	int GetDXGIFormatBitsPerPixel(DXGI_FORMAT& dxgiFormat);
 	int LoadImageDataFromFile();
-
+	
 public:
 	Texture(LPCWSTR fileName);
 	~Texture();
+
+	void GenerateMipMaps(ID3D12Resource* pGPUresource, int mipLevels, FrameBuffer* pFrameBuffer);
 
 	BYTE*						GetTextureData();
 	D3D12_RESOURCE_DESC*		GetTextureDesc();
@@ -24,6 +27,7 @@ public:
 	int							GetBytersPerRow();
 	int							GetTextureWidth();
 	int							GetTextureHeight();
+
 
 	
 private:
@@ -36,5 +40,12 @@ private:
 
 	unsigned int				m_uiWidth;
 	unsigned int				m_uiHeight;
+
+
+	CD3DX12_DESCRIPTOR_RANGE	m_pMipmapCbvRange[2];
+	CD3DX12_ROOT_PARAMETER		m_pRootParameters[3];
+	D3D12_STATIC_SAMPLER_DESC	m_mipmapGenSamplerDesc;
+
+	ID3D12RootSignature*		m_pMipMapRootSignature;
 };
 
