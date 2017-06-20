@@ -22,9 +22,26 @@ void main(
 )
 {
     GS_OUTPUT element;
+    float4 p = mul(float4(0, 0, 0, 1), wvpMat);
+    //mul(float4(input[0].position, 1), wvpMat);
     
+    element.position = (p + float4(0.1f, 0, 0, 0));
+    output.Append(element);
+    element.position = (p + float4(-0.1f, 0, 0, 0));
+    output.Append(element);
+    element.position = (p + float4(0.1f, 0.1f, 0, 0));
+    output.Append(element);
+    output.RestartStrip();
+    element.position = (p + float4(0.1f, 0.1f, 0, 0));
+    output.Append(element);
+    element.position = (p + float4(-0.1f, 0.0f, 0, 0));
+    output.Append(element);
+    element.position = (p + float4(-0.1f, 0.1f, 0, 0));
+    output.Append(element);
     
-	for (uint i = 0; i < 2; i++)
+    output.RestartStrip();
+    
+	/*for (uint i = 0; i < 2; i++)
 	{
         float4 p = mul(float4(input[i].position, 1), wvpMat);
         float4 p2 = mul(float4(input[i + 1].position, 1), wvpMat);
@@ -42,6 +59,6 @@ void main(
         element.position = p + float4(-0.05f, p2.y - p.y, 0.0f, 0.0f);
         output.Append(element);
         output.RestartStrip();
-    }
+    }*/
     
 }

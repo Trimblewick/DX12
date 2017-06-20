@@ -42,6 +42,10 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 	ID3D12Fence* pUploadBufferFence;
 	HANDLE fenceHandle;
+	DxAssert(D3DClass::GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&pUploadBufferFence)), S_OK);
+	fenceHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
+
+
 
 	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Reset(D3DClass::GetCurrentCommandAllocator(), nullptr), S_OK);
 
@@ -188,25 +192,6 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	}
 	iVertexBufferSize = size * sizeof(PlaneVertex);
 	
-	
-	//create vertex buffer and its initdata
-	/*PlaneVertex planeVertices[] = {
-		{5, 0, 5, 2, 2},
-		{5, 0, -5, 2, 0},
-		{ -5, 0, 5, 0, 2 },
-		{ -5, 0, -5, 0, 0 }
-		//,
-		//{ -5, 0, 5, 0, 2 },
-		//{ 5, 0, -5, 2, 0 },
-		//{ 5, 0, 5, 2, 2 }
-		
-		//{-5, 0, 5, 0, 2},
-		//{5, 0, 5, 2, 2},
-		//{-5, 0, -5, 0, 0}
-
-	};
-	iVertexBufferSize = sizeof(planeVertices);
-	*/
 
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -260,10 +245,6 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 		squareIndex += 6;
 	}
 
-/*	DWORD indices[] = {
-		0, 1, 2,
-		2, 3, 1
-	};*/
 	iIndexBufferSize = m_iNrOfIndices * sizeof(DWORD);
 
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
@@ -302,7 +283,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 
 
-	m_pGrassTexture = new Texture(L"../Resources/dirt1024texture.jpg");//dirtMIP.png", 2);
+	m_pGrassTexture = new Texture(L"../Resources/grasstexture.png");
 
 
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
@@ -335,8 +316,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	UpdateSubresources(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD), m_pGrassTextureBuffer, pGrassTextureBufferUpploadHeap, 0, 0, 1, &textureInitData);
 	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_pGrassTextureBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
-	m_pGrassTexture->GenerateMipMaps(m_pGrassTextureBuffer, 10, pFrameBuffer);
-
+	m_pGrassTexture->GenerateMipMaps(m_pGrassTextureBuffer, pFrameBuffer);
 
 	textureDescriptorHeapDesc.NumDescriptors = 1;
 	textureDescriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
@@ -347,6 +327,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 	D3DClass::QueueGraphicsCommandList(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD));
 	D3DClass::ExecuteGraphicsCommandLists();
+	D3DClass::GetCommandQueue()->Signal(pUploadBufferFence, 1);
 
 
 	m_vertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
@@ -361,9 +342,8 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	grassTextureSRVDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	grassTextureSRVDesc.Format = m_pGrassTexture->GetTextureDesc()->Format;
 	grassTextureSRVDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-	grassTextureSRVDesc.Texture2D.MipLevels = 7;
+	grassTextureSRVDesc.Texture2D.MipLevels = -1;
 	grassTextureSRVDesc.Texture2D.MostDetailedMip = 0;
-	//grassTextureSRVDesc.Texture2D.ResourceMinLODClamp = 0;
 	
 	
 	D3DClass::GetDevice()->CreateShaderResourceView(m_pGrassTextureBuffer, &grassTextureSRVDesc, m_pTextureDH->GetCPUDescriptorHandleForHeapStart());
@@ -393,26 +373,28 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 	
 
-
-
-
 	//release vertexbuffer upload heap
-	DxAssert(D3DClass::GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&pUploadBufferFence)), S_OK);
-	fenceHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	DxAssert(pUploadBufferFence->Signal(1), S_OK);
+	
 	DxAssert(pUploadBufferFence->SetEventOnCompletion(1, fenceHandle), S_OK);
 	
 	WaitForSingleObject(fenceHandle, INFINITE);
 	
-	//SAFE_RELEASE(pVertexBufferUpploadHeap);
-	//SAFE_RELEASE(pIndexBufferUploadHeap);
-	//SAFE_RELEASE(pGrassTextureBufferUpploadHeap);
+	SAFE_RELEASE(pVertexBufferUpploadHeap);
+	SAFE_RELEASE(pIndexBufferUploadHeap);
+	SAFE_RELEASE(pGrassTextureBufferUpploadHeap);
 	SAFE_RELEASE(pUploadBufferFence);
 	if (m_pGrassTexture)
 	{
 		delete m_pGrassTexture;
 		m_pGrassTexture = nullptr;
 	}
+	if (heightMap)
+	{
+		delete heightMap;
+	}
+
+	delete[] planeVertices;
+	delete[] indices;
 }
 
 Plane::~Plane()
@@ -438,7 +420,8 @@ Plane::~Plane()
 
 void Plane::Update(Camera * camera)
 {
-	DirectX::XMMATRIX transposedWVPMat = DirectX::XMMatrixTranspose(camera->GetVPMatrix());
+	
+	DirectX::XMMATRIX transposedWVPMat = DirectX::XMMatrixTranspose(camera->GetVPMatrix());//DirectX::XMMatrixMultiplyTranspose(DirectX::XMMatrixTranslation(-20, -20, -20), camera->GetVPMatrix());
 	DirectX::XMStoreFloat4x4(&m_wvpMat.wvpMat, transposedWVPMat);
 	memcpy(m_pWVPGPUAdress[D3DClass::GetFrameIndex()], &m_wvpMat, sizeof(m_wvpMat));
 

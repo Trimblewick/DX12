@@ -33,7 +33,8 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 
 	ID3D12Fence* pUploadBufferFence;
 	HANDLE fenceHandle;
-
+	DxAssert(D3DClass::GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&pUploadBufferFence)), S_OK);
+	fenceHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
 	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Reset(D3DClass::GetCurrentCommandAllocator(), nullptr), S_OK);
 
@@ -148,7 +149,7 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 	SAFE_RELEASE(pPSblob);
 
 	const int nrOfStraws = 2;
-	const int nrOfSectionsInStraw = 3;
+	const int nrOfSectionsInStraw = 4;
 	Vertex patch[nrOfStraws * nrOfSectionsInStraw];
 	for (int i = 0; i < nrOfStraws * nrOfSectionsInStraw; i += nrOfSectionsInStraw)
 	{
@@ -210,12 +211,13 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 		&CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pGrassBladesListVertexBuffer,
 			D3D12_RESOURCE_STATE_COPY_DEST,
-			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
+			D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 
 
 	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Close(), S_OK);
 	D3DClass::QueueGraphicsCommandList(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD));
 	D3DClass::ExecuteGraphicsCommandLists();
+	D3DClass::GetCommandQueue()->Signal(pUploadBufferFence, 1);
 
 	m_grassBladesListVertexBufferView.BufferLocation = m_pGrassBladesListVertexBuffer->GetGPUVirtualAddress();
 	m_grassBladesListVertexBufferView.SizeInBytes = iVertexBufferSize;
@@ -244,9 +246,8 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 
 	}
 
-	DxAssert(D3DClass::GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&pUploadBufferFence)), S_OK);
-	fenceHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
-	DxAssert(pUploadBufferFence->Signal(1), S_OK);
+	
+
 	DxAssert(pUploadBufferFence->SetEventOnCompletion(1, fenceHandle), S_OK);
 	WaitForSingleObject(fenceHandle, INFINITE);
 

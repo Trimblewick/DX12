@@ -33,6 +33,7 @@ private:
 	
 
 	ID3D12Resource*						m_pGrassBladesListVertexBuffer;
+	
 	D3D12_VERTEX_BUFFER_VIEW			m_grassBladesListVertexBufferView;
 	ID3D12DescriptorHeap*				m_pGrassBladeInstancesDH;
 	//ID3D12DescriptorHeap*				m_pGrassBladesTextureDH;
