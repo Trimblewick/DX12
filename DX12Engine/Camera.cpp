@@ -61,7 +61,7 @@ void Camera::Update(Input * input)
 		if (!input->IsKeyDown(Input::RIGHT_ARROW))
 		{
 			DirectX::XMVECTOR tempForward = DirectX::XMLoadFloat3(&m_forward);
-			DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(0.001);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
+			DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(0.01);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
 			tempForward = DirectX::XMVector3Transform(tempForward, rotMat);
 			DirectX::XMFLOAT3 p;
 			DirectX::XMStoreFloat3(&p, tempForward);
@@ -75,7 +75,7 @@ void Camera::Update(Input * input)
 	else if (input->IsKeyDown(Input::RIGHT_ARROW))
 	{
 		DirectX::XMVECTOR tempForward = DirectX::XMLoadFloat3(&m_forward);
-		DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(-0.001);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
+		DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(-0.01);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
 		tempForward = DirectX::XMVector3Transform(tempForward, rotMat);
 		DirectX::XMFLOAT3 p;
 		DirectX::XMStoreFloat3(&p, tempForward);
@@ -88,23 +88,23 @@ void Camera::Update(Input * input)
 	}
 	if (input->IsKeyDown(Input::UP_ARROW) && distance > 3)
 	{	
-		offsX += m_forward.x * 0.01;
-		offsY += m_forward.y * 0.01;
-		offsZ += m_forward.z * 0.01;
+		offsX += m_forward.x * 0.1;
+		offsY += m_forward.y * 0.1;
+		offsZ += m_forward.z * 0.1;
 	}
-	if (input->IsKeyDown(Input::DOWN_ARROW) && distance < 100)
+	if (input->IsKeyDown(Input::DOWN_ARROW) && distance < 1000)
 	{
-		offsX -= m_forward.x * 0.01;
-		offsY -= m_forward.y * 0.01;
-		offsZ -= m_forward.z * 0.01;
+		offsX -= m_forward.x * 0.1;
+		offsY -= m_forward.y * 0.1;
+		offsZ -= m_forward.z * 0.1;
 	}
 	if (input->IsKeyDown(Input::SPACE))
 	{
-		offsY += 0.01;
+		offsY += 0.1;
 	}
 	if (input->IsKeyDown(Input::CTRL))
 	{
-		offsY -= 0.01;
+		offsY -= 0.1;
 	}
 	if (offsX != 0 || offsY != 0 || offsZ != 0)
 	{
@@ -136,4 +136,9 @@ D3D12_RECT Camera::GetScissorRect()
 DirectX::XMMATRIX Camera::GetVPMatrix()
 {
 	return DirectX::XMLoadFloat4x4(&m_viewMatrix) * DirectX::XMLoadFloat4x4(&m_projMatrix);
+}
+
+DirectX::XMFLOAT3 Camera::GetPosition()
+{
+	return m_position;
 }

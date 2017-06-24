@@ -264,12 +264,12 @@ int Texture::LoadImageDataFromFile()
 	m_textureDesc.Width = m_uiWidth; // width of the texture
 	m_textureDesc.Height = m_uiHeight; // height of the texture
 	m_textureDesc.DepthOrArraySize = 1; // if 3d image, depth of 3d image. Otherwise an array of 1D or 2D textures (we only have one image, so we set 1)
-	m_textureDesc.MipLevels = 10; // Number of mipmaps. We are not generating mipmaps for this texture, so we have only one level
+	m_textureDesc.MipLevels = 1; // Number of mipmaps. We are not generating mipmaps for this texture, so we have only one level
 	m_textureDesc.Format = dxgiFormat; // This is the dxgi format of the image (format of the pixels)
 	m_textureDesc.SampleDesc.Count = 1; // This is the number of samples per pixel, we just want 1 sample
 	m_textureDesc.SampleDesc.Quality = 0; // The quality level of the samples. Higher is better quality, but worse performance
 	m_textureDesc.Layout = D3D12_TEXTURE_LAYOUT_UNKNOWN; // The arrangement of the pixels. Setting to unknown lets the driver choose the most efficient one
-	m_textureDesc.Flags = D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS; // no flags
+	m_textureDesc.Flags = D3D12_RESOURCE_FLAG_NONE;//ALLOW_UNORDERED_ACCESS; // no flags
 
 	m_iTextureSize = imageSize;				// return the size of the image. remember to delete the image once your done with it (in this tutorial once its uploaded to the gpu)
 	return imageSize;
@@ -277,7 +277,6 @@ int Texture::LoadImageDataFromFile()
 
 void Texture::GenerateMipMaps(ID3D12Resource* pGPUresource, FrameBuffer* pFrameBuffer)
 {
-	
 	m_pMipmapCbvRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
 	m_pMipmapCbvRange[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);
 
@@ -361,6 +360,7 @@ void Texture::GenerateMipMaps(ID3D12Resource* pGPUresource, FrameBuffer* pFrameB
 	pCL->SetPipelineState(m_pMipMapPSO);
 	pCL->SetDescriptorHeaps(1, &m_pMipMapDH);
 
+	//assuming the resource(texture2d) is a shader resource
 	pCL->ResourceBarrier(
 		1, 
 		&CD3DX12_RESOURCE_BARRIER::Transition(
@@ -390,6 +390,7 @@ void Texture::GenerateMipMaps(ID3D12Resource* pGPUresource, FrameBuffer* pFrameB
 	for (uint32_t i = 0; i < m_iMipLevels - 1; ++i)
 	{
 		//assuming textures are squared, make bit shift to get lesser dim.
+
 		unsigned int destWidth = (m_uiWidth >> (i + 1)) > 1 ? m_uiWidth >> (i + 1) : 1;
 		unsigned int destHeight = (m_uiHeight >> (i + 1)) > 1 ? m_uiHeight >> (i + 1) : 1;
 

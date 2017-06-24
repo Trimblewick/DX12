@@ -22,7 +22,21 @@ public:
 	};
 
 
+	//Union used for shader constants
+	struct DWParam
+	{
+		DWParam(FLOAT f) : Float(f) {}
+		DWParam(UINT u) : Uint(u) {}
 
+		void operator= (FLOAT f) { Float = f; }
+		void operator= (UINT u) { Uint = u; }
+
+		union
+		{
+			FLOAT Float;
+			UINT Uint;
+		};
+	};
 public:
 	Plane(FrameBuffer* pFrameBuffer);
 	~Plane();
@@ -41,14 +55,16 @@ private:
 
 	ID3D12Resource*							m_pIndexBuffer;
 	D3D12_INDEX_BUFFER_VIEW					m_indexBufferView;
-	int										m_iNrOfIndices;
+	UINT									m_uiNrOfIndices;
 
 	WVPMatrixBufferStruct					m_wvpMat;
 	ID3D12Resource*							m_pWVPMatUpploadHeaps[g_cFrameBufferCount];
 	UINT8*									m_pWVPGPUAdress[g_cFrameBufferCount];
 
-	Texture*								m_pGrassTexture;
-	ID3D12Resource*							m_pGrassTextureBuffer;
+	ID3D12Resource*							m_pHeightBuffer;
+	ID3D12Resource*							m_pTextureBuffer;
 	ID3D12DescriptorHeap*					m_pTextureDH;
+	UINT									m_uiTextureDescriptorSize;
+
 };
 

@@ -19,6 +19,7 @@ public:
 
 	DirectX::XMMATRIX GetVPMatrix();
 
+	DirectX::XMFLOAT3 GetPosition();
 
 private:
 
