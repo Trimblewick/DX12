@@ -61,7 +61,7 @@ void Camera::Update(Input * input)
 		if (!input->IsKeyDown(Input::RIGHT_ARROW))
 		{
 			DirectX::XMVECTOR tempForward = DirectX::XMLoadFloat3(&m_forward);
-			DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(0.01);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
+			DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(0.001);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
 			tempForward = DirectX::XMVector3Transform(tempForward, rotMat);
 			DirectX::XMFLOAT3 p;
 			DirectX::XMStoreFloat3(&p, tempForward);
@@ -75,7 +75,7 @@ void Camera::Update(Input * input)
 	else if (input->IsKeyDown(Input::RIGHT_ARROW))
 	{
 		DirectX::XMVECTOR tempForward = DirectX::XMLoadFloat3(&m_forward);
-		DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(-0.01);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
+		DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(-0.001);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
 		tempForward = DirectX::XMVector3Transform(tempForward, rotMat);
 		DirectX::XMFLOAT3 p;
 		DirectX::XMStoreFloat3(&p, tempForward);

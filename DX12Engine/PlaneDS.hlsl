@@ -46,7 +46,7 @@ DS_OUTPUT main(
     float hs = heightMap.SampleLevel(heightSamp, uvs, 0).r;
 
     float3 pos = patch[0].vPosition * domain.x + patch[1].vPosition * domain.y + patch[2].vPosition * domain.z;
-    //pos.y += hs * 100;
+    pos.y += hs * 100;
     Output.vPosition = mul(float4(pos, 1), wvpMat);
 
 

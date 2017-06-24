@@ -177,7 +177,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 	rootparameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
 	rootparameters[2].DescriptorTable = heightmapDescriptorTable;
-	rootparameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_DOMAIN;
+	rootparameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
 	rootparameters[3].InitAsConstants(3, 1, 0, D3D12_SHADER_VISIBILITY_HULL);// ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 	//rootparameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_HULL;
@@ -210,7 +210,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	heightmapSampler.MaxLOD = D3D12_FLOAT32_MAX;
 	heightmapSampler.ShaderRegister = 1;
 	heightmapSampler.RegisterSpace = 0;
-	heightmapSampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_DOMAIN;
+	heightmapSampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 	
 	D3D12_STATIC_SAMPLER_DESC samplers[] = { textureSampler, heightmapSampler };
 

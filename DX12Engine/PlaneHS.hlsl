@@ -1,3 +1,7 @@
+Texture2D heightMap : register(t1);
+SamplerState heightSamp : register(s1);
+
+
 cbuffer MatrixBuffer : register(b0)
 {
     float4x4 wvpMat;
@@ -43,22 +47,23 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(
 	HS_CONSTANT_DATA_OUTPUT Output;
 
 	
-    float3 c = ip[0].position;
-    //+ip[1].position + ip[2].position;
-	//c = c / 3;
-    //c = mul(float4(c, 1), wvpMat);
-    //float4 p = mul(float4(cameraPostion, 1), wvpMat);
-    
-    float d = length(cameraPostion - c.xyz);
-    //ip[0].position);
+    float3 c = ip[0].position + ip[1].position + ip[2].position;
+    c /= 3;
+    float2 uvs = ip[0].uv + ip[1].uv + ip[2].uv;
+    uvs /= 300;
+    float y = heightMap.SampleLevel(heightSamp, uvs, 0).r;
 
-    float f = min(5.0f/d, 10.0f); //min(1.0f / d, 10.0f);
+    c.y += y * 100;
+   
+    float d = length(cameraPostion - c.xyz);
+
+    float f = min(75.0f/d, 10.0f);
 
 
 	// Insert code to compute Output here
-    Output.EdgeTessFactor[0] = 
-    Output.EdgeTessFactor[1] = 
-	Output.EdgeTessFactor[2] = 
+    Output.EdgeTessFactor[0] =
+        Output.EdgeTessFactor[1] =
+	    Output.EdgeTessFactor[2] = 
 	    Output.InsideTessFactor = f;	// e.g. could calculate dynamic tessellation factors instead
 
 	return Output;
