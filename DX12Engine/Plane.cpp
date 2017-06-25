@@ -8,10 +8,12 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	D3D12_SHADER_BYTECODE psByteCode = {};
 	D3D12_SHADER_BYTECODE hsByteCode = {};
 	D3D12_SHADER_BYTECODE dsByteCode = {};
+	D3D12_SHADER_BYTECODE gsByteCode = {};
 	ID3DBlob* pVSblob = nullptr;
 	ID3DBlob* pPSblob = nullptr;
 	ID3DBlob* pHSblob = nullptr;
 	ID3DBlob* pDSblob = nullptr;
+	ID3DBlob* pGSblob = nullptr;
 	ID3DBlob* pEblob = nullptr;
 
 	D3D12_INPUT_ELEMENT_DESC inputLayoutElementDesc[] = {
@@ -143,6 +145,26 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	dsByteCode.BytecodeLength = pDSblob->GetBufferSize();
 	dsByteCode.pShaderBytecode = pDSblob->GetBufferPointer();
 
+	//compile geometryshader
+	hr = D3DCompileFromFile(
+		L"PlaneGS.hlsl",
+		nullptr,
+		nullptr,
+		"main",
+		"gs_5_0",
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,
+		0,
+		&pDSblob,
+		&pEblob);
+	if (FAILED(hr))
+	{
+		OutputDebugStringA((char*)pEblob->GetBufferPointer());
+		return;
+	}
+
+	gsByteCode.BytecodeLength = pDSblob->GetBufferSize();
+	gsByteCode.pShaderBytecode = pDSblob->GetBufferPointer();
+
 
 
 
@@ -179,7 +201,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	rootparameters[2].DescriptorTable = heightmapDescriptorTable;
 	rootparameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	rootparameters[3].InitAsConstants(3, 1, 0, D3D12_SHADER_VISIBILITY_HULL);// ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	rootparameters[3].InitAsConstants(3, 1, 0);// , D3D12_SHADER_VISIBILITY_HULL);// ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 	//rootparameters[3].ShaderVisibility = D3D12_SHADER_VISIBILITY_HULL;
 	
 
@@ -218,8 +240,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 		rootparameters,
 		_countof(samplers),
 		samplers,
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS);
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	ID3DBlob* sig;
 	DxAssert(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &sig, nullptr), S_OK);
 
@@ -235,6 +256,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	psoDesc.PS = psByteCode;
 	psoDesc.HS = hsByteCode;
 	psoDesc.DS = dsByteCode;
+	psoDesc.GS = gsByteCode;
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 	psoDesc.SampleDesc = tempSwapChainDesc.SampleDesc;
@@ -245,7 +267,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
-	psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
+	//psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
 
 	DxAssert(D3DClass::GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pPSO)), S_OK);
 
@@ -369,7 +391,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 
 
-	
+	//grasstexture.png		dirt1024texture.jpg
 	pPlaneTexture = new Texture(L"../Resources/dirt1024texture.jpg");
 
 	D3D12_RESOURCE_DESC planeResourceDesc = *pPlaneTexture->GetTextureDesc();
