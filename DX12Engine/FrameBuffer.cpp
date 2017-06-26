@@ -12,13 +12,12 @@ FrameBuffer::~FrameBuffer()
 
 bool FrameBuffer::Initialize()
 {
-	ID3D12GraphicsCommandList* pCL;
+	ID3D12GraphicsCommandList* pCL = nullptr;
 
 	D3DClass::GetDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, D3DClass::GetCurrentCommandAllocator(), NULL, IID_PPV_ARGS(&pCL));
-
 	m_pGraphicsCommandLists.push_back(pCL);
-
 	DxAssert(pCL->Close(), S_OK);
+	
 
 	//Create a descriptor heap for depthstencil
 	D3D12_DESCRIPTOR_HEAP_DESC depthStencilStateDescriptorHeadpDesc = {};
@@ -121,4 +120,9 @@ D3D12_CPU_DESCRIPTOR_HANDLE * FrameBuffer::GetRTVHandle()
 ID3D12GraphicsCommandList * FrameBuffer::GetGraphicsCommandList(PIPELINES i)
 {
 	return m_pGraphicsCommandLists[i];
+}
+
+ID3D12DescriptorHeap * FrameBuffer::GetDescriptorHeap()
+{
+	return m_pDepthStencilsDescriptorHeaps[0];
 }

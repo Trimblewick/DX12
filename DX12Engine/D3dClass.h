@@ -47,7 +47,7 @@ public:
 	static ID3D12Fence* GetCurrentFence();
 	static UINT64 GetCurrentFenceValue();
 
-	static ID3D12GraphicsCommandList* GetNewOffGraphicsCommandList(_In_opt_ ID3D12PipelineState* pso);
+	//static ID3D12GraphicsCommandList* GetNewOffGraphicsCommandList(_In_opt_ ID3D12PipelineState* pso = nullptr);
 
 	static void QueueGraphicsCommandList(ID3D12CommandList* pCL);
 	static void ExecuteGraphicsCommandLists();
@@ -59,7 +59,6 @@ private:
 	static ID3D12CommandQueue*			s_pCommandQueue;
 
 	static D3D12_CPU_DESCRIPTOR_HANDLE* s_pRTVHandle;//pointer to allocated memory for the GetRTVDescriptorHande() function.
-	//static ID3D12CommandList*			m_pClearColorBundle;
 
 	static std::vector<ID3D12CommandList*> _pGraphicsCommandLists;
 

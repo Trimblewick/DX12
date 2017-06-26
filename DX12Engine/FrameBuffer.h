@@ -24,10 +24,12 @@ public:
 
 
 	void SetRTVHandle(D3D12_CPU_DESCRIPTOR_HANDLE* pRTVHandle);
+
 	D3D12_CPU_DESCRIPTOR_HANDLE* GetRTVHandle();
 
 	ID3D12GraphicsCommandList*								GetGraphicsCommandList(PIPELINES i);
 
+	ID3D12DescriptorHeap*									GetDescriptorHeap();
 private:
 	D3D12_CPU_DESCRIPTOR_HANDLE* _pRTVHandle;//pointer to allocated memory for the D3DClass::GetRTVDescriptorHande() function.
 

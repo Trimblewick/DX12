@@ -20,13 +20,16 @@ private:
 		DirectX::XMFLOAT4X4 wvpMat;
 	};
 public:
-	GrassBlades(FrameBuffer* pFrameBuffer);
+	GrassBlades();
 	~GrassBlades();
 
 	void Update(Camera* camera);
 	void Draw(FrameBuffer* pFrameBuffer, Camera* camera);
 
 private:
+	ID3D12CommandAllocator*				m_pCA;
+	ID3D12GraphicsCommandList*			m_pCL;
+
 	ID3D12PipelineState*				m_pPSO;
 
 	ID3D12RootSignature*				m_pRootSignature;

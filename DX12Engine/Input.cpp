@@ -24,7 +24,7 @@ bool Input::Initialize()
 void Input::KeyDown(unsigned int const keyIndex)
 {
 	// If a key is pressed then save that state in the key array.
-	//if (keyIndex >= 0 && keyIndex <= 256)
+	if (keyIndex >= 0 && keyIndex <= 256)
 		m_bKeys[keyIndex] = true;
 	
 	return;
@@ -35,7 +35,7 @@ void Input::KeyUp(unsigned int const keyIndex)
 {
 	// If a key is released then clear that state in the key array.
 	int test = keyIndex;
-	//if (keyIndex >= 0 && keyIndex <= 256)
+	if (keyIndex >= 0 && keyIndex <= 256)
 		m_bKeys[keyIndex] = false;
 	
 	return;

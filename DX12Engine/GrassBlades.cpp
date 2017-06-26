@@ -1,7 +1,7 @@
 #include "GrassBlades.h"
 
 
-GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
+GrassBlades::GrassBlades()
 {
 	HRESULT hr;
 	D3D12_SHADER_BYTECODE vsByteCode = {};
@@ -36,7 +36,8 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 	DxAssert(D3DClass::GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&pUploadBufferFence)), S_OK);
 	fenceHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
-	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Reset(D3DClass::GetCurrentCommandAllocator(), nullptr), S_OK);
+	DxAssert(D3DClass::GetDevice()->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&m_pCA)), S_OK);
+	DxAssert(D3DClass::GetDevice()->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_pCA, nullptr, IID_PPV_ARGS(&m_pCL)), S_OK);
 
 	//compile vertexshader
 	hr = D3DCompileFromFile(
@@ -133,7 +134,7 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 	psoDesc.VS = vsByteCode;
 	psoDesc.GS = gsByteCode;
 	psoDesc.PS = psByteCode;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_POINT;
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 	psoDesc.SampleDesc = tempSwapChainDesc.SampleDesc;
 	psoDesc.SampleMask = 0xffffffff;
@@ -204,18 +205,18 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 	vertexInitData.RowPitch = iVertexBufferSize;
 	vertexInitData.SlicePitch = iVertexBufferSize;
 
-	UpdateSubresources(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD), m_pGrassBladesListVertexBuffer, pGrassBladesVertexBufferUploadHeap, 0, 0, 1, &vertexInitData);
+	UpdateSubresources(m_pCL, m_pGrassBladesListVertexBuffer, pGrassBladesVertexBufferUploadHeap, 0, 0, 1, &vertexInitData);
 
-	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->ResourceBarrier(
+	m_pCL->ResourceBarrier(
 		1,
 		&CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pGrassBladesListVertexBuffer,
 			D3D12_RESOURCE_STATE_COPY_DEST,
-			D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
+			D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 
 
-	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Close(), S_OK);
-	D3DClass::QueueGraphicsCommandList(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD));
+	DxAssert(m_pCL->Close(), S_OK);
+	D3DClass::QueueGraphicsCommandList(m_pCL);
 	D3DClass::ExecuteGraphicsCommandLists();
 	D3DClass::GetCommandQueue()->Signal(pUploadBufferFence, 1);
 
@@ -253,7 +254,11 @@ GrassBlades::GrassBlades(FrameBuffer* pFrameBuffer)
 
 	SAFE_RELEASE(pGrassBladesVertexBufferUploadHeap);
 	SAFE_RELEASE(pUploadBufferFence);
-
+	
+	//OK WTF, DO SOMETHING WITH THIS??!
+	//DISASTER
+	SAFE_RELEASE(m_pCL);
+	SAFE_RELEASE(m_pCA);
 
 }
 
@@ -279,22 +284,32 @@ void GrassBlades::Update(Camera * camera)
 	return;
 }
 
-void GrassBlades::Draw(FrameBuffer * pFrameBuffer, Camera* camera)
+void GrassBlades::Draw(FrameBuffer* pFrameBuffer, Camera* camera)
 {
-	ID3D12GraphicsCommandList* pCL = pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD);
+	//DxAssert(m_pCL->Reset(m_pCA, m_pPSO), S_OK);
 
-	pCL->SetGraphicsRootSignature(m_pRootSignature);
-	pCL->SetPipelineState(m_pPSO);
+	/*D3D12_CPU_DESCRIPTOR_HANDLE* rtvHandle = D3DClass::GetRTVDescriptorHandle();
+	D3D12_CPU_DESCRIPTOR_HANDLE depthHande = pFrameBuffer->GetDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
+	m_pCL->OMSetRenderTargets(1, rtvHandle, false, &depthHande);*/
 
-	pCL->RSSetViewports(1, &camera->GetViewport());
-	pCL->RSSetScissorRects(1, &camera->GetScissorRect());
+	m_pCL = pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD);
 
-	pCL->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	pCL->IASetVertexBuffers(0, 1, &m_grassBladesListVertexBufferView);
+	m_pCL->SetGraphicsRootSignature(m_pRootSignature);
+	m_pCL->SetPipelineState(m_pPSO);
 
-	pCL->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[D3DClass::GetFrameIndex()]->GetGPUVirtualAddress());
+	m_pCL->RSSetViewports(1, &camera->GetViewport());
+	m_pCL->RSSetScissorRects(1, &camera->GetScissorRect());
 
-	pCL->DrawInstanced(6, 1, 0, 0);
+	m_pCL->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_POINTLIST);
+	m_pCL->IASetVertexBuffers(0, 1, &m_grassBladesListVertexBufferView);
+
+	m_pCL->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[D3DClass::GetFrameIndex()]->GetGPUVirtualAddress());
+
+	m_pCL->DrawInstanced(8, 1, 0, 0);
+
+	//DxAssert(m_pCL->Close(), S_OK);
+	//D3DClass::QueueGraphicsCommandList(m_pCL);
+
 
 	return;
 }

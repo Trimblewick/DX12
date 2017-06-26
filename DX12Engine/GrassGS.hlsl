@@ -15,28 +15,28 @@ cbuffer MatrixBuffer : register(b0)
     float padding[48];
 };
 
-[maxvertexcount(18)]
+[maxvertexcount(36)]
 void main(
-	triangle GS_INPUT input[3], 
+	point GS_INPUT input[1], 
 	inout TriangleStream<GS_OUTPUT> output
 )
 {
     GS_OUTPUT element;
-    float4 p = mul(float4(0, 0, 0, 1), wvpMat);
-    //mul(float4(input[0].position, 1), wvpMat);
+    float4 p = float4(input[0].position, 1.0f);
+    //float4(0, 0, 0, 1); //mul(float4(input[0].position, 1), wvpMat);
     
-    element.position = (p + float4(0.1f, 0, 0, 0));
+    element.position = mul((p + float4(0.1f, 0, 0, 0)), wvpMat);
     output.Append(element);
-    element.position = (p + float4(-0.1f, 0, 0, 0));
+    element.position = mul((p + float4(-0.1f, 0, 0, 0)), wvpMat);
     output.Append(element);
-    element.position = (p + float4(0.1f, 0.1f, 0, 0));
+    element.position = mul((p + float4(0.1f, 0.1f, 0, 0)), wvpMat);
     output.Append(element);
     output.RestartStrip();
-    element.position = (p + float4(0.1f, 0.1f, 0, 0));
+    element.position = mul((p + float4(0.1f, 0.1f, 0, 0)), wvpMat);
     output.Append(element);
-    element.position = (p + float4(-0.1f, 0.0f, 0, 0));
+    element.position = mul((p + float4(-0.1f, 0.0f, 0, 0)), wvpMat);
     output.Append(element);
-    element.position = (p + float4(-0.1f, 0.1f, 0, 0));
+    element.position = mul((p + float4(-0.1f, 0.1f, 0, 0)), wvpMat);
     output.Append(element);
     
     output.RestartStrip();

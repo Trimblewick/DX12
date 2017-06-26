@@ -271,8 +271,6 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 
 	DxAssert(D3DClass::GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pPSO)), S_OK);
 
-	SAFE_RELEASE(pVSblob);
-	SAFE_RELEASE(pPSblob);
 
 	pHeightMap = new Texture(L"../Resources/h.png");
 	BYTE* data = pHeightMap->GetTextureData();
