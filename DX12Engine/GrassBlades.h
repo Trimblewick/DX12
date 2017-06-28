@@ -4,15 +4,18 @@
 #include "FrameBuffer.h"
 #include "Camera.h"
 #include <random>
+#include <ctime>
 
 class GrassBlades
 {
 private:
-	struct Vertex 
+	struct StructGrass
 	{
-		Vertex() : position(0, 0, 0) {}
-		Vertex(float x, float y, float z) : position(x, y, z) {}
-		DirectX::XMFLOAT3 position;
+		/*Vertex() : position(0, 0, 0) {}
+		Vertex(float x, float y, float z) : position(x, y, z) {}*/
+		DirectX::XMFLOAT4 position[4];
+		DirectX::XMFLOAT4 binormal;
+		DirectX::XMFLOAT4 seed;
 	};
 
 	struct WVPMatrixBufferStruct
@@ -27,6 +30,8 @@ public:
 	void Draw(FrameBuffer* pFrameBuffer, Camera* camera);
 
 private:
+	unsigned int						m_uiGrassInstances; //nr of straws * nr of section in straws --> for the drawcall
+
 	ID3D12CommandAllocator*				m_pCA;
 	ID3D12GraphicsCommandList*			m_pCL;
 
@@ -35,11 +40,13 @@ private:
 	ID3D12RootSignature*				m_pRootSignature;
 	
 
-	ID3D12Resource*						m_pGrassBladesListVertexBuffer;
+	ID3D12Resource*						m_pBufferGrassBladesList;
 	
-	D3D12_VERTEX_BUFFER_VIEW			m_grassBladesListVertexBufferView;
-	ID3D12DescriptorHeap*				m_pGrassBladeInstancesDH;
-	//ID3D12DescriptorHeap*				m_pGrassBladesTextureDH;
+	D3D12_UNORDERED_ACCESS_VIEW_DESC	m_UAVdescGrassBlades;
+	ID3D12DescriptorHeap*				m_pDHGrassBlade;
+	UINT								m_uiDHsize;
+	CD3DX12_ROOT_PARAMETER*				m_pRootParameters[1];
+	CD3DX12_DESCRIPTOR_RANGE*			m_pDHrange[1];
 
 
 	WVPMatrixBufferStruct					m_wvpMat;

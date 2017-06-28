@@ -1,6 +1,7 @@
 struct GS_INPUT
 {
-    float3 position : POSITION;
+    //float3 position : POSITION;
+    uint index : INDEX;
 };
 
 struct GS_OUTPUT
@@ -8,6 +9,14 @@ struct GS_OUTPUT
 	float4 position : SV_POSITION;
 };
 
+struct StructGrass
+{
+    float4 position[4];
+    float4 binormal;
+    float4 seed;
+};
+
+RWStructuredBuffer<StructGrass> patch : register(u0);
 
 cbuffer MatrixBuffer : register(b0)
 {
@@ -15,50 +24,57 @@ cbuffer MatrixBuffer : register(b0)
     float padding[48];
 };
 
-[maxvertexcount(36)]
+[maxvertexcount(128)]
 void main(
 	point GS_INPUT input[1], 
 	inout TriangleStream<GS_OUTPUT> output
 )
 {
+    uint index = input[0].index;
+
+    float4 binormalWS = mul(patch[index].binormal, wvpMat);
+
     GS_OUTPUT element;
-    float4 p = float4(input[0].position, 1.0f);
-    //float4(0, 0, 0, 1); //mul(float4(input[0].position, 1), wvpMat);
+
+    float4 wp[4]; 
+    for (int i = 0; i < 4; ++i)
+    {
+        wp[i] = mul(patch[index].position[i], wvpMat);
+    }
+ /*       wp[1] = mul(patch[index].position[1], wvpMat);
+    wp[2] = mul(patch[index].position[2], wvpMat);
+    wp[3] = mul(patch[index].position[3], wvpMat);*/
     
-    element.position = mul((p + float4(0.1f, 0, 0, 0)), wvpMat);
-    output.Append(element);
-    element.position = mul((p + float4(-0.1f, 0, 0, 0)), wvpMat);
-    output.Append(element);
-    element.position = mul((p + float4(0.1f, 0.1f, 0, 0)), wvpMat);
-    output.Append(element);
-    output.RestartStrip();
-    element.position = mul((p + float4(0.1f, 0.1f, 0, 0)), wvpMat);
-    output.Append(element);
-    element.position = mul((p + float4(-0.1f, 0.0f, 0, 0)), wvpMat);
-    output.Append(element);
-    element.position = mul((p + float4(-0.1f, 0.1f, 0, 0)), wvpMat);
-    output.Append(element);
-    
-    output.RestartStrip();
-    
-	/*for (uint i = 0; i < 2; i++)
-	{
-        float4 p = mul(float4(input[i].position, 1), wvpMat);
-        float4 p2 = mul(float4(input[i + 1].position, 1), wvpMat);
-        element.position = p + float4(0.05f, 0.0f, 0.0f, 0.0f);
+    for (int i = 0; i < 3; ++i)
+    {
+        element.position = wp[i] + patch[index].seed[i] * binormalWS;
         output.Append(element);
-        element.position = p + float4(-0.05f, 0.0f, 0.0f, 0.0f);
-		output.Append(element);
-        element.position = p + float4(0.05f, p2.y - p.y, 0.0f, 0.0f);
+        element.position = wp[i + 1] + patch[index].seed[i + 1] * binormalWS;
+        output.Append(element);
+        element.position = wp[i] - patch[index].seed[i] * binormalWS;
         output.Append(element);
         output.RestartStrip();
-        element.position = p + float4(0.05f, 0.0f, 0.0f, 0.0f);
+        element.position = wp[i + 1] + patch[index].seed[i + 1] * binormalWS;
         output.Append(element);
-        element.position = p + float4(0.05f, p2.y - p.y, 0.0f, 0.0f);
+        element.position = wp[i] - patch[index].seed[i] * binormalWS;
         output.Append(element);
-        element.position = p + float4(-0.05f, p2.y - p.y, 0.0f, 0.0f);
+        element.position = wp[i + 1] - patch[index].seed[i + 1] * binormalWS;
         output.Append(element);
         output.RestartStrip();
-    }*/
-    
+        element.position = wp[i] + patch[index].seed[i] * binormalWS;
+        output.Append(element);
+        element.position = wp[i] - patch[index].seed[i] * binormalWS;
+        output.Append(element);
+        element.position = wp[i + 1] + patch[index].seed[i + 1] * binormalWS;
+        output.Append(element);
+        output.RestartStrip();
+        element.position = wp[i + 1] + patch[index].seed[i + 1] * binormalWS;
+        output.Append(element);
+        element.position = wp[i + 1] - patch[index].seed[i + 1] * binormalWS;
+        output.Append(element);
+        element.position = wp[i] - patch[index].seed[i] * binormalWS;
+        output.Append(element);
+        output.RestartStrip();
+    }
+
 }

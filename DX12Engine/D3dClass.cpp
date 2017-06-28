@@ -240,7 +240,7 @@ void D3DClass::Cleanup()
 		delete s_pRTVHandle;
 		s_pRTVHandle = nullptr;
 	}
-	//WIERDEST LEAK EUW
+	//WIERDEST LEAK EUW?
 	//std::vector <ID3D12CommandList*> temp;
 	_pGraphicsCommandLists.clear();
 	//_vGraphicsCommandLists.swap(temp);
