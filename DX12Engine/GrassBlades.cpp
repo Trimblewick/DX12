@@ -11,26 +11,24 @@ GrassBlades::GrassBlades()
 	ID3DBlob* pGSblob = nullptr;
 	ID3DBlob* pPSblob = nullptr;
 	ID3DBlob* pEblob = nullptr;
-	/*
-	D3D12_INPUT_ELEMENT_DESC inputLayoutElementDesc[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-	//fill input layout desc
-	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
-	inputLayoutDesc.NumElements = sizeof(inputLayoutElementDesc) / sizeof(D3D12_INPUT_ELEMENT_DESC);
-	inputLayoutDesc.pInputElementDescs = inputLayoutElementDesc;*/
 
 	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
 
 	D3D12_ROOT_DESCRIPTOR wvpRootDescriptor;
-	D3D12_ROOT_DESCRIPTOR uavRootDescriptor;
-	D3D12_ROOT_PARAMETER rootParameters[2];
-	D3D12_ROOT_DESCRIPTOR_TABLE grassBladesDescriptorTable;
+
+	D3D12_DESCRIPTOR_RANGE heightmapDescriptorRanges[1];
+	D3D12_STATIC_SAMPLER_DESC heightmapSampler = {};
+
+	CD3DX12_ROOT_PARAMETER rootParameters[4];
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 
+	D3D12_SHADER_RESOURCE_VIEW_DESC		SRVdescHeightMap = {};
+
 	int iVertexBufferSize;
 	ID3D12Resource* pGrassBladesVertexBufferUploadHeap;
+
+	ID3D12Resource* pHeightMapUpploadHeap;
 
 	ID3D12Fence* pUploadBufferFence;
 	HANDLE fenceHandle;
@@ -100,37 +98,44 @@ GrassBlades::GrassBlades()
 	psByteCode.BytecodeLength = pPSblob->GetBufferSize();
 	psByteCode.pShaderBytecode = pPSblob->GetBufferPointer();
 
-	wvpRootDescriptor.RegisterSpace = 0;
-	wvpRootDescriptor.ShaderRegister = 0;
+	heightmapDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	heightmapDescriptorRanges[0].NumDescriptors = 1;
+	heightmapDescriptorRanges[0].BaseShaderRegister = 0;
+	heightmapDescriptorRanges[0].RegisterSpace = 0;
+	heightmapDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-	uavRootDescriptor.RegisterSpace = 0;
-	uavRootDescriptor.ShaderRegister = 0;
+	rootParameters[0].InitAsConstantBufferView(0, 0);
+	rootParameters[1].InitAsUnorderedAccessView(0, 0);
+	rootParameters[2].InitAsConstants(4, 1, 0);
+	rootParameters[3].InitAsDescriptorTable(_countof(heightmapDescriptorRanges), heightmapDescriptorRanges);
 	
-	rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
-	rootParameters[0].Descriptor = wvpRootDescriptor;
-	rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_GEOMETRY;
 
-	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
-	rootParameters[1].Descriptor = uavRootDescriptor;
-	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	heightmapSampler.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
+	heightmapSampler.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	heightmapSampler.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	heightmapSampler.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	heightmapSampler.MipLODBias = 0;
+	heightmapSampler.MaxAnisotropy = 1;
+	heightmapSampler.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
+	heightmapSampler.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
+	heightmapSampler.MinLOD = 0.0f;
+	heightmapSampler.MaxLOD = D3D12_FLOAT32_MAX;
+	heightmapSampler.ShaderRegister = 0;
+	heightmapSampler.RegisterSpace = 0;
+	heightmapSampler.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	/*grassBladesDescriptorTable.NumDescriptorRanges = 
-
-	rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
-	rootParameters[1].DescriptorTable = grassBladesDescriptorTable;
-	rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;*/
 
 	rootSignatureDesc.Init(_countof(rootParameters),
 		rootParameters,
-		0,
-		nullptr,
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+		1,
+		&heightmapSampler,
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS);
 
 	ID3DBlob* signature;
 	DxAssert(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, nullptr), S_OK);
 	DxAssert(D3DClass::GetDevice()->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_pRootSignature)), S_OK);
+
 
 	//fetch the swapchain desc
 	DXGI_SWAP_CHAIN_DESC tempSwapChainDesc;
@@ -154,39 +159,20 @@ GrassBlades::GrassBlades()
 
 	DxAssert(D3DClass::GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pPSO)), S_OK);
 
-	/*D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
-	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAGS::D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	heapDesc.NodeMask = 0;
-	heapDesc.NumDescriptors = 1;
-	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-
-	DxAssert(D3DClass::GetDevice()->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_pDHGrassBlade)), S_OK);
-	m_uiDHsize = D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);*/
-
-
 	std::srand(std::time(0));
-	const int nrOfStraws = 1;
+	const int nrOfStraws = 16384;
 
-	m_uiGrassInstances = nrOfStraws * 4;
+	m_uiGrassInstances = nrOfStraws;
 	
-	StructGrass patch[nrOfStraws * 4];
+	StructGrass* patch =  new StructGrass[nrOfStraws];
 	DirectX::XMFLOAT4 binorm;
+	DirectX::XMFLOAT3 forward;
+	DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(0, 1, 0));
 	float length;
 	
+
 	for (int i = 0; i < nrOfStraws; ++i)
 	{
-		patch[i].position[0].x = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
-		patch[i].position[0].y = 0.0f;
-		patch[i].position[0].z = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
-		patch[i].position[0].w = 1.0f;
-		for (int j = 1; j < 4; ++j)
-		{
-			patch[i].position[j].x = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
-			patch[i].position[j].y = patch[i].position[j - 1].y + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
-			patch[i].position[j].z = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
-			patch[i].position[j].w = 1.0f;
-		}
-		
 		binorm.x = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 2 - 1;
 		binorm.z = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 2 - 1;
 		binorm.y = 0.0f;
@@ -197,13 +183,29 @@ GrassBlades::GrassBlades()
 
 		patch[i].binormal = binorm;
 
-		patch[i].seed.x = 1.0f;
-		patch[i].seed.y = 0.7f;
-		patch[i].seed.z = 0.5f;
+		DirectX::XMStoreFloat3(&forward, DirectX::XMVector3Cross(DirectX::XMLoadFloat4(&binorm), up));
+
+		patch[i].position[0].x = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+		patch[i].position[0].y = 0.0f;
+		patch[i].position[0].z = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+		patch[i].position[0].w = 1.0f;
+		for (int j = 1; j < 4; ++j)
+		{
+			patch[i].position[j].x = patch[i].position[j - 1].x + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.02f - 0.01f;
+			patch[i].position[j].y = patch[i].position[j - 1].y + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.16f;
+			patch[i].position[j].z = patch[i].position[j - 1].z + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.02f - 0.01f;
+			patch[i].position[j].w = 1.0f;
+		}
+		
+		
+
+		patch[i].seed.x = 0.015f;
+		patch[i].seed.y = 0.01f;
+		patch[i].seed.z = 0.008f;
 		patch[i].seed.w = 0.0f;
 	}
 
-	iVertexBufferSize = sizeof(patch);
+	iVertexBufferSize = sizeof(StructGrass) * m_uiGrassInstances;
 
 	m_UAVdescGrassBlades = {};
 	m_UAVdescGrassBlades.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
@@ -249,6 +251,70 @@ GrassBlades::GrassBlades()
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 
+	Texture* pHeightMap = new Texture(L"../Resources/h.png");
+
+	SRVdescHeightMap.Format = pHeightMap->GetTextureDesc()->Format;
+	SRVdescHeightMap.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	SRVdescHeightMap.Texture2D.MipLevels = 1;
+	SRVdescHeightMap.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+
+	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE,
+		pHeightMap->GetTextureDesc(),
+		D3D12_RESOURCE_STATE_COPY_DEST,
+		nullptr,
+		IID_PPV_ARGS(&m_pTextureHeightMap)), S_OK);
+	m_pTextureHeightMap->SetName(L"heightmap resource heap");
+
+	UINT64 ui64HeightMapSize;
+	D3DClass::GetDevice()->GetCopyableFootprints(pHeightMap->GetTextureDesc(), 0, 1, 0, nullptr, nullptr, nullptr, &ui64HeightMapSize);
+
+
+	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(ui64HeightMapSize),
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&pHeightMapUpploadHeap)
+	), S_OK);
+	pHeightMapUpploadHeap->SetName(L"UPLOAD HEIGHTMAP - GRASSBLADES");
+
+	D3D12_SUBRESOURCE_DATA heightMapInitData = {};
+	heightMapInitData.pData = pHeightMap->GetTextureData();
+	heightMapInitData.RowPitch = pHeightMap->GetBytersPerRow();
+	heightMapInitData.SlicePitch = pHeightMap->GetBytersPerRow() * pHeightMap->GetTextureHeight();
+
+	UpdateSubresources(
+		m_pCL,
+		m_pTextureHeightMap,
+		pHeightMapUpploadHeap,
+		0,
+		0,
+		1,
+		&heightMapInitData);
+
+	m_pCL->ResourceBarrier(
+		1,
+		&CD3DX12_RESOURCE_BARRIER::Transition(
+			m_pTextureHeightMap,
+			D3D12_RESOURCE_STATE_COPY_DEST,
+			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
+	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
+	heapDesc.NumDescriptors = 1;
+	heapDesc.NodeMask = 0;
+	heapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	DxAssert(D3DClass::GetDevice()->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_pDHHeightMap)), S_OK);
+
+	INT DHsize = D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(heapDesc.Type);
+
+	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_pDHHeightMap->GetCPUDescriptorHandleForHeapStart());
+	D3DClass::GetDevice()->CreateShaderResourceView(m_pTextureHeightMap, &SRVdescHeightMap, cpuHandle);// m_pDHHeightMap->GetCPUDescriptorHandleForHeapStart());
+	cpuHandle.Offset(DHsize);
+
 	m_pCL->SetGraphicsRootSignature(m_pRootSignature);
 	m_pCL->SetGraphicsRootUnorderedAccessView(1, m_pBufferGrassBladesList->GetGPUVirtualAddress());
 
@@ -287,19 +353,31 @@ GrassBlades::GrassBlades()
 	WaitForSingleObject(fenceHandle, INFINITE);
 
 	SAFE_RELEASE(pGrassBladesVertexBufferUploadHeap);
+	SAFE_RELEASE(pHeightMapUpploadHeap);
 	SAFE_RELEASE(pUploadBufferFence);
 	
 	//OK WTF, DO SOMETHING WITH THIS??!
 	//DISASTER
 	SAFE_RELEASE(m_pCL);
 	SAFE_RELEASE(m_pCA);
-
+	if (patch)
+	{
+		delete[] patch;
+		patch = nullptr;
+	}
+	if (pHeightMap)
+	{
+		delete pHeightMap;
+		pHeightMap = nullptr;
+	}
 }
 
 GrassBlades::~GrassBlades()
 {
 
 	SAFE_RELEASE(m_pBufferGrassBladesList);
+	SAFE_RELEASE(m_pTextureHeightMap);
+	SAFE_RELEASE(m_pDHHeightMap);
 	SAFE_RELEASE(m_pRootSignature);
 	SAFE_RELEASE(m_pPSO);
 
@@ -336,9 +414,17 @@ void GrassBlades::Draw(FrameBuffer* pFrameBuffer, Camera* camera)
 
 	m_pCL->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
 	//m_pCL->IASetVertexBuffers(0, 1, &m_grassBladesListVertexBufferView);
-
+	m_pCL->SetDescriptorHeaps(1, &m_pDHHeightMap);
 	m_pCL->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[D3DClass::GetFrameIndex()]->GetGPUVirtualAddress());
 	m_pCL->SetGraphicsRootUnorderedAccessView(1, m_pBufferGrassBladesList->GetGPUVirtualAddress());
+
+	m_pCL->SetGraphicsRoot32BitConstant(2, 5, 0);
+	m_pCL->SetGraphicsRoot32BitConstant(2, 5, 1);
+	m_pCL->SetGraphicsRoot32BitConstant(2, 25, 2);
+	m_pCL->SetGraphicsRoot32BitConstant(2, 512, 3);
+
+	m_pCL->SetGraphicsRootDescriptorTable(3, m_pDHHeightMap->GetGPUDescriptorHandleForHeapStart());
+	
 
 	m_pCL->DrawInstanced(m_uiGrassInstances, 1, 0, 0);
 

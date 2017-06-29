@@ -3,6 +3,7 @@
 #include "D3dClass.h"
 #include "FrameBuffer.h"
 #include "Camera.h"
+#include "Texture.h"
 #include <random>
 #include <ctime>
 
@@ -11,8 +12,6 @@ class GrassBlades
 private:
 	struct StructGrass
 	{
-		/*Vertex() : position(0, 0, 0) {}
-		Vertex(float x, float y, float z) : position(x, y, z) {}*/
 		DirectX::XMFLOAT4 position[4];
 		DirectX::XMFLOAT4 binormal;
 		DirectX::XMFLOAT4 seed;
@@ -39,18 +38,17 @@ private:
 
 	ID3D12RootSignature*				m_pRootSignature;
 	
+	ID3D12Resource*						m_pTextureHeightMap;
+	ID3D12DescriptorHeap*				m_pDHHeightMap;
 
 	ID3D12Resource*						m_pBufferGrassBladesList;
-	
 	D3D12_UNORDERED_ACCESS_VIEW_DESC	m_UAVdescGrassBlades;
-	ID3D12DescriptorHeap*				m_pDHGrassBlade;
-	UINT								m_uiDHsize;
-	CD3DX12_ROOT_PARAMETER*				m_pRootParameters[1];
-	CD3DX12_DESCRIPTOR_RANGE*			m_pDHrange[1];
 
 
-	WVPMatrixBufferStruct					m_wvpMat;
-	ID3D12Resource*							m_pWVPMatUpploadHeaps[g_cFrameBufferCount];
-	UINT8*									m_pWVPGPUAdress[g_cFrameBufferCount];
+	WVPMatrixBufferStruct				m_wvpMat;
+	ID3D12Resource*						m_pWVPMatUpploadHeaps[g_cFrameBufferCount];
+	UINT8*								m_pWVPGPUAdress[g_cFrameBufferCount];
+
+	
 
 };

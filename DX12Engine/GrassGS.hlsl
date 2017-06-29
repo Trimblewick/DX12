@@ -1,3 +1,14 @@
+SamplerState heightSamp : register(s0);
+Texture2D heightMap : register(t0);
+
+cbuffer grassInstanceBuffer : register(b1)
+{
+    uint xuv;
+    uint zuv;
+    uint i;
+    uint width;//for uvs
+}
+
 struct GS_INPUT
 {
     //float3 position : POSITION;
@@ -37,14 +48,21 @@ void main(
     GS_OUTPUT element;
 
     float4 wp[4]; 
-    for (int i = 0; i < 4; ++i)
+    /*for (int i = 0; i < 4; ++i)
     {
         wp[i] = mul(patch[index].position[i], wvpMat);
-    }
- /*       wp[1] = mul(patch[index].position[1], wvpMat);
-    wp[2] = mul(patch[index].position[2], wvpMat);
-    wp[3] = mul(patch[index].position[3], wvpMat);*/
+    }*/
+    float4 wp1 = mul(patch[index].position[0], wvpMat);
     
+    float2 uv = float2((wp[0].x + xuv) / width, (wp[0].z + zuv) / width);
+    float yval = heightMap.SampleLevel(heightSamp, uv, 0);
+    float4 hOffs = float4(xuv, yval, zuv, 0.0f);
+
+    for (int i = 0; i < 4; ++i)
+    {
+        wp[i] = mul(patch[index].position[i] + hOffs, wvpMat);
+    }
+
     for (int i = 0; i < 3; ++i)
     {
         element.position = wp[i] + patch[index].seed[i] * binormalWS;
@@ -76,5 +94,4 @@ void main(
         output.Append(element);
         output.RestartStrip();
     }
-
 }
