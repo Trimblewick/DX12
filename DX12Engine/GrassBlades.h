@@ -40,6 +40,7 @@ private:
 	
 	ID3D12Resource*						m_pTextureHeightMap;
 	ID3D12DescriptorHeap*				m_pDHHeightMap;
+	int									m_iDHsize;
 
 	ID3D12Resource*						m_pBufferGrassBladesList;
 	D3D12_UNORDERED_ACCESS_VIEW_DESC	m_UAVdescGrassBlades;

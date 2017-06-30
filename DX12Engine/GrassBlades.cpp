@@ -25,8 +25,8 @@ GrassBlades::GrassBlades()
 
 	D3D12_SHADER_RESOURCE_VIEW_DESC		SRVdescHeightMap = {};
 
-	int iVertexBufferSize;
-	ID3D12Resource* pGrassBladesVertexBufferUploadHeap;
+	int iBufferSize;
+	ID3D12Resource* pGrassBladesBufferUploadHeap;
 
 	ID3D12Resource* pHeightMapUpploadHeap;
 
@@ -205,7 +205,7 @@ GrassBlades::GrassBlades()
 		patch[i].seed.w = 0.0f;
 	}
 
-	iVertexBufferSize = sizeof(StructGrass) * m_uiGrassInstances;
+	iBufferSize = sizeof(StructGrass) * m_uiGrassInstances;
 
 	m_UAVdescGrassBlades = {};
 	m_UAVdescGrassBlades.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
@@ -219,7 +219,7 @@ GrassBlades::GrassBlades()
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(iVertexBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+		&CD3DX12_RESOURCE_DESC::Buffer(iBufferSize, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
 		D3D12_RESOURCE_STATE_COPY_DEST,
 		nullptr,
 		IID_PPV_ARGS(&m_pBufferGrassBladesList)), S_OK);
@@ -229,20 +229,20 @@ GrassBlades::GrassBlades()
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(iVertexBufferSize),
+		&CD3DX12_RESOURCE_DESC::Buffer(iBufferSize),
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		IID_PPV_ARGS(&pGrassBladesVertexBufferUploadHeap)), S_OK);
-	pGrassBladesVertexBufferUploadHeap->SetName(L"GRASS BLADE INSTANCES - VERTEX BUFFER UPLOAD HEAP");
+		IID_PPV_ARGS(&pGrassBladesBufferUploadHeap)), S_OK);
+	pGrassBladesBufferUploadHeap->SetName(L"GRASS BLADE INSTANCES - VERTEX BUFFER UPLOAD HEAP");
 
 
 
 	D3D12_SUBRESOURCE_DATA vertexInitData = {};
 	vertexInitData.pData = reinterpret_cast<BYTE*>(patch);
-	vertexInitData.RowPitch = iVertexBufferSize;
-	vertexInitData.SlicePitch = iVertexBufferSize;
+	vertexInitData.RowPitch = iBufferSize;
+	vertexInitData.SlicePitch = iBufferSize;
 
-	UpdateSubresources(m_pCL, m_pBufferGrassBladesList, pGrassBladesVertexBufferUploadHeap, 0, 0, 1, &vertexInitData);
+	UpdateSubresources(m_pCL, m_pBufferGrassBladesList, pGrassBladesBufferUploadHeap, 0, 0, 1, &vertexInitData);
 
 	m_pCL->ResourceBarrier(
 		1,
@@ -272,7 +272,7 @@ GrassBlades::GrassBlades()
 
 
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
 		&CD3DX12_RESOURCE_DESC::Buffer(ui64HeightMapSize),
 		D3D12_RESOURCE_STATE_GENERIC_READ,
@@ -309,11 +309,11 @@ GrassBlades::GrassBlades()
 	heapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 	DxAssert(D3DClass::GetDevice()->CreateDescriptorHeap(&heapDesc, IID_PPV_ARGS(&m_pDHHeightMap)), S_OK);
 
-	INT DHsize = D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(heapDesc.Type);
+	m_iDHsize = D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(heapDesc.Type);
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuHandle(m_pDHHeightMap->GetCPUDescriptorHandleForHeapStart());
-	D3DClass::GetDevice()->CreateShaderResourceView(m_pTextureHeightMap, &SRVdescHeightMap, cpuHandle);// m_pDHHeightMap->GetCPUDescriptorHandleForHeapStart());
-	cpuHandle.Offset(DHsize);
+	D3DClass::GetDevice()->CreateShaderResourceView(m_pTextureHeightMap, &SRVdescHeightMap, cpuHandle);
+	//cpuHandle.Offset(m_iDHsize);
 
 	m_pCL->SetGraphicsRootSignature(m_pRootSignature);
 	m_pCL->SetGraphicsRootUnorderedAccessView(1, m_pBufferGrassBladesList->GetGPUVirtualAddress());
@@ -352,12 +352,11 @@ GrassBlades::GrassBlades()
 	DxAssert(pUploadBufferFence->SetEventOnCompletion(1, fenceHandle), S_OK);
 	WaitForSingleObject(fenceHandle, INFINITE);
 
-	SAFE_RELEASE(pGrassBladesVertexBufferUploadHeap);
+	SAFE_RELEASE(pGrassBladesBufferUploadHeap);
 	SAFE_RELEASE(pHeightMapUpploadHeap);
 	SAFE_RELEASE(pUploadBufferFence);
 	
 	//OK WTF, DO SOMETHING WITH THIS??!
-	//DISASTER
 	SAFE_RELEASE(m_pCL);
 	SAFE_RELEASE(m_pCA);
 	if (patch)
@@ -398,13 +397,8 @@ void GrassBlades::Update(Camera * camera)
 
 void GrassBlades::Draw(FrameBuffer* pFrameBuffer, Camera* camera)
 {
-	//DxAssert(m_pCL->Reset(m_pCA, m_pPSO), S_OK);
 
-	/*D3D12_CPU_DESCRIPTOR_HANDLE* rtvHandle = D3DClass::GetRTVDescriptorHandle();
-	D3D12_CPU_DESCRIPTOR_HANDLE depthHande = pFrameBuffer->GetDescriptorHeap()->GetCPUDescriptorHandleForHeapStart();
-	m_pCL->OMSetRenderTargets(1, rtvHandle, false, &depthHande);*/
-
-	m_pCL = pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD);
+	m_pCL = pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD);//AHAHA WHAT?!
 
 	m_pCL->SetGraphicsRootSignature(m_pRootSignature);
 	m_pCL->SetPipelineState(m_pPSO);
@@ -413,24 +407,30 @@ void GrassBlades::Draw(FrameBuffer* pFrameBuffer, Camera* camera)
 	m_pCL->RSSetScissorRects(1, &camera->GetScissorRect());
 
 	m_pCL->IASetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY::D3D_PRIMITIVE_TOPOLOGY_POINTLIST);
-	//m_pCL->IASetVertexBuffers(0, 1, &m_grassBladesListVertexBufferView);
 	m_pCL->SetDescriptorHeaps(1, &m_pDHHeightMap);
 	m_pCL->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[D3DClass::GetFrameIndex()]->GetGPUVirtualAddress());
 	m_pCL->SetGraphicsRootUnorderedAccessView(1, m_pBufferGrassBladesList->GetGPUVirtualAddress());
 
-	m_pCL->SetGraphicsRoot32BitConstant(2, 5, 0);
-	m_pCL->SetGraphicsRoot32BitConstant(2, 5, 1);
-	m_pCL->SetGraphicsRoot32BitConstant(2, 25, 2);
+	CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(m_pDHHeightMap->GetGPUDescriptorHandleForHeapStart());
+	m_pCL->SetGraphicsRootDescriptorTable(3, gpuHandle);
+
 	m_pCL->SetGraphicsRoot32BitConstant(2, 512, 3);
 
-	m_pCL->SetGraphicsRootDescriptorTable(3, m_pDHHeightMap->GetGPUDescriptorHandleForHeapStart());
-	
+	for (unsigned int i = 0; i < 10; ++i)
+	{
 
-	m_pCL->DrawInstanced(m_uiGrassInstances, 1, 0, 0);
+		int instanceI = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * m_uiGrassInstances / 3;
 
-	//DxAssert(m_pCL->Close(), S_OK);
-	//D3DClass::QueueGraphicsCommandList(m_pCL);
+		m_pCL->SetGraphicsRoot32BitConstant(2, i, 0);
+		m_pCL->SetGraphicsRoot32BitConstant(2, 0, 1);
+		m_pCL->SetGraphicsRoot32BitConstant(2, m_uiGrassInstances - 256, 2);
+		
+
+		
+		//gpuHandle.Offset(m_iDHsize);
 
 
+		m_pCL->DrawInstanced(256, 1, 0, 0);
+	}
 	return;
 }

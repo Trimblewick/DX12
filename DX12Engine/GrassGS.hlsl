@@ -5,7 +5,7 @@ cbuffer grassInstanceBuffer : register(b1)
 {
     uint xuv;
     uint zuv;
-    uint i;
+    uint instanceI;//from what index to use the pregenerated staws
     uint width;//for uvs
 }
 
@@ -41,23 +41,18 @@ void main(
 	inout TriangleStream<GS_OUTPUT> output
 )
 {
-    uint index = input[0].index;
+    uint index = input[0].index + instanceI;
 
     float4 binormalWS = mul(patch[index].binormal, wvpMat);
 
     GS_OUTPUT element;
 
-    float4 wp[4]; 
-    /*for (int i = 0; i < 4; ++i)
-    {
-        wp[i] = mul(patch[index].position[i], wvpMat);
-    }*/
-    float4 wp1 = mul(patch[index].position[0], wvpMat);
     
-    float2 uv = float2((wp[0].x + xuv) / width, (wp[0].z + zuv) / width);
+    
+    float2 uv = float2((patch[index].position[0].x + xuv) / (float) width, (patch[index].position[0].z + zuv) / (float) width);
     float yval = heightMap.SampleLevel(heightSamp, uv, 0);
-    float4 hOffs = float4(xuv, yval, zuv, 0.0f);
-
+    float4 hOffs = float4(xuv, yval * 100.0f, zuv, 0.0f);//mother of god, this is hardcoded af
+    float4 wp[4];
     for (int i = 0; i < 4; ++i)
     {
         wp[i] = mul(patch[index].position[i] + hOffs, wvpMat);
