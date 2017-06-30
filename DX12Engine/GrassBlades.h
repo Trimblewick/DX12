@@ -6,6 +6,7 @@
 #include "Texture.h"
 #include <random>
 #include <ctime>
+#include "FrustumCulling.h"
 
 class GrassBlades
 {
@@ -26,10 +27,12 @@ public:
 	~GrassBlades();
 
 	void Update(Camera* camera);
-	void Draw(FrameBuffer* pFrameBuffer, Camera* camera);
+	void Draw(FrameBuffer* pFrameBuffer, Camera* camera , FrustumCulling* pFrustumCuller);
 
 private:
-	unsigned int						m_uiGrassInstances; //nr of straws * nr of section in straws --> for the drawcall
+	unsigned int						m_uiGrassInstances; //nr of straws
+	int									m_iGridDim;//width of hightmap basically
+	int**								m_ppTiles;
 
 	ID3D12CommandAllocator*				m_pCA;
 	ID3D12GraphicsCommandList*			m_pCL;
@@ -50,6 +53,6 @@ private:
 	ID3D12Resource*						m_pWVPMatUpploadHeaps[g_cFrameBufferCount];
 	UINT8*								m_pWVPGPUAdress[g_cFrameBufferCount];
 
-	
+	Texture*							m_pHeightMap;
 
 };

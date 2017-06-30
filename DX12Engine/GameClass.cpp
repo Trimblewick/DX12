@@ -16,13 +16,15 @@ bool GameClass::Initialize(FrameBuffer* pFrameBuffer)
 
 	m_pPlaneObject = new Plane(pFrameBuffer);
 	m_pGrassBlades = new GrassBlades();
-	
+	m_pFrustumCuller = new FrustumCulling(m_pMainCamera);
+
 	return true;
 }
 
 void GameClass::Update(Input* input)
 {
 	m_pMainCamera->Update(input);
+	m_pFrustumCuller->Update(m_pMainCamera);
 
 	m_pPlaneObject->Update(m_pMainCamera);
 	m_pGrassBlades->Update(m_pMainCamera);
@@ -31,7 +33,7 @@ void GameClass::Update(Input* input)
 bool GameClass::Render(FrameBuffer* pFrameBuffer)
 {
 	m_pPlaneObject->Draw(pFrameBuffer, m_pMainCamera);
-	m_pGrassBlades->Draw(pFrameBuffer, m_pMainCamera);
+	m_pGrassBlades->Draw(pFrameBuffer, m_pMainCamera , m_pFrustumCuller);
 	
 	return true;
 }
@@ -52,5 +54,10 @@ void GameClass::CleanUp()
 	{
 		delete m_pGrassBlades;
 		m_pGrassBlades = nullptr;
+	}
+	if (m_pFrustumCuller)
+	{
+		delete m_pFrustumCuller;
+		m_pFrustumCuller = nullptr;
 	}
 }

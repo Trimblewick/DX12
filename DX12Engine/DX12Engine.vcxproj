@@ -162,6 +162,7 @@
     <ClCompile Include="D3dClass.cpp" />
     <ClCompile Include="DHHandler.cpp" />
     <ClCompile Include="FrameBuffer.cpp" />
+    <ClCompile Include="FrustumCulling.cpp" />
     <ClCompile Include="GameClass.cpp" />
     <ClCompile Include="GrassBlades.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="d3dx12.h" />
     <ClInclude Include="DHHandler.h" />
     <ClInclude Include="FrameBuffer.h" />
+    <ClInclude Include="FrustumCulling.h" />
     <ClInclude Include="GameClass.h" />
     <ClInclude Include="GrassBlades.h" />
     <ClInclude Include="Input.h" />

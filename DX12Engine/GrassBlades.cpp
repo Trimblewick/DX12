@@ -28,7 +28,7 @@ GrassBlades::GrassBlades()
 	int iBufferSize;
 	ID3D12Resource* pGrassBladesBufferUploadHeap;
 
-	ID3D12Resource* pHeightMapUpploadHeap;
+	ID3D12Resource* m_pHeightMapUpploadHeap;
 
 	ID3D12Fence* pUploadBufferFence;
 	HANDLE fenceHandle;
@@ -191,21 +191,23 @@ GrassBlades::GrassBlades()
 		patch[i].position[0].w = 1.0f;
 		for (int j = 1; j < 4; ++j)
 		{
-			patch[i].position[j].x = patch[i].position[j - 1].x + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.02f - 0.01f;
-			patch[i].position[j].y = patch[i].position[j - 1].y + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.16f;
-			patch[i].position[j].z = patch[i].position[j - 1].z + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.02f - 0.01f;
+			patch[i].position[j].x = patch[i].position[j - 1].x + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.1f - 0.05f;
+			patch[i].position[j].y = patch[i].position[j - 1].y + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.64f;
+			patch[i].position[j].z = patch[i].position[j - 1].z + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.1f - 0.05f;
 			patch[i].position[j].w = 1.0f;
 		}
 		
 		
-
-		patch[i].seed.x = 0.015f;
-		patch[i].seed.y = 0.01f;
-		patch[i].seed.z = 0.008f;
+		patch[i].seed.x = 0.03f;
+		patch[i].seed.y = 0.02f;
+		patch[i].seed.z = 0.012f;
 		patch[i].seed.w = 0.0f;
+		
 	}
 
 	iBufferSize = sizeof(StructGrass) * m_uiGrassInstances;
+
+
 
 	m_UAVdescGrassBlades = {};
 	m_UAVdescGrassBlades.ViewDimension = D3D12_UAV_DIMENSION_BUFFER;
@@ -251,9 +253,9 @@ GrassBlades::GrassBlades()
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
 
-	Texture* pHeightMap = new Texture(L"../Resources/h.png");
+	m_pHeightMap = new Texture(L"../Resources/h.png");
 
-	SRVdescHeightMap.Format = pHeightMap->GetTextureDesc()->Format;
+	SRVdescHeightMap.Format = m_pHeightMap->GetTextureDesc()->Format;
 	SRVdescHeightMap.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SRVdescHeightMap.Texture2D.MipLevels = 1;
 	SRVdescHeightMap.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
@@ -261,14 +263,14 @@ GrassBlades::GrassBlades()
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 		D3D12_HEAP_FLAG_NONE,
-		pHeightMap->GetTextureDesc(),
+		m_pHeightMap->GetTextureDesc(),
 		D3D12_RESOURCE_STATE_COPY_DEST,
 		nullptr,
 		IID_PPV_ARGS(&m_pTextureHeightMap)), S_OK);
 	m_pTextureHeightMap->SetName(L"heightmap resource heap");
 
 	UINT64 ui64HeightMapSize;
-	D3DClass::GetDevice()->GetCopyableFootprints(pHeightMap->GetTextureDesc(), 0, 1, 0, nullptr, nullptr, nullptr, &ui64HeightMapSize);
+	D3DClass::GetDevice()->GetCopyableFootprints(m_pHeightMap->GetTextureDesc(), 0, 1, 0, nullptr, nullptr, nullptr, &ui64HeightMapSize);
 
 
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
@@ -277,19 +279,19 @@ GrassBlades::GrassBlades()
 		&CD3DX12_RESOURCE_DESC::Buffer(ui64HeightMapSize),
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		IID_PPV_ARGS(&pHeightMapUpploadHeap)
+		IID_PPV_ARGS(&m_pHeightMapUpploadHeap)
 	), S_OK);
-	pHeightMapUpploadHeap->SetName(L"UPLOAD HEIGHTMAP - GRASSBLADES");
+	m_pHeightMapUpploadHeap->SetName(L"UPLOAD HEIGHTMAP - GRASSBLADES");
 
 	D3D12_SUBRESOURCE_DATA heightMapInitData = {};
-	heightMapInitData.pData = pHeightMap->GetTextureData();
-	heightMapInitData.RowPitch = pHeightMap->GetBytersPerRow();
-	heightMapInitData.SlicePitch = pHeightMap->GetBytersPerRow() * pHeightMap->GetTextureHeight();
+	heightMapInitData.pData = m_pHeightMap->GetTextureData();
+	heightMapInitData.RowPitch = m_pHeightMap->GetBytersPerRow();
+	heightMapInitData.SlicePitch = m_pHeightMap->GetBytersPerRow() * m_pHeightMap->GetTextureHeight();
 
 	UpdateSubresources(
 		m_pCL,
 		m_pTextureHeightMap,
-		pHeightMapUpploadHeap,
+		m_pHeightMapUpploadHeap,
 		0,
 		0,
 		1,
@@ -322,6 +324,22 @@ GrassBlades::GrassBlades()
 	D3DClass::QueueGraphicsCommandList(m_pCL);
 	D3DClass::ExecuteGraphicsCommandLists();
 	D3DClass::GetCommandQueue()->Signal(pUploadBufferFence, 1);
+	
+	int width;
+	int height =  width = m_iGridDim = 128;// m_pHeightMap->GetTextureWidth();
+	// m_pHeightMap->GetTextureHeight();
+	m_ppTiles = new int*[width];
+	for (int i = 0; i < width; ++i)
+	{
+		m_ppTiles[i] = new int[height];
+		for (int j = 0; j < height; ++j)
+		{
+			int temp = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * m_uiGrassInstances;
+			if (temp >= m_uiGrassInstances - m_iGridDim)
+				temp -= m_iGridDim;
+			m_ppTiles[i][j] = temp;
+		}
+	}
 
 
 	//create matrix buffer
@@ -353,7 +371,7 @@ GrassBlades::GrassBlades()
 	WaitForSingleObject(fenceHandle, INFINITE);
 
 	SAFE_RELEASE(pGrassBladesBufferUploadHeap);
-	SAFE_RELEASE(pHeightMapUpploadHeap);
+	SAFE_RELEASE(m_pHeightMapUpploadHeap);
 	SAFE_RELEASE(pUploadBufferFence);
 	
 	//OK WTF, DO SOMETHING WITH THIS??!
@@ -364,11 +382,7 @@ GrassBlades::GrassBlades()
 		delete[] patch;
 		patch = nullptr;
 	}
-	if (pHeightMap)
-	{
-		delete pHeightMap;
-		pHeightMap = nullptr;
-	}
+	
 }
 
 GrassBlades::~GrassBlades()
@@ -385,6 +399,20 @@ GrassBlades::~GrassBlades()
 		SAFE_RELEASE(m_pWVPMatUpploadHeaps[i]);
 	}
 
+	if (m_ppTiles)
+	{
+		for (int i = 0; i < m_iGridDim; ++i)//jise man. This couldn't be much more hardcoded
+		{
+			delete[] m_ppTiles[i];
+		}
+		delete[] m_ppTiles;
+		m_ppTiles = nullptr;
+	}
+	if (m_pHeightMap)
+	{
+		delete m_pHeightMap;
+		m_pHeightMap = nullptr;
+	}
 }
 
 void GrassBlades::Update(Camera * camera)
@@ -395,7 +423,7 @@ void GrassBlades::Update(Camera * camera)
 	return;
 }
 
-void GrassBlades::Draw(FrameBuffer* pFrameBuffer, Camera* camera)
+void GrassBlades::Draw(FrameBuffer* pFrameBuffer, Camera* camera, FrustumCulling* pFrustumCuller)
 {
 
 	m_pCL = pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD);//AHAHA WHAT?!
@@ -414,23 +442,36 @@ void GrassBlades::Draw(FrameBuffer* pFrameBuffer, Camera* camera)
 	CD3DX12_GPU_DESCRIPTOR_HANDLE gpuHandle(m_pDHHeightMap->GetGPUDescriptorHandleForHeapStart());
 	m_pCL->SetGraphicsRootDescriptorTable(3, gpuHandle);
 
-	m_pCL->SetGraphicsRoot32BitConstant(2, 512, 3);
+	m_pCL->SetGraphicsRoot32BitConstant(2, m_pHeightMap->GetTextureWidth(), 3);
 
-	for (unsigned int i = 0; i < 10; ++i)
+	BYTE* heightData = m_pHeightMap->GetTextureData();
+	int dataIndex = 0;
+	for (int k = 0; k < m_iGridDim; ++k)
 	{
+		for (int i = 0; i < m_iGridDim; ++i)
+		{
+			dataIndex = (k * m_pHeightMap->GetTextureWidth() + i) * 4;
+			float y = heightData[dataIndex] / 2.55f;
+			DirectX::XMFLOAT4 pos(i, y, k, 0);
+			if (pFrustumCuller->Cull(DirectX::XMLoadFloat4(&pos), 1.5f))
+			{
+				
+				m_pCL->SetGraphicsRoot32BitConstant(2, i, 0);
+				m_pCL->SetGraphicsRoot32BitConstant(2, k, 1);
+				m_pCL->SetGraphicsRoot32BitConstant(2, m_ppTiles[k][i], 2);// m_ppTiles[k][i], 2);
 
-		int instanceI = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * m_uiGrassInstances / 3;
-
-		m_pCL->SetGraphicsRoot32BitConstant(2, i, 0);
-		m_pCL->SetGraphicsRoot32BitConstant(2, 0, 1);
-		m_pCL->SetGraphicsRoot32BitConstant(2, m_uiGrassInstances - 256, 2);
-		
-
-		
-		//gpuHandle.Offset(m_iDHsize);
-
-
-		m_pCL->DrawInstanced(256, 1, 0, 0);
+				
+				DirectX::XMFLOAT3 f3Pos(i, y, k);
+				float dist = DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&f3Pos), DirectX::XMLoadFloat3(&camera->GetPosition()))));
+				if (dist > 50)
+					m_pCL->DrawInstanced(16, 1, 0, 0);
+				else if (dist > 25)
+					m_pCL->DrawInstanced(32, 1, 0, 0);
+				else
+					m_pCL->DrawInstanced(64, 1, 0, 0);
+				
+			}
+		}
 	}
 	return;
 }
