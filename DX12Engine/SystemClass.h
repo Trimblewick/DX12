@@ -15,6 +15,7 @@
 #include "d3dx12.h"
 #include <string>
 #include "Common.h"
+#include <chrono>
 
 #include "WindowClass.h"
 #include "D3dClass.h"
@@ -43,5 +44,5 @@ private:
 	static bool s_bRunning;
 	static Input s_input;
 	static bool s_initialized;
-	
+	static float s_fDeltaTime;
 };

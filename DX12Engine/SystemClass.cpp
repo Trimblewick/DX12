@@ -6,11 +6,13 @@ GameClass SystemClass::s_game;
 bool SystemClass::s_initialized;
 FrameBuffer SystemClass::s_frameBuffer;
 Input SystemClass::s_input;
+float SystemClass::s_fDeltaTime;
 
 SystemClass::SystemClass()
 {
 	s_bRunning = false;
 	s_initialized = false;
+	s_fDeltaTime = 0.0f;
 }
 
 SystemClass::~SystemClass()
@@ -106,11 +108,24 @@ bool SystemClass::Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance, int n
 	return true;
 }
 
+std::wstring s2ws(const std::string& s)
+{
+	int len;
+	int slength = (int)s.length() + 1;
+	len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, 0, 0);
+	wchar_t* buf = new wchar_t[len];
+	MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, buf, len);
+	std::wstring r(buf);
+	delete[] buf;
+	return r;
+}
+
 void SystemClass::Run()
 {
 	MSG msg;
 	ZeroMemory(&msg, sizeof(MSG));
-
+	auto prevTime = std::chrono::steady_clock::now();
+	auto currentTime = std::chrono::steady_clock::now();
 	while (s_bRunning)
 	{
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
@@ -129,11 +144,22 @@ void SystemClass::Run()
 		else //loop logics
 		{
 			D3DClass::WaitForPreviousFrame();
+			auto currentTime = std::chrono::steady_clock::now();
+			s_fDeltaTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - prevTime).count() / 1000000.0f;
+			prevTime = currentTime;
+
+			float fps = 1.0f / s_fDeltaTime;
+			
+			std::string stFPS = "FPS: " + std::to_string(fps);
+			std::wstring stemp = s2ws(stFPS);
+			LPCWSTR st = stemp.c_str();
+			WindowClass::SetWindowTitle(st);
+
 			DxAssert(D3DClass::GetCurrentCommandAllocator()->Reset(), S_OK);
 			
 			
 
-			s_game.Update(&s_input);
+			s_game.Update(&s_input, s_fDeltaTime);
 
 
 

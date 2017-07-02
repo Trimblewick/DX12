@@ -12,7 +12,7 @@ public:
 	Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt);
 	~Camera();
 
-	void Update(Input* input);
+	void Update(Input* input, float dt);
 
 	D3D12_VIEWPORT GetViewport();
 	D3D12_RECT GetScissorRect();
@@ -36,4 +36,6 @@ private:
 
 	DirectX::XMFLOAT4X4 m_viewMatrix;
 	DirectX::XMFLOAT4X4 m_projMatrix;
+
+	float m_fSpeedRotation, m_fSpeedZoom, m_fSpeedElevate;
 };

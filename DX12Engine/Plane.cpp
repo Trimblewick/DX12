@@ -573,6 +573,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	if (pHeightMap)
 	{
 		delete pHeightMap;
+		pHeightMap = nullptr;
 	}
 
 	delete[] planeVertices;

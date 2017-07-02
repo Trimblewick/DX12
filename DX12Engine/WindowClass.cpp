@@ -82,7 +82,6 @@ bool WindowClass::Initialize(HINSTANCE hInstance, int nCmdShow, LONG width, LONG
 		ChangeWindowShowState(nCmdShow);
 	}
 
-
 	return s_initialized;
 }
 
@@ -208,5 +207,10 @@ bool WindowClass::Initialized()
 bool WindowClass::ChangeWindowShowState(int nCmdShow)
 {
 	return ShowWindow(s_windowHandler, nCmdShow);
+}
+
+bool WindowClass::SetWindowTitle(LPCWSTR title)
+{
+	return SetWindowText(s_windowHandler, title);
 }
 

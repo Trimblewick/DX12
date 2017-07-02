@@ -39,6 +39,9 @@ Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 	
 	DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookToLH(DirectX::XMLoadFloat3(&initPosition), forward, up);
 	DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);
+
+	m_fSpeedElevate = m_fSpeedZoom = 15.0f;
+	m_fSpeedRotation = 0.5f;
 }
 
 Camera::~Camera()
@@ -46,7 +49,7 @@ Camera::~Camera()
 	
 }
 
-void Camera::Update(Input * input)
+void Camera::Update(Input * input, float dt)
 {
 	float offsX = 0;
 	float offsY = 0;
@@ -61,7 +64,7 @@ void Camera::Update(Input * input)
 		if (!input->IsKeyDown(Input::RIGHT_ARROW))
 		{
 			DirectX::XMVECTOR tempForward = DirectX::XMLoadFloat3(&m_forward);
-			DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(0.001);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
+			DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(m_fSpeedRotation * dt);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
 			tempForward = DirectX::XMVector3Transform(tempForward, rotMat);
 			DirectX::XMFLOAT3 p;
 			DirectX::XMStoreFloat3(&p, tempForward);
@@ -75,7 +78,7 @@ void Camera::Update(Input * input)
 	else if (input->IsKeyDown(Input::RIGHT_ARROW))
 	{
 		DirectX::XMVECTOR tempForward = DirectX::XMLoadFloat3(&m_forward);
-		DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(-0.001);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
+		DirectX::XMMATRIX rotMat = DirectX::XMMatrixRotationY(-m_fSpeedRotation * dt);//DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationAxis(DirectX::XMLoadFloat3(&m_up), 0.01));
 		tempForward = DirectX::XMVector3Transform(tempForward, rotMat);
 		DirectX::XMFLOAT3 p;
 		DirectX::XMStoreFloat3(&p, tempForward);
@@ -88,23 +91,23 @@ void Camera::Update(Input * input)
 	}
 	if (input->IsKeyDown(Input::UP_ARROW) && distance > 3)
 	{	
-		offsX += m_forward.x * 0.1;
-		offsY += m_forward.y * 0.1;
-		offsZ += m_forward.z * 0.1;
+		offsX += m_forward.x * m_fSpeedZoom * dt;
+		offsY += m_forward.y * m_fSpeedZoom * dt;
+		offsZ += m_forward.z * m_fSpeedZoom * dt;
 	}
 	if (input->IsKeyDown(Input::DOWN_ARROW) && distance < 1000)
 	{
-		offsX -= m_forward.x * 0.1;
-		offsY -= m_forward.y * 0.1;
-		offsZ -= m_forward.z * 0.1;
+		offsX -= m_forward.x * m_fSpeedZoom * dt;
+		offsY -= m_forward.y * m_fSpeedZoom * dt;
+		offsZ -= m_forward.z * m_fSpeedZoom * dt;
 	}
 	if (input->IsKeyDown(Input::SPACE))
 	{
-		offsY += 0.1;
+		offsY += m_fSpeedElevate * dt;
 	}
 	if (input->IsKeyDown(Input::CTRL))
 	{
-		offsY -= 0.1;
+		offsY -= m_fSpeedElevate * dt;
 	}
 	if (offsX != 0 || offsY != 0 || offsZ != 0)
 	{

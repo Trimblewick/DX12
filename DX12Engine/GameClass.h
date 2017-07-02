@@ -17,7 +17,7 @@ public:
 	~GameClass();
 
 	bool Initialize(FrameBuffer* pFrameBuffer);
-	void Update(Input* input);
+	void Update(Input* input, float dt);
 	bool Render(FrameBuffer* pFrameBuffer);
 	void CleanUp();
 

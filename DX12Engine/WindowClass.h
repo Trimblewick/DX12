@@ -42,6 +42,7 @@ public:
 	static bool Initialized();
 
 	static bool ChangeWindowShowState(int nCmdShow);
+	static bool SetWindowTitle(LPCWSTR title);
 
 private:
 	static LONG s_width;

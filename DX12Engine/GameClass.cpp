@@ -21,9 +21,9 @@ bool GameClass::Initialize(FrameBuffer* pFrameBuffer)
 	return true;
 }
 
-void GameClass::Update(Input* input)
+void GameClass::Update(Input* input, float dt)
 {
-	m_pMainCamera->Update(input);
+	m_pMainCamera->Update(input, dt);
 	m_pFrustumCuller->Update(m_pMainCamera);
 
 	m_pPlaneObject->Update(m_pMainCamera);

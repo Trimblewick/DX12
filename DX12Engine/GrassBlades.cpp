@@ -192,7 +192,7 @@ GrassBlades::GrassBlades()
 		for (int j = 1; j < 4; ++j)
 		{
 			patch[i].position[j].x = patch[i].position[j - 1].x + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.1f - 0.05f;
-			patch[i].position[j].y = patch[i].position[j - 1].y + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.64f;
+			patch[i].position[j].y = patch[i].position[j - 1].y + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.6f;
 			patch[i].position[j].z = patch[i].position[j - 1].z + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.1f - 0.05f;
 			patch[i].position[j].w = 1.0f;
 		}
@@ -463,12 +463,12 @@ void GrassBlades::Draw(FrameBuffer* pFrameBuffer, Camera* camera, FrustumCulling
 				
 				DirectX::XMFLOAT3 f3Pos(i, y, k);
 				float dist = DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&f3Pos), DirectX::XMLoadFloat3(&camera->GetPosition()))));
-				if (dist > 50)
-					m_pCL->DrawInstanced(16, 1, 0, 0);
-				else if (dist > 25)
+				if (dist > 100)
 					m_pCL->DrawInstanced(32, 1, 0, 0);
-				else
+				else if (dist > 65)
 					m_pCL->DrawInstanced(64, 1, 0, 0);
+				else
+					m_pCL->DrawInstanced(128, 1, 0, 0);
 				
 			}
 		}
