@@ -108,17 +108,6 @@ bool SystemClass::Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance, int n
 	return true;
 }
 
-std::wstring s2ws(const std::string& s)
-{
-	int len;
-	int slength = (int)s.length() + 1;
-	len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, 0, 0);
-	wchar_t* buf = new wchar_t[len];
-	MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, buf, len);
-	std::wstring r(buf);
-	delete[] buf;
-	return r;
-}
 
 void SystemClass::Run()
 {
@@ -150,10 +139,10 @@ void SystemClass::Run()
 
 			float fps = 1.0f / s_fDeltaTime;
 			
-			std::string stFPS = "FPS: " + std::to_string(fps);
-			std::wstring stemp = s2ws(stFPS);
-			LPCWSTR st = stemp.c_str();
-			WindowClass::SetWindowTitle(st);
+			std::string sFPS = "FPS: " + std::to_string(fps);
+			std::wstring wstemp = std::wstring(sFPS.begin(), sFPS.end());
+			LPCWSTR titleFPS = wstemp.c_str();
+			WindowClass::SetWindowTitle(titleFPS);
 
 			DxAssert(D3DClass::GetCurrentCommandAllocator()->Reset(), S_OK);
 			
