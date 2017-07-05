@@ -134,7 +134,7 @@ void SystemClass::Run()
 		{
 			D3DClass::WaitForPreviousFrame();
 			auto currentTime = std::chrono::steady_clock::now();
-			s_fDeltaTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - prevTime).count() / 1000000.0f;
+			s_fDeltaTime = (currentTime - prevTime).count() / 1000000000.0f;
 			prevTime = currentTime;
 
 			float fps = 1.0f / s_fDeltaTime;

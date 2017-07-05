@@ -40,7 +40,7 @@ Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 	DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookToLH(DirectX::XMLoadFloat3(&initPosition), forward, up);
 	DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);
 
-	m_fSpeedElevate = m_fSpeedZoom = 15.0f;
+	m_fSpeedElevate = m_fSpeedZoom = 35.0f;
 	m_fSpeedRotation = 0.5f;
 }
 
@@ -58,6 +58,52 @@ void Camera::Update(Input * input, float dt)
 	DirectX::XMFLOAT3 distanceVec;
 	DirectX::XMStoreFloat3(&distanceVec, DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_position)));
 	float distance = std::sqrt(distanceVec.x * distanceVec.x + distanceVec.y * distanceVec.y + distanceVec.z * distanceVec.z);
+
+	if (input->IsKeyDown(Input::W))
+	{
+		float temp = m_forward.x * m_fSpeedZoom * dt;
+		m_focusPoint.x += temp;
+		offsX += temp;
+		temp = m_forward.z * m_fSpeedZoom * dt;
+		m_focusPoint.z += temp;
+		offsZ += temp;
+	}
+	if (input->IsKeyDown(Input::S))
+	{
+		float temp = m_forward.x * m_fSpeedZoom * dt;
+		m_focusPoint.x -= temp;
+		offsX -= temp;
+		temp = m_forward.z * m_fSpeedZoom * dt;
+		m_focusPoint.z -= temp;
+		offsZ -= temp;
+	}
+	if (input->IsKeyDown(Input::D))
+	{
+		if (!input->IsKeyDown(Input::A))
+		{
+			DirectX::XMFLOAT3 r;
+			DirectX::XMStoreFloat3(&r, DirectX::XMVector3Cross(DirectX::XMLoadFloat3(&m_up), DirectX::XMLoadFloat3(&m_forward)));
+
+			float temp = r.x * m_fSpeedZoom * dt;
+			m_focusPoint.x += temp;
+			offsX += temp;
+			temp = r.z * m_fSpeedZoom * dt;
+			m_focusPoint.z += temp;
+			offsZ += temp;
+		}
+	}
+	else if (input->IsKeyDown(Input::A))
+	{
+		DirectX::XMFLOAT3 r;
+		DirectX::XMStoreFloat3(&r, DirectX::XMVector3Cross(DirectX::XMLoadFloat3(&m_up), DirectX::XMLoadFloat3(&m_forward)));
+
+		float temp = r.x * m_fSpeedZoom * dt;
+		m_focusPoint.x -= temp;
+		offsX -= temp;
+		temp = r.z * m_fSpeedZoom * dt;
+		m_focusPoint.z -= temp;
+		offsZ -= temp;
+	}
 	
 	if (input->IsKeyDown(Input::LEFT_ARROW))
 	{
@@ -109,20 +155,19 @@ void Camera::Update(Input * input, float dt)
 	{
 		offsY -= m_fSpeedElevate * dt;
 	}
-	if (offsX != 0 || offsY != 0 || offsZ != 0)
-	{
-		//recalc point
-		DirectX::XMStoreFloat3(&m_position, DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(m_position.x + offsX, m_position.y + offsY, m_position.z + offsZ)));
-		//recalc forward
-		DirectX::XMVECTOR f = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_position)));
-		DirectX::XMStoreFloat3(&m_forward, f);
-		//recalc up
-		DirectX::XMVECTOR tempRight = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(f, DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(0, 1, 0))));
-		DirectX::XMStoreFloat3(&m_up, DirectX::XMVector3Normalize(DirectX::XMVector3Cross(tempRight, f)));
-		//recalc viewmatrix
-		DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_up));
-		DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);
-	}
+	
+	//recalc point
+	DirectX::XMStoreFloat3(&m_position, DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(m_position.x + offsX, m_position.y + offsY, m_position.z + offsZ)));
+	//recalc forward
+	DirectX::XMVECTOR f = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_position)));
+	DirectX::XMStoreFloat3(&m_forward, f);
+	//recalc up
+	DirectX::XMVECTOR tempRight = DirectX::XMVector3Normalize(DirectX::XMVector3Cross(f, DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(0, 1, 0))));
+	DirectX::XMStoreFloat3(&m_up, DirectX::XMVector3Normalize(DirectX::XMVector3Cross(tempRight, f)));
+	//recalc viewmatrix
+	DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_up));
+	DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);
+	
 	return;
 }
 

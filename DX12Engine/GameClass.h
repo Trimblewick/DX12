@@ -9,6 +9,7 @@
 #include "Plane.h"
 #include "GrassBlades.h"
 #include "FrustumCulling.h"
+#include "SkyBox.h"
 
 class GameClass
 {
@@ -24,6 +25,7 @@ public:
 
 private:
 	Camera*					m_pMainCamera;
+	SkyBox*					m_pSkyBox;
 	FrustumCulling*			m_pFrustumCuller;
 
 	Plane*					m_pPlaneObject;

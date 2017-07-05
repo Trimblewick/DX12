@@ -185,9 +185,9 @@ GrassBlades::GrassBlades()
 
 		DirectX::XMStoreFloat3(&forward, DirectX::XMVector3Cross(DirectX::XMLoadFloat4(&binorm), up));
 
-		patch[i].position[0].x = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+		patch[i].position[0].x = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 8.0f;
 		patch[i].position[0].y = 0.0f;
-		patch[i].position[0].z = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX);
+		patch[i].position[0].z = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 8.0f;
 		patch[i].position[0].w = 1.0f;
 		for (int j = 1; j < 4; ++j)
 		{
@@ -326,7 +326,8 @@ GrassBlades::GrassBlades()
 	D3DClass::GetCommandQueue()->Signal(pUploadBufferFence, 1);
 	
 	int width;
-	int height =  width = m_iGridDim = 128;// m_pHeightMap->GetTextureWidth();
+	int height =  width = m_iGridDim = 64;// m_pHeightMap->GetTextureWidth();
+	int maxDraw = 2048;
 	// m_pHeightMap->GetTextureHeight();
 	m_ppTiles = new int*[width];
 	for (int i = 0; i < width; ++i)
@@ -335,8 +336,8 @@ GrassBlades::GrassBlades()
 		for (int j = 0; j < height; ++j)
 		{
 			int temp = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * m_uiGrassInstances;
-			if (temp >= m_uiGrassInstances - m_iGridDim)
-				temp -= m_iGridDim;
+			if (temp >= m_uiGrassInstances - maxDraw)
+				temp -= maxDraw;
 			m_ppTiles[i][j] = temp;
 		}
 	}
@@ -450,25 +451,27 @@ void GrassBlades::Draw(FrameBuffer* pFrameBuffer, Camera* camera, FrustumCulling
 	{
 		for (int i = 0; i < m_iGridDim; ++i)
 		{
-			dataIndex = (k * m_pHeightMap->GetTextureWidth() + i) * 4;
+			dataIndex = (k * m_pHeightMap->GetTextureWidth() + i) * 4;//multiplied by 4 since xyzw comes sequentially in the indexes
 			float y = heightData[dataIndex] / 2.55f;
-			DirectX::XMFLOAT4 pos(i, y, k, 0);
-			if (pFrustumCuller->Cull(DirectX::XMLoadFloat4(&pos), 1.5f))
+			DirectX::XMFLOAT4 pos(i * 8, y, k * 8, 0);
+			if (pFrustumCuller->Cull(DirectX::XMLoadFloat4(&pos), 1.0f))
 			{
 				
-				m_pCL->SetGraphicsRoot32BitConstant(2, i, 0);
-				m_pCL->SetGraphicsRoot32BitConstant(2, k, 1);
-				m_pCL->SetGraphicsRoot32BitConstant(2, m_ppTiles[k][i], 2);// m_ppTiles[k][i], 2);
+				m_pCL->SetGraphicsRoot32BitConstant(2, i * 8, 0);
+				m_pCL->SetGraphicsRoot32BitConstant(2, k * 8, 1);
+				m_pCL->SetGraphicsRoot32BitConstant(2, m_ppTiles[k][i], 2);
 
 				
-				DirectX::XMFLOAT3 f3Pos(i, y, k);
+				DirectX::XMFLOAT3 f3Pos(i * 8, y, k * 8);
 				float dist = DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&f3Pos), DirectX::XMLoadFloat3(&camera->GetPosition()))));
-				if (dist > 100)
-					m_pCL->DrawInstanced(32, 1, 0, 0);
-				else if (dist > 65)
-					m_pCL->DrawInstanced(64, 1, 0, 0);
-				else
-					m_pCL->DrawInstanced(128, 1, 0, 0);
+				if (dist > 200)
+					m_pCL->DrawInstanced(256, 1, 0, 0);
+				else if (dist > 150 && dist < 200)
+					m_pCL->DrawInstanced(512, 1, 0, 0);
+				else if (dist > 100 && dist < 150)
+					m_pCL->DrawInstanced(1024, 1, 0, 0);
+				else if (dist < 100)
+					m_pCL->DrawInstanced(2048, 1, 0, 0);
 				
 			}
 		}
