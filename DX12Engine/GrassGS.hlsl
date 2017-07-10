@@ -18,6 +18,7 @@ struct GS_INPUT
 struct GS_OUTPUT
 {
 	float4 position : SV_POSITION;
+    float4 normal : NORMAL;
 };
 
 struct StructGrass
@@ -60,6 +61,7 @@ void main(
 
     for (int i = 0; i < 3; ++i)
     {
+        element.normal = float4(cross(binormalWS.xyz, float3(0, 1, 0)), 0.0f);
         element.position = wp[i] + patch[index].seed[i] * binormalWS;
         output.Append(element);
         element.position = wp[i + 1] + patch[index].seed[i + 1] * binormalWS;
@@ -74,6 +76,9 @@ void main(
         element.position = wp[i + 1] - patch[index].seed[i + 1] * binormalWS;
         output.Append(element);
         output.RestartStrip();
+
+
+        element.normal = -element.normal;
         element.position = wp[i] + patch[index].seed[i] * binormalWS;
         output.Append(element);
         element.position = wp[i] - patch[index].seed[i] * binormalWS;

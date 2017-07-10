@@ -17,6 +17,7 @@ public:
 	D3D12_VIEWPORT GetViewport();
 	D3D12_RECT GetScissorRect();
 
+	DirectX::XMMATRIX GetViewMatrix();
 	DirectX::XMMATRIX GetVPMatrix();
 
 	DirectX::XMFLOAT3 GetPosition();

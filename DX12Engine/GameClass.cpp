@@ -13,7 +13,7 @@ GameClass::~GameClass()
 bool GameClass::Initialize(FrameBuffer* pFrameBuffer)
 {
 	m_pMainCamera = new Camera(DirectX::XMFLOAT3(0.0f, 0.0f, -15.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
-	m_pSkyBox = new SkyBox();
+	//m_pSkyBox = new SkyBox();
 
 	m_pPlaneObject = new Plane(pFrameBuffer);
 	m_pGrassBlades = new GrassBlades();
@@ -25,19 +25,19 @@ bool GameClass::Initialize(FrameBuffer* pFrameBuffer)
 void GameClass::Update(Input* input, float dt)
 {
 	m_pMainCamera->Update(input, dt);
-	m_pSkyBox->Update(m_pMainCamera);
+	//m_pSkyBox->Update(m_pMainCamera);
 	m_pFrustumCuller->Update(m_pMainCamera);
 
 	m_pPlaneObject->Update(m_pMainCamera);
-	//m_pGrassBlades->Update(m_pMainCamera);
+	m_pGrassBlades->Update(m_pMainCamera);
 }
 
 bool GameClass::Render(FrameBuffer* pFrameBuffer)
 {
-	m_pSkyBox->Draw(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::STANDARD), m_pMainCamera);
+	//m_pSkyBox->Draw(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::STANDARD), m_pMainCamera);
 	
 	m_pPlaneObject->Draw(pFrameBuffer, m_pMainCamera);
-	//m_pGrassBlades->Draw(pFrameBuffer, m_pMainCamera , m_pFrustumCuller);
+	m_pGrassBlades->Draw(pFrameBuffer, m_pMainCamera , m_pFrustumCuller);
 	
 	return true;
 }

@@ -47,18 +47,18 @@ HS_CONSTANT_DATA_OUTPUT CalcHSPatchConstants(
 	HS_CONSTANT_DATA_OUTPUT Output;
 
 	
-    float3 c = ip[0].position + ip[1].position + ip[2].position;
-    c /= 3.0f;
+    float3 center = ip[0].position + ip[1].position + ip[2].position;
+    center /= 3.0f;
     float2 uvs = ip[0].uv + ip[1].uv + ip[2].uv;
     uvs /= 300.0f;
     float y = heightMap.SampleLevel(heightSamp, uvs, 0).r;
 
-    c.y += y * 100;
+    center.y += y * 100;
    
-    float d = length(cameraPostion - c.xyz);
+    float d = length(cameraPostion - center.xyz);
 
     //falloff function
-    float f = min(75.0f/d, 10.0f);
+    float f = min(75.0f/d,10.0f);
 
 
 	// Insert code to compute Output here

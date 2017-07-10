@@ -104,9 +104,9 @@ SkyBox::SkyBox()
 	
 
 	samplerCubemap.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerCubemap.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	samplerCubemap.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-	samplerCubemap.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerCubemap.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerCubemap.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
+	samplerCubemap.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
 	samplerCubemap.BorderColor = D3D12_STATIC_BORDER_COLOR_TRANSPARENT_BLACK;
 	samplerCubemap.ComparisonFunc = D3D12_COMPARISON_FUNC_NEVER;
 	samplerCubemap.MaxAnisotropy = 1;
@@ -147,18 +147,21 @@ SkyBox::SkyBox()
 	psoDesc.SampleMask = 0xffffffff;
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
+	psoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+	psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+
 	DxAssert(D3DClass::GetDevice()->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&m_pPSO)), S_OK);
 
 	
 
 	//skybox_texture.jpg     //skybox_clouds.png		//Skybox_example.png		//skybox_braynz.png
-	pTextureCubeMap = new Texture(L"../Resources/skybox_braynz.png");
+	pTextureCubeMap = new Texture(L"../Resources/Skybox_example.png");
 
-
-	SRVdescCubeMap.Texture2D.MipLevels = 1;
+	SRVdescCubeMap.TextureCube.MipLevels = -1;
+	SRVdescCubeMap.TextureCube.MostDetailedMip = 0;
 	SRVdescCubeMap.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 	SRVdescCubeMap.Format = pTextureCubeMap->GetTextureDesc()->Format;
-	SRVdescCubeMap.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+	SRVdescCubeMap.ViewDimension = D3D12_SRV_DIMENSION_TEXTURECUBE;
 
 	DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
@@ -202,6 +205,7 @@ SkyBox::SkyBox()
 			m_pBufferTexture,
 			D3D12_RESOURCE_STATE_COPY_DEST,
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
+
 
 	D3D12_DESCRIPTOR_HEAP_DESC heapDesc = {};
 	heapDesc.NumDescriptors = 1;
@@ -445,10 +449,13 @@ void SkyBox::CreateSphere(int iLatLines, int iLongLines)
 
 void SkyBox::Update(Camera * camera)
 {
-	DirectX::XMMATRIX wMat = DirectX::XMMatrixMultiply(DirectX::XMMatrixScaling(500.0f, 500.0f, 500.0f),
+	DirectX::XMMATRIX wMat = DirectX::XMMatrixMultiply(
+		DirectX::XMMatrixScaling(5.0f, 5.0f, 5.0f),
 		DirectX::XMMatrixTranslation(camera->GetPosition().x, camera->GetPosition().y, camera->GetPosition().z));
 	
-	DirectX::XMMATRIX transposedWVPMat = DirectX::XMMatrixMultiplyTranspose(wMat, camera->GetVPMatrix());//DirectX::XMMatrixMultiplyTranspose(DirectX::XMMatrixTranslation(-20, -20, -20), camera->GetVPMatrix());
+	DirectX::XMStoreFloat4x4(&m_wvpMat.worldMatrix, camera->GetViewMatrix());
+
+	DirectX::XMMATRIX transposedWVPMat = DirectX::XMMatrixMultiplyTranspose(wMat, camera->GetVPMatrix());
 	DirectX::XMStoreFloat4x4(&m_wvpMat.wvpMat, transposedWVPMat);
 	memcpy(m_pWVPGPUAdress[D3DClass::GetFrameIndex()], &m_wvpMat, sizeof(m_wvpMat));
 

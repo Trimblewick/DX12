@@ -1,6 +1,7 @@
 
 cbuffer MatrixBuffer : register(b0)
 {
+    float4x4 worldMatrix;
     float4x4 wvpMat;
 }
 
@@ -13,13 +14,13 @@ struct VS_INPUT
 struct VS_OUTPUT
 {
     float4 position : SV_POSITION;
-    float2 uv : TEXCOORD0;
+    float3 uvw : POSITION;
 };
 
 VS_OUTPUT main( VS_INPUT input )
 {
     VS_OUTPUT output;
-    output.position = mul(float4(input.position, 1.0f), wvpMat);
-    output.uv = input.uv;
+    output.position = mul(float4(input.position, 1.0f), wvpMat).xyww;
+    output.uvw = mul(input.position, (float3x3)worldMatrix);
 	return output;
 }

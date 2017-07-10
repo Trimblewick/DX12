@@ -181,6 +181,11 @@ D3D12_RECT Camera::GetScissorRect()
 	return m_scissorRect;
 }
 
+DirectX::XMMATRIX Camera::GetViewMatrix()
+{
+	return DirectX::XMLoadFloat4x4(&m_viewMatrix);
+}
+
 DirectX::XMMATRIX Camera::GetVPMatrix()
 {
 	return DirectX::XMLoadFloat4x4(&m_viewMatrix) * DirectX::XMLoadFloat4x4(&m_projMatrix);

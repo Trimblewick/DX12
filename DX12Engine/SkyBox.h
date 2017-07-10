@@ -21,6 +21,7 @@ private:
 
 	struct WVPMatrixBufferStruct
 	{
+		DirectX::XMFLOAT4X4	worldMatrix;
 		DirectX::XMFLOAT4X4 wvpMat;
 	};
 
@@ -48,7 +49,6 @@ private:
 	ID3D12Resource*					m_pBufferTexture;
 	int								m_iDHsize;
 	
-	DirectX::XMFLOAT4X4				m_worldMatrix;
 	WVPMatrixBufferStruct			m_wvpMat;
 	ID3D12Resource*					m_pWVPMatUpploadHeaps[g_cFrameBufferCount];
 	UINT8*							m_pWVPGPUAdress[g_cFrameBufferCount];

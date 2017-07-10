@@ -184,6 +184,7 @@ GrassBlades::GrassBlades()
 		patch[i].binormal = binorm;
 
 		DirectX::XMStoreFloat3(&forward, DirectX::XMVector3Cross(DirectX::XMLoadFloat4(&binorm), up));
+		
 
 		patch[i].position[0].x = static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 8.0f;
 		patch[i].position[0].y = 0.0f;
@@ -192,15 +193,15 @@ GrassBlades::GrassBlades()
 		for (int j = 1; j < 4; ++j)
 		{
 			patch[i].position[j].x = patch[i].position[j - 1].x + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.1f - 0.05f;
-			patch[i].position[j].y = patch[i].position[j - 1].y + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.6f;
+			patch[i].position[j].y = patch[i].position[j - 1].y + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 1.1f;
 			patch[i].position[j].z = patch[i].position[j - 1].z + static_cast <float> (std::rand()) / static_cast <float> (RAND_MAX) * 0.1f - 0.05f;
 			patch[i].position[j].w = 1.0f;
 		}
 		
 		
-		patch[i].seed.x = 0.03f;
-		patch[i].seed.y = 0.02f;
-		patch[i].seed.z = 0.012f;
+		patch[i].seed.x = 0.07f;
+		patch[i].seed.y = 0.05f;
+		patch[i].seed.z = 0.03f;
 		patch[i].seed.w = 0.0f;
 		
 	}
@@ -447,14 +448,15 @@ void GrassBlades::Draw(FrameBuffer* pFrameBuffer, Camera* camera, FrustumCulling
 
 	BYTE* heightData = m_pHeightMap->GetTextureData();
 	int dataIndex = 0;
+	int test = 0;
 	for (int k = 0; k < m_iGridDim; ++k)
 	{
 		for (int i = 0; i < m_iGridDim; ++i)
 		{
 			dataIndex = (k * m_pHeightMap->GetTextureWidth() + i) * 4;//multiplied by 4 since xyzw comes sequentially in the indexes
 			float y = heightData[dataIndex] / 2.55f;
-			DirectX::XMFLOAT4 pos(i * 8, y, k * 8, 0);
-			if (pFrustumCuller->Cull(DirectX::XMLoadFloat4(&pos), 1.0f))
+			DirectX::XMFLOAT4 pos((i + 0.5f) * 8, y, (k + 0.5f) * 8, 0);
+			if (pFrustumCuller->Cull(DirectX::XMLoadFloat4(&pos), 2.0f))
 			{
 				
 				m_pCL->SetGraphicsRoot32BitConstant(2, i * 8, 0);
@@ -462,19 +464,30 @@ void GrassBlades::Draw(FrameBuffer* pFrameBuffer, Camera* camera, FrustumCulling
 				m_pCL->SetGraphicsRoot32BitConstant(2, m_ppTiles[k][i], 2);
 
 				
+
 				DirectX::XMFLOAT3 f3Pos(i * 8, y, k * 8);
 				float dist = DirectX::XMVectorGetX(DirectX::XMVector3Length(DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&f3Pos), DirectX::XMLoadFloat3(&camera->GetPosition()))));
-				if (dist > 200)
-					m_pCL->DrawInstanced(256, 1, 0, 0);
-				else if (dist > 150 && dist < 200)
+				
+				if (dist > 175 && dist < 225)
 					m_pCL->DrawInstanced(512, 1, 0, 0);
-				else if (dist > 100 && dist < 150)
+				else if (dist > 150 && dist < 175)
+					m_pCL->DrawInstanced(750, 1, 0, 0);
+				else if (dist > 120 && dist < 150)
 					m_pCL->DrawInstanced(1024, 1, 0, 0);
-				else if (dist < 100)
+				else if (dist > 100 && dist < 120)
+					m_pCL->DrawInstanced(1400, 1, 0, 0);
+				else if (dist > 70 && dist < 100)
+					m_pCL->DrawInstanced(1750, 1, 0, 0);
+				else if (dist < 70)
 					m_pCL->DrawInstanced(2048, 1, 0, 0);
+
+				if (dist < 100)
+					test++;
 				
 			}
 		}
 	}
+	int stopper = 0;
+
 	return;
 }
