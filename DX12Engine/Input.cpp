@@ -50,3 +50,29 @@ bool Input::IsKeyDown(unsigned int const keyIndex)
 	return m_bKeys[keyIndex];
 	
 }
+
+void Input::UpdateMouse()
+{
+	POINT p;
+	if (GetCursorPos(&p))
+	{
+		float x = p.x;
+		float y = p.y;
+
+		m_mouseDelta.x = x - m_mousePosPreviousFrame.x;
+		m_mouseDelta.y = y - m_mousePosPreviousFrame.y;
+		m_mousePosPreviousFrame.x = x;
+		m_mousePosPreviousFrame.y = y;
+	}
+
+	
+
+	if (!Input::IsKeyDown(Input::KEYS::P))
+	{
+		RECT temp = WindowClass::GetClientRect();
+		
+		SetCursorPos(temp.left + (WindowClass::GetWidth() / 2.0f), temp.top + (WindowClass::GetHeight() / 2.0f));
+	}
+
+	return;
+}

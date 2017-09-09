@@ -1,5 +1,8 @@
 #pragma once
 #include <assert.h>
+#include <DirectXMath.h>
+#include "WindowClass.h"
+#include "Common.h"
 
 class Input
 {
@@ -63,7 +66,10 @@ public:
 
 	bool IsKeyDown(unsigned int const keyIndex);
 
-private:
+	void UpdateMouse();
 
+private:
+	DirectX::XMFLOAT2 m_mousePosPreviousFrame;
+	DirectX::XMFLOAT2 m_mouseDelta;
 	bool m_bKeys[256];
 };

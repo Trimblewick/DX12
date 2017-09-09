@@ -35,6 +35,7 @@ public:
 	static LONG GetHorizontalResolution();
 	static LONG GetVerticalResolution();
 	static bool IsFullscreen();
+	static RECT GetClientRect();
 
 	static void ShowCursor();
 	static void HideCursor();

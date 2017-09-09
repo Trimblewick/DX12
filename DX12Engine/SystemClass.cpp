@@ -48,6 +48,8 @@ LRESULT CALLBACK SystemClass::EventHandler(HWND hWnd, UINT message, WPARAM wPara
 	case WM_MOUSEHOVER:
 		/*Input::ProcessMouse(message, wParam, lParam);
 		break;*/
+	case WM_CAPTURECHANGED:
+		s_input.UpdateMouse();
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE) {
 			if (MessageBox(0, L"Are you sure you want to exit?",

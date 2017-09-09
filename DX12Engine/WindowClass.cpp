@@ -163,6 +163,13 @@ bool WindowClass::IsFullscreen()
 	return s_bFullscreen;
 }
 
+RECT WindowClass::GetClientRect()
+{
+	RECT temp;
+	GetWindowRect(s_windowHandler, &temp);
+	return temp;
+}
+
 bool WindowClass::SetAspectRatio()
 {
 	s_aspectRatio = float(s_width) / float(s_height);
