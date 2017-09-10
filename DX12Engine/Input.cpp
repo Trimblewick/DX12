@@ -62,10 +62,10 @@ void Input::UpdateMouse()
 
 		//if (x > rect.left && x < rect.right && y > rect.top && y < rect.bottom)
 		//{
-			m_mouseDelta.x = x - m_mousePosPreviousFrame.x;
-			m_mouseDelta.y = y - m_mousePosPreviousFrame.y;
-			m_mousePosPreviousFrame.x = x;
-			m_mousePosPreviousFrame.y = y;
+		m_mouseDelta.x = x - m_mousePosPreviousFrame.x;
+		m_mouseDelta.y = y - m_mousePosPreviousFrame.y;
+		m_mousePosPreviousFrame.x = x;
+		m_mousePosPreviousFrame.y = y;
 
 
 			//SetCursorPos(rect.left + (WindowClass::GetWidth() / 2.0f), rect.top + (WindowClass::GetHeight() / 2.0f));

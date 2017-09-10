@@ -29,7 +29,7 @@ private:
 	D3D12_RECT m_scissorRect; // the area to draw in. pixels outside that area will not be drawn onto
 
 
-
+	float increment;
 	DirectX::XMFLOAT3	m_position;
 	DirectX::XMFLOAT3	m_focusPoint;
 	DirectX::XMFLOAT3	m_forward;

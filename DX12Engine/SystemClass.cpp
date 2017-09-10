@@ -13,6 +13,7 @@ SystemClass::SystemClass()
 	s_bRunning = false;
 	s_initialized = false;
 	s_fDeltaTime = 0.0f;
+	
 }
 
 SystemClass::~SystemClass()
@@ -24,7 +25,7 @@ LRESULT CALLBACK SystemClass::EventHandler(HWND hWnd, UINT message, WPARAM wPara
 {
 	//If one case is hit the code will execute everything down until a break;
 
-	s_input.UpdateMouse();
+	//s_input.UpdateMouse();
 	
 	switch (message)
 	{
@@ -46,9 +47,9 @@ LRESULT CALLBACK SystemClass::EventHandler(HWND hWnd, UINT message, WPARAM wPara
 	case WM_MOUSEHOVER:
 
 	case WM_MOUSELEAVE:
-		
 	case WM_CAPTURECHANGED:
-		//s_input.UpdateMouse();
+		s_input.UpdateMouse();
+	
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE) {
 			if (MessageBox(0, L"Are you sure you want to exit?",
@@ -132,10 +133,12 @@ void SystemClass::Run()
 		else //loop logics
 		{
 			D3DClass::WaitForPreviousFrame();
+			//dt
 			auto currentTime = std::chrono::steady_clock::now();
 			s_fDeltaTime = (currentTime - prevTime).count() / 1000000000.0f;
 			prevTime = currentTime;
 
+			//fps counter
 			float fps = 1.0f / s_fDeltaTime;
 			
 			std::string sFPS = "FPS: " + std::to_string(fps);
@@ -143,6 +146,8 @@ void SystemClass::Run()
 			LPCWSTR titleFPS = wstemp.c_str();
 			WindowClass::SetWindowTitle(titleFPS);
 
+
+			//____________fix
 			DxAssert(D3DClass::GetCurrentCommandAllocator()->Reset(), S_OK);
 			
 			

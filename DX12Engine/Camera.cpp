@@ -2,6 +2,7 @@
 
 Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 {
+	increment = 0;
 	// Fill out the Viewport
 	m_viewport.TopLeftX = 0;
 	m_viewport.TopLeftY = 0;
@@ -51,6 +52,7 @@ Camera::~Camera()
 
 void Camera::Update(Input * input, float dt)
 {
+	/*
 	float offsX = 0;
 	float offsY = 0;
 	float offsZ = 0;
@@ -166,7 +168,14 @@ void Camera::Update(Input * input, float dt)
 	DirectX::XMStoreFloat3(&m_up, DirectX::XMVector3Normalize(DirectX::XMVector3Cross(tempRight, f)));
 	//recalc viewmatrix
 	DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_up));
-	DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);
+	DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);*/
+
+	if (input->IsKeyDown(Input::RIGHT_ARROW))
+	{
+		increment=1.0f * dt;
+		
+		DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixMultiply(DirectX::XMLoadFloat4x4(&m_viewMatrix), DirectX::XMMatrixRotationRollPitchYaw(increment, 0, 0)));
+	}
 	
 	return;
 }
