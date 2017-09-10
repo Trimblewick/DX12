@@ -54,24 +54,25 @@ bool Input::IsKeyDown(unsigned int const keyIndex)
 void Input::UpdateMouse()
 {
 	POINT p;
+
 	if (GetCursorPos(&p))
 	{
 		float x = p.x;
 		float y = p.y;
 
-		m_mouseDelta.x = x - m_mousePosPreviousFrame.x;
-		m_mouseDelta.y = y - m_mousePosPreviousFrame.y;
-		m_mousePosPreviousFrame.x = x;
-		m_mousePosPreviousFrame.y = y;
-	}
+		//if (x > rect.left && x < rect.right && y > rect.top && y < rect.bottom)
+		//{
+			m_mouseDelta.x = x - m_mousePosPreviousFrame.x;
+			m_mouseDelta.y = y - m_mousePosPreviousFrame.y;
+			m_mousePosPreviousFrame.x = x;
+			m_mousePosPreviousFrame.y = y;
 
-	
 
-	if (!Input::IsKeyDown(Input::KEYS::P))
-	{
-		RECT temp = WindowClass::GetClientRect();
-		
-		SetCursorPos(temp.left + (WindowClass::GetWidth() / 2.0f), temp.top + (WindowClass::GetHeight() / 2.0f));
+			//SetCursorPos(rect.left + (WindowClass::GetWidth() / 2.0f), rect.top + (WindowClass::GetHeight() / 2.0f));
+		//}
+
+//			RECT rect = WindowClass::GetClientRect();
+//			SetCursorPos(rect.left + (WindowClass::GetWidth() / 2.0f), rect.top + (WindowClass::GetHeight() / 2.0f));
 	}
 
 	return;

@@ -23,17 +23,15 @@ SystemClass::~SystemClass()
 LRESULT CALLBACK SystemClass::EventHandler(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	//If one case is hit the code will execute everything down until a break;
+
+	s_input.UpdateMouse();
+	
 	switch (message)
 	{
 
 	case WM_SETFOCUS:
 	case WM_KILLFOCUS:
-		//Input::ProcessGamePad(message, wParam, lParam);
-		//break;
 	case WM_ACTIVATEAPP:
-		/*Input::ProcessKeyboard(message, wParam, lParam);
-		Input::ProcessMouse(message, wParam, lParam);
-		break;*/
 	case WM_INPUT:
 	case WM_MOUSEMOVE:
 	case WM_LBUTTONDOWN:
@@ -46,10 +44,11 @@ LRESULT CALLBACK SystemClass::EventHandler(HWND hWnd, UINT message, WPARAM wPara
 	case WM_XBUTTONDOWN:
 	case WM_XBUTTONUP:
 	case WM_MOUSEHOVER:
-		/*Input::ProcessMouse(message, wParam, lParam);
-		break;*/
+
+	case WM_MOUSELEAVE:
+		
 	case WM_CAPTURECHANGED:
-		s_input.UpdateMouse();
+		//s_input.UpdateMouse();
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE) {
 			if (MessageBox(0, L"Are you sure you want to exit?",
@@ -68,8 +67,6 @@ LRESULT CALLBACK SystemClass::EventHandler(HWND hWnd, UINT message, WPARAM wPara
 		s_input.KeyUp((unsigned int)wParam);
 		return 0;
 	case WM_SYSKEYUP:
-		/*Input::ProcessKeyboard(message, wParam, lParam);
-		break;*/
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;

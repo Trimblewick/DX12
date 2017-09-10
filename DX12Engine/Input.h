@@ -3,6 +3,7 @@
 #include <DirectXMath.h>
 #include "WindowClass.h"
 #include "Common.h"
+#include <thread>
 
 class Input
 {
