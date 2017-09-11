@@ -68,9 +68,13 @@ public:
 	bool IsKeyDown(unsigned int const keyIndex);
 
 	void UpdateMouse();
+	void UpdateWindowPos(RECT* pRect);
+	DirectX::XMFLOAT2 GetMouseDelta();
 
 private:
-	DirectX::XMFLOAT2 m_mousePosPreviousFrame;
+	float m_fWindowCenterPosX;
+	float m_fWindowCenterPosY;
+
 	DirectX::XMFLOAT2 m_mouseDelta;
 	bool m_bKeys[256];
 };

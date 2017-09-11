@@ -2,6 +2,11 @@
 
 Input::Input()
 {
+	RECT r = WindowClass::GetClientRect();
+	m_fWindowCenterPosX = r.left + (WindowClass::GetWidth() / 2.0f);
+	m_fWindowCenterPosY = r.top + (WindowClass::GetHeight() / 2.0f);
+
+	SetCursorPos(m_fWindowCenterPosX, m_fWindowCenterPosY);
 }
 
 Input::~Input()
@@ -60,20 +65,25 @@ void Input::UpdateMouse()
 		float x = p.x;
 		float y = p.y;
 
-		//if (x > rect.left && x < rect.right && y > rect.top && y < rect.bottom)
-		//{
-		m_mouseDelta.x = x - m_mousePosPreviousFrame.x;
-		m_mouseDelta.y = y - m_mousePosPreviousFrame.y;
-		m_mousePosPreviousFrame.x = x;
-		m_mousePosPreviousFrame.y = y;
+		m_mouseDelta.x = x - m_fWindowCenterPosX;
+		m_mouseDelta.y = y - m_fWindowCenterPosY;
+		
 
-
-			//SetCursorPos(rect.left + (WindowClass::GetWidth() / 2.0f), rect.top + (WindowClass::GetHeight() / 2.0f));
-		//}
-
-//			RECT rect = WindowClass::GetClientRect();
-//			SetCursorPos(rect.left + (WindowClass::GetWidth() / 2.0f), rect.top + (WindowClass::GetHeight() / 2.0f));
+		if (!IsKeyDown(Input::NINE))
+			SetCursorPos(m_fWindowCenterPosX, m_fWindowCenterPosY);
 	}
 
 	return;
+}
+
+void Input::UpdateWindowPos(RECT * pRect)
+{
+	m_fWindowCenterPosX = pRect->left + (WindowClass::GetWidth() / 2.0f);
+	m_fWindowCenterPosY = pRect->top + (WindowClass::GetHeight() / 2.0f);
+
+}
+
+DirectX::XMFLOAT2 Input::GetMouseDelta()
+{
+	return m_mouseDelta;
 }

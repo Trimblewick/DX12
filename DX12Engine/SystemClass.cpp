@@ -26,6 +26,7 @@ LRESULT CALLBACK SystemClass::EventHandler(HWND hWnd, UINT message, WPARAM wPara
 	//If one case is hit the code will execute everything down until a break;
 
 	//s_input.UpdateMouse();
+
 	
 	switch (message)
 	{
@@ -48,8 +49,8 @@ LRESULT CALLBACK SystemClass::EventHandler(HWND hWnd, UINT message, WPARAM wPara
 
 	case WM_MOUSELEAVE:
 	case WM_CAPTURECHANGED:
-		s_input.UpdateMouse();
-	
+	case WM_MOVE:
+		s_input.UpdateWindowPos(&WindowClass::GetClientRect());//if window has moved, update window for the sake of the mouse
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE) {
 			if (MessageBox(0, L"Are you sure you want to exit?",
@@ -133,6 +134,9 @@ void SystemClass::Run()
 		else //loop logics
 		{
 			D3DClass::WaitForPreviousFrame();
+
+			s_input.UpdateMouse();
+
 			//dt
 			auto currentTime = std::chrono::steady_clock::now();
 			s_fDeltaTime = (currentTime - prevTime).count() / 1000000000.0f;

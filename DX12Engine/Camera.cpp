@@ -50,7 +50,7 @@ Camera::~Camera()
 	
 }
 
-void Camera::Update(Input * input, float dt)
+void Camera::Update(Input * pInput, float dt)
 {
 	/*
 	float offsX = 0;
@@ -170,9 +170,9 @@ void Camera::Update(Input * input, float dt)
 	DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&m_focusPoint), DirectX::XMLoadFloat3(&m_up));
 	DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);*/
 
-	if (input->IsKeyDown(Input::RIGHT_ARROW))
+	if (pInput->IsKeyDown(Input::RIGHT_ARROW))
 	{
-		increment=1.0f * dt;
+		increment = pInput->GetMouseDelta().x * dt;
 		
 		DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixMultiply(DirectX::XMLoadFloat4x4(&m_viewMatrix), DirectX::XMMatrixRotationRollPitchYaw(increment, 0, 0)));
 	}
