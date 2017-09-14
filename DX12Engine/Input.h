@@ -68,7 +68,7 @@ public:
 	bool IsKeyDown(unsigned int const keyIndex);
 
 	void UpdateMouse();
-	void UpdateWindowPos(RECT* pRect);
+	void UpdateClientRectPos();
 	DirectX::XMFLOAT2 GetMouseDelta();
 
 private:

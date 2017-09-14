@@ -50,7 +50,7 @@ LRESULT CALLBACK SystemClass::EventHandler(HWND hWnd, UINT message, WPARAM wPara
 	case WM_MOUSELEAVE:
 	case WM_CAPTURECHANGED:
 	case WM_MOVE:
-		s_input.UpdateWindowPos(&WindowClass::GetClientRect());//if window has moved, update window for the sake of the mouse
+		s_input.UpdateClientRectPos();//if window has moved, update window for the sake of the mouse
 	case WM_KEYDOWN:
 		if (wParam == VK_ESCAPE) {
 			if (MessageBox(0, L"Are you sure you want to exit?",

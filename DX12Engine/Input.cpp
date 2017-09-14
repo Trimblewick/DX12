@@ -2,9 +2,7 @@
 
 Input::Input()
 {
-	RECT r = WindowClass::GetClientRect();
-	m_fWindowCenterPosX = r.left + (WindowClass::GetWidth() / 2.0f);
-	m_fWindowCenterPosY = r.top + (WindowClass::GetHeight() / 2.0f);
+	this->UpdateClientRectPos();
 
 	SetCursorPos(m_fWindowCenterPosX, m_fWindowCenterPosY);
 }
@@ -76,10 +74,11 @@ void Input::UpdateMouse()
 	return;
 }
 
-void Input::UpdateWindowPos(RECT * pRect)
+void Input::UpdateClientRectPos()
 {
-	m_fWindowCenterPosX = pRect->left + (WindowClass::GetWidth() / 2.0f);
-	m_fWindowCenterPosY = pRect->top + (WindowClass::GetHeight() / 2.0f);
+	RECT rect = WindowClass::GetClientRect();
+	m_fWindowCenterPosX = rect.left + (WindowClass::GetWidth() / 2.0f);
+	m_fWindowCenterPosY = rect.top + (WindowClass::GetHeight() / 2.0f);
 
 }
 

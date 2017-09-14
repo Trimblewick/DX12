@@ -28,16 +28,22 @@ private:
 	D3D12_VIEWPORT m_viewport; // area that output from rasterizer will be stretched to.
 	D3D12_RECT m_scissorRect; // the area to draw in. pixels outside that area will not be drawn onto
 
-
-	float increment;
 	DirectX::XMFLOAT3	m_position;
-	DirectX::XMFLOAT3	m_focusPoint;
-	DirectX::XMFLOAT3	m_forward;
-	DirectX::XMFLOAT3	m_up;
+	DirectX::XMVECTOR	m_forward;
+	DirectX::XMVECTOR	m_right;
 
+	DirectX::XMVECTOR	m_fDefaultForward;
+	DirectX::XMVECTOR	m_fDefaultRight;
+
+	float m_fPitch;
+	float m_fYaw;
+
+	float m_fForwardSpeed;
+	float m_fHorizontalSpeed;
+
+	DirectX::XMMATRIX	m_rotMat;
 
 	DirectX::XMFLOAT4X4 m_viewMatrix;
 	DirectX::XMFLOAT4X4 m_projMatrix;
 
-	float m_fSpeedRotation, m_fSpeedZoom, m_fSpeedElevate;
 };
