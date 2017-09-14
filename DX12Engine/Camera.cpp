@@ -35,8 +35,9 @@ Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 	DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookToLH(DirectX::XMLoadFloat3(&initPosition), m_forward, up);
 	DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);
 
-	m_fForwardSpeed = 15.0f;
-	m_fHorizontalSpeed = 10.0f;
+	m_fForwardSpeed = 35.0f;
+	m_fHorizontalSpeed = 20.0f;
+	m_fVerticalSpeed = 20.0f;
 }
 
 Camera::~Camera()
@@ -56,6 +57,7 @@ void Camera::Update(Input * pInput, float dt)
 
 	float f = 0.0f;
 	float r = 0.0f;
+	float u = 0.0f;
 	
 	if (pInput->IsKeyDown(Input::W))
 	{
@@ -73,9 +75,17 @@ void Camera::Update(Input * pInput, float dt)
 	{
 		r -= dt * m_fHorizontalSpeed;
 	}
+	if (pInput->IsKeyDown(Input::SPACE))
+	{
+		u += dt * m_fVerticalSpeed;
+	}
+	if (pInput->IsKeyDown(Input::CTRL))
+	{
+		u -= dt * m_fVerticalSpeed;
+	}
 
 	m_position.x += DirectX::XMVectorGetX(m_forward) * f + DirectX::XMVectorGetX(m_right) * r;
-	m_position.y += DirectX::XMVectorGetY(m_forward) * f + DirectX::XMVectorGetY(m_right) * r;
+	m_position.y += DirectX::XMVectorGetY(m_forward) * f + DirectX::XMVectorGetY(m_right) * r + u;
 	m_position.z += DirectX::XMVectorGetZ(m_forward) * f + DirectX::XMVectorGetZ(m_right) * r;
 	
 

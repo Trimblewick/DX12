@@ -40,6 +40,7 @@ private:
 
 	float m_fForwardSpeed;
 	float m_fHorizontalSpeed;
+	float m_fVerticalSpeed;
 
 	DirectX::XMMATRIX	m_rotMat;
 
