@@ -11,7 +11,7 @@ ID3D12CommandQueue* D3DClass::s_pCommandQueue;
 ID3D12DescriptorHeap* D3DClass::s_pRTVDescriptorHeap;
 ID3D12Resource* D3DClass::s_pRenderTargets[g_cFrameBufferCount];//right now just for backbuffering
 ID3D12CommandAllocator* D3DClass::s_pCommandAllocator[g_cFrameBufferCount];
-ID3D12Fence* D3DClass::s_pFence[g_cFrameBufferCount];
+ID3D12Fence* D3DClass::s_pFenceCQ[g_cFrameBufferCount];
 HANDLE D3DClass::s_hFenceEventHandle;
 UINT64 D3DClass::s_ui64FenceValue[g_cFrameBufferCount];
 unsigned int D3DClass::s_uiFrameIndex;
@@ -180,7 +180,7 @@ bool D3DClass::Initialize()
 	// create the fences
 	for (int i = 0; i < g_cFrameBufferCount; i++)
 	{
-		hr = s_pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&s_pFence[i]));
+		hr = s_pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&s_pFenceCQ[i]));
 		if (FAILED(hr))
 		{
 			return false;
@@ -208,10 +208,10 @@ void D3DClass::Cleanup()
 	{
 		s_uiFrameIndex = i;
 		//WaitForPreviousFrame();
-		if (s_pFence[s_uiFrameIndex]->GetCompletedValue() < s_ui64FenceValue[s_uiFrameIndex])
+		if (s_pFenceCQ[s_uiFrameIndex]->GetCompletedValue() < s_ui64FenceValue[s_uiFrameIndex])
 		{
 			// we have the fence create an event which is signaled once the fence's current value is "fenceValue"
-			DxAssert(s_pFence[s_uiFrameIndex]->SetEventOnCompletion(s_ui64FenceValue[s_uiFrameIndex], s_hFenceEventHandle), S_OK);
+			DxAssert(s_pFenceCQ[s_uiFrameIndex]->SetEventOnCompletion(s_ui64FenceValue[s_uiFrameIndex], s_hFenceEventHandle), S_OK);
 			
 			// We will wait until the fence has triggered the event that it's current value has reached "fenceValue". once it's value
 			// has reached "fenceValue", we know the command queue has finished executing
@@ -233,7 +233,7 @@ void D3DClass::Cleanup()
 	{
 		SAFE_RELEASE(s_pRenderTargets[i]);
 		SAFE_RELEASE(s_pCommandAllocator[i]);
-		SAFE_RELEASE(s_pFence[i]);
+		SAFE_RELEASE(s_pFenceCQ[i]);
 	}
 	if (s_pRTVHandle)
 	{
@@ -248,7 +248,7 @@ void D3DClass::Cleanup()
 	
 }
 
-void D3DClass::WaitForPreviousFrame()
+void D3DClass::WaitForPreviousFrame()//wait for the command Q to finish on the gpu
 {
 	HRESULT hr;
 
@@ -257,10 +257,10 @@ void D3DClass::WaitForPreviousFrame()
 
 	// if the current fence value is still less than "fenceValue", then we know the GPU has not finished executing
 	// the command queue since it has not reached the "commandQueue->Signal(fence, fenceValue)" command
-	if (s_pFence[s_uiFrameIndex]->GetCompletedValue() < s_ui64FenceValue[s_uiFrameIndex])
+	if (s_pFenceCQ[s_uiFrameIndex]->GetCompletedValue() < s_ui64FenceValue[s_uiFrameIndex])
 	{
 		// we have the fence create an event which is signaled once the fence's current value is "fenceValue"
-		DxAssert(s_pFence[s_uiFrameIndex]->SetEventOnCompletion(s_ui64FenceValue[s_uiFrameIndex], s_hFenceEventHandle), S_OK);
+		DxAssert(s_pFenceCQ[s_uiFrameIndex]->SetEventOnCompletion(s_ui64FenceValue[s_uiFrameIndex], s_hFenceEventHandle), S_OK);
 		
 		// We will wait until the fence has triggered the event that it's current value has reached "fenceValue". once it's value
 		// has reached "fenceValue", we know the command queue has finished executing
@@ -270,17 +270,51 @@ void D3DClass::WaitForPreviousFrame()
 
 	// increment fenceValue for next frame
 	s_ui64FenceValue[s_uiFrameIndex]++;
+
+
+	DxAssert(s_pCommandAllocator[s_uiFrameIndex]->Reset(), S_OK);
+}
+
+ID3D12CommandAllocator * D3DClass::CreateCA(D3D12_COMMAND_LIST_TYPE listType)
+{
+	ID3D12CommandAllocator* pCA;
+	DxAssert(s_pDevice->CreateCommandAllocator(listType, IID_PPV_ARGS(&pCA)), S_OK);
+	return pCA;
+}
+
+ID3D12Fence * D3DClass::CreateFence(UINT64 ui64InitVal, D3D12_FENCE_FLAGS fenceFlag)
+{
+	ID3D12Fence* pFence;
+	DxAssert(s_pDevice->CreateFence(ui64InitVal, fenceFlag, IID_PPV_ARGS(&pFence)), S_OK);
+	return pFence;
+}
+
+ID3D12DescriptorHeap * D3DClass::CreateDH(int numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
+{
+	ID3D12DescriptorHeap* pDH;
+	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+	desc.NumDescriptors = numDescriptors;
+	desc.Type = type;
+	DxAssert(s_pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&pDH)), S_OK);
+	return pDH;
+}
+
+ID3D12GraphicsCommandList * D3DClass::CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE listType, ID3D12CommandAllocator* pCA)
+{
+	ID3D12GraphicsCommandList* pCL;
+	DxAssert(s_pDevice->CreateCommandList(0, listType, pCA, nullptr, IID_PPV_ARGS(&pCL)), S_OK);
+	return pCL;
 }
 
 ID3D12Device * D3DClass::GetDevice()
 {
 	return s_pDevice;
 }
-
+/*
 ID3D12CommandAllocator * D3DClass::GetCurrentCommandAllocator()
 {
 	return s_pCommandAllocator[s_uiFrameIndex];
-}
+}*/
 
 ID3D12Resource * D3DClass::GetCurrentRenderTarget()
 {
@@ -316,7 +350,7 @@ void D3DClass::IncrementFenceValue()
 
 ID3D12Fence * D3DClass::GetCurrentFence()
 {
-	return s_pFence[s_uiFrameIndex];
+	return s_pFenceCQ[s_uiFrameIndex];
 }
 
 UINT64 D3DClass::GetCurrentFenceValue()
@@ -337,7 +371,7 @@ void D3DClass::ExecuteGraphicsCommandLists()
 	// this command goes in at the end of our command queue. we will know when our command queue 
 	// has finished because the fence value will be set to "fenceValue" from the GPU since the command
 	// queue is being executed on the GPU
-	s_pCommandQueue->Signal(s_pFence[s_uiFrameIndex], s_ui64FenceValue[s_uiFrameIndex]);
+	s_pCommandQueue->Signal(s_pFenceCQ[s_uiFrameIndex], s_ui64FenceValue[s_uiFrameIndex]);
 	
 	_pGraphicsCommandLists.clear();
 }

@@ -19,7 +19,7 @@ public:
 	Texture(LPCWSTR fileName);
 	~Texture();
 
-	void GenerateMipMaps(ID3D12Resource* pGPUresource, FrameBuffer* pFrameBuffer);
+	void GenerateMipMaps(ID3D12Resource* pGPUresource, ID3D12GraphicsCommandList* pCL);
 
 	BYTE*						GetTextureData();
 	D3D12_RESOURCE_DESC*		GetTextureDesc();

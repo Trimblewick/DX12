@@ -10,14 +10,12 @@ GameClass::~GameClass()
 	
 }
 
-bool GameClass::Initialize(FrameBuffer* pFrameBuffer)
+bool GameClass::Initialize()
 {
-	m_pMainCamera = new Camera(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f));
-	//m_pSkyBox = new SkyBox();
-
-	m_pPlaneObject = new Plane(pFrameBuffer);
-	//m_pGrassBlades = new GrassBlades();
-	m_pFrustumCuller = new FrustumCulling(m_pMainCamera);
+	m_pMainCamera = new Camera(DirectX::XMFLOAT3(-20.0f, 34.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f));
+	m_pRenderer = new DeferredRenderer();
+	m_pPlaneObject = new Plane(m_pRenderer->temp_GetGraphicsCommandList_thisFrame());
+	
 
 	return true;
 }
@@ -25,20 +23,25 @@ bool GameClass::Initialize(FrameBuffer* pFrameBuffer)
 void GameClass::Update(Input* input, float dt)
 {
 	m_pMainCamera->Update(input, dt);
-	//m_pSkyBox->Update(m_pMainCamera);
-	m_pFrustumCuller->Update(m_pMainCamera);
 
 	m_pPlaneObject->Update(m_pMainCamera);
-	//m_pGrassBlades->Update(m_pMainCamera);
 }
 
-bool GameClass::Render(FrameBuffer* pFrameBuffer)
+bool GameClass::Render()
 {
-	//m_pSkyBox->Draw(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::STANDARD), m_pMainCamera);
+	ID3D12GraphicsCommandList* pCL = m_pRenderer->temp_GetGraphicsCommandList_thisFrame();
+
+
+	m_pPlaneObject->Draw(pCL, m_pMainCamera);
 	
-	m_pPlaneObject->Draw(pFrameBuffer, m_pMainCamera);
-	//m_pGrassBlades->Draw(pFrameBuffer, m_pMainCamera , m_pFrustumCuller);
-	
+	DxAssert(pCL->Close(), S_OK);
+
+	D3DClass::QueueGraphicsCommandList(pCL);
+	D3DClass::ExecuteGraphicsCommandLists();
+	D3DClass::WaitForPreviousFrame();
+	SAFE_RELEASE(pCL);
+
+
 	return true;
 }
 
@@ -54,19 +57,5 @@ void GameClass::CleanUp()
 		delete m_pPlaneObject;
 		m_pPlaneObject = nullptr;
 	}
-	if (m_pGrassBlades)
-	{
-		delete m_pGrassBlades;
-		m_pGrassBlades = nullptr;
-	}
-	if (m_pFrustumCuller)
-	{
-		delete m_pFrustumCuller;
-		m_pFrustumCuller = nullptr;
-	}
-	if (m_pSkyBox)
-	{
-		delete m_pSkyBox;
-		m_pSkyBox = nullptr;
-	}
+	
 }

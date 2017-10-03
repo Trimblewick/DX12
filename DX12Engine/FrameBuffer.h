@@ -12,7 +12,7 @@ public:
 		STANDARD = 0
 	};
 private:
-	const float m_fClearColor[4] = { 0.4f, 0.4f, 0.4f, 1.0f };
+	const float m_fClearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 public:
 	FrameBuffer();
 	~FrameBuffer();

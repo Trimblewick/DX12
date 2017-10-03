@@ -39,7 +39,6 @@ public:
 
 
 private:
-	static FrameBuffer s_frameBuffer;
 	static GameClass s_game;
 	static bool s_bRunning;
 	static Input s_input;

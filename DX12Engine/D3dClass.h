@@ -33,8 +33,13 @@ public:
 	static void WaitForPreviousFrame();
 
 
+	static ID3D12CommandAllocator*				CreateCA(D3D12_COMMAND_LIST_TYPE listType);
+	static ID3D12Fence*							CreateFence(UINT64 ui64InitVal, D3D12_FENCE_FLAGS fenceFlag);
+	static ID3D12DescriptorHeap*				CreateDH(int numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
+	static ID3D12GraphicsCommandList*					CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE listType, ID3D12CommandAllocator* pCA);
+
 	static ID3D12Device* GetDevice();
-	static ID3D12CommandAllocator* GetCurrentCommandAllocator();
+	//static ID3D12CommandAllocator* GetCurrentCommandAllocator();
 	static ID3D12Resource* GetCurrentRenderTarget();
 	static IDXGISwapChain3* GetSwapChain();
 	static ID3D12CommandQueue* GetCommandQueue();
@@ -65,7 +70,7 @@ private:
 	static ID3D12DescriptorHeap*		s_pRTVDescriptorHeap;
 	static ID3D12Resource*				s_pRenderTargets[g_cFrameBufferCount];//right now just for backbuffering
 	static ID3D12CommandAllocator*		s_pCommandAllocator[g_cFrameBufferCount];
-	static ID3D12Fence*					s_pFence[g_cFrameBufferCount];
+	static ID3D12Fence*					s_pFenceCQ[g_cFrameBufferCount];
 	static HANDLE						s_hFenceEventHandle;
 	static UINT64						s_ui64FenceValue[g_cFrameBufferCount];
 	static unsigned int					s_uiFrameIndex;

@@ -3,7 +3,6 @@
 Input::Input()
 {
 	this->UpdateClientRectPos();
-
 	SetCursorPos(m_fWindowCenterPosX, m_fWindowCenterPosY);
 }
 

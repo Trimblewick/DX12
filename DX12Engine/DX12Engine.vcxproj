@@ -157,14 +157,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="BoxObject.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="D3dClass.cpp" />
+    <ClCompile Include="DeferredRenderer.cpp" />
     <ClCompile Include="DHHandler.cpp" />
-    <ClCompile Include="FrameBuffer.cpp" />
     <ClCompile Include="FrustumCulling.cpp" />
     <ClCompile Include="GameClass.cpp" />
-    <ClCompile Include="GrassBlades.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Plane.cpp" />
@@ -173,20 +171,17 @@
     <ClCompile Include="SkyBox.cpp" />
     <ClCompile Include="SystemClass.cpp" />
     <ClCompile Include="Texture.cpp" />
-    <ClCompile Include="TriangleObject.cpp" />
     <ClCompile Include="WindowClass.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BoxObject.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="D3dClass.h" />
     <ClInclude Include="d3dx12.h" />
+    <ClInclude Include="DeferredRenderer.h" />
     <ClInclude Include="DHHandler.h" />
-    <ClInclude Include="FrameBuffer.h" />
     <ClInclude Include="FrustumCulling.h" />
     <ClInclude Include="GameClass.h" />
-    <ClInclude Include="GrassBlades.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="PSOHandler.h" />
@@ -194,7 +189,6 @@
     <ClInclude Include="SkyBox.h" />
     <ClInclude Include="SystemClass.h" />
     <ClInclude Include="Texture.h" />
-    <ClInclude Include="TriangleObject.h" />
     <ClInclude Include="WindowClass.h" />
   </ItemGroup>
   <ItemGroup>

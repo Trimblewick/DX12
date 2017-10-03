@@ -275,7 +275,7 @@ int Texture::LoadImageDataFromFile()
 	return imageSize;
 }
 
-void Texture::GenerateMipMaps(ID3D12Resource* pGPUresource, FrameBuffer* pFrameBuffer)
+void Texture::GenerateMipMaps(ID3D12Resource* pGPUresource, ID3D12GraphicsCommandList* pCL)
 {
 	m_pMipmapCbvRange[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
 	m_pMipmapCbvRange[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0, 0);
@@ -355,7 +355,6 @@ void Texture::GenerateMipMaps(ID3D12Resource* pGPUresource, FrameBuffer* pFrameB
 	destTextureUAVdesc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
 	destTextureUAVdesc.Format = m_textureDesc.Format;
 
-	ID3D12GraphicsCommandList* pCL = pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD);//D3DClass::GetNewOffGraphicsCommandList(pPSOMipMaps);
 	pCL->SetComputeRootSignature(m_pMipMapRootSignature);
 	pCL->SetPipelineState(m_pMipMapPSO);
 	pCL->SetDescriptorHeaps(1, &m_pMipMapDH);

@@ -4,7 +4,6 @@
 bool SystemClass::s_bRunning;
 GameClass SystemClass::s_game;
 bool SystemClass::s_initialized;
-FrameBuffer SystemClass::s_frameBuffer;
 Input SystemClass::s_input;
 float SystemClass::s_fDeltaTime;
 
@@ -91,11 +90,11 @@ bool SystemClass::Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance, int n
 	{
 		return false;
 	}
-	if (!s_frameBuffer.Initialize())
+	/*if (!s_frameBuffer.Initialize())
 	{
 		return false;
-	}
-	if (!s_game.Initialize(&s_frameBuffer))
+	}*/
+	if (!s_game.Initialize())
 	{
 		return false;
 	}
@@ -133,7 +132,8 @@ void SystemClass::Run()
 		}
 		else //loop logics
 		{
-			D3DClass::WaitForPreviousFrame();
+			//--->>>__>_>
+			//D3DClass::WaitForPreviousFrame();
 
 			s_input.UpdateMouse();
 
@@ -151,22 +151,23 @@ void SystemClass::Run()
 			WindowClass::SetWindowTitle(titleFPS);
 
 
+
+
 			//____________fix
-			DxAssert(D3DClass::GetCurrentCommandAllocator()->Reset(), S_OK);
+			//DxAssert(D3DClass::GetCurrentCommandAllocator()->Reset(), S_OK);
 			
 			
 
 			s_game.Update(&s_input, s_fDeltaTime);
 
-
-
-			s_frameBuffer.ResetList(FrameBuffer::PIPELINES::STANDARD);
+			//s_frameBuffer.ResetList(FrameBuffer::PIPELINES::STANDARD);
 			
-			s_bRunning = s_game.Render(&s_frameBuffer);
+			//s_bRunning = s_game.Render(&s_frameBuffer);
 
-			s_frameBuffer.CloseList(FrameBuffer::PIPELINES::STANDARD);
+			//s_frameBuffer.CloseList(FrameBuffer::PIPELINES::STANDARD);
 
-			D3DClass::ExecuteGraphicsCommandLists();
+			//---->>
+			//D3DClass::ExecuteGraphicsCommandLists();
 			DxAssert(D3DClass::GetSwapChain()->Present(0, 0), S_OK);
 		}
 	}
@@ -186,7 +187,7 @@ void SystemClass::Stop()
 void SystemClass::CleanUp()
 {
 	s_game.CleanUp();
-	s_frameBuffer.CleanUp();
+	//s_frameBuffer.CleanUp();
 	WindowClass::Destroy();
 	D3DClass::Cleanup();
 }

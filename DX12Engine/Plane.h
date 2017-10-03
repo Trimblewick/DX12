@@ -2,7 +2,6 @@
 #include "Common.h"
 #include "D3dClass.h"
 #include <DirectXMath.h>
-#include "FrameBuffer.h"
 #include "Texture.h"
 
 class Plane
@@ -38,11 +37,11 @@ public:
 		};
 	};
 public:
-	Plane(FrameBuffer* pFrameBuffer);
+	Plane(ID3D12GraphicsCommandList* pCL);
 	~Plane();
 
 	void Update(Camera* camera);
-	void Draw(FrameBuffer* pFrameBuffer, Camera* camera);
+	void Draw(ID3D12GraphicsCommandList* pCL, Camera* camera);
 
 
 private:

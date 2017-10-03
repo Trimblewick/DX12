@@ -29,11 +29,13 @@ Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 	DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));
 	m_right = DirectX::XMVector3Cross(up, m_forward);
 
-	m_fPitch = DirectX::XMVectorGetX(DirectX::XMVector3Dot(m_fDefaultForward, m_forward));
-	m_fYaw = DirectX::XMVectorGetX(DirectX::XMVector3Dot(m_fDefaultRight, m_right));
+	m_fPitch = 0.0f;// std::acos(DirectX::XMVectorGetX(DirectX::XMVector3Dot(m_fDefaultForward, m_forward)));
+	m_fYaw = 0.0f;// std::acos(DirectX::XMVectorGetX(DirectX::XMVector3Dot(m_fDefaultRight, m_right)));
 
 	DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookToLH(DirectX::XMLoadFloat3(&initPosition), m_forward, up);
 	DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);
+
+	m_rotMat = DirectX::XMMatrixIdentity();
 
 	m_fForwardSpeed = 35.0f;
 	m_fHorizontalSpeed = 20.0f;

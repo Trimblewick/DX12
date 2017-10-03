@@ -1,7 +1,7 @@
 #include "Plane.h"
 
 
-Plane::Plane(FrameBuffer* pFrameBuffer)
+Plane::Plane(ID3D12GraphicsCommandList* pCL)
 {
 	HRESULT hr;
 	D3D12_SHADER_BYTECODE vsByteCode = {};
@@ -59,9 +59,6 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	DxAssert(D3DClass::GetDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&pUploadBufferFence)), S_OK);
 	fenceHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
-
-
-	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Reset(D3DClass::GetCurrentCommandAllocator(), nullptr), S_OK);
 
 	//compile vertexshader
 	hr = D3DCompileFromFile(
@@ -323,9 +320,9 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	vertexInitData.RowPitch = iVertexBufferSize;
 	vertexInitData.SlicePitch = iVertexBufferSize;
 
-	UpdateSubresources(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD), m_pVertexBuffer, pVertexBufferUploadHeap, 0, 0, 1, &vertexInitData);
+	//UpdateSubresources(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD), m_pVertexBuffer, pVertexBufferUploadHeap, 0, 0, 1, &vertexInitData);
 
-	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->ResourceBarrier(
+	pCL->ResourceBarrier(
 		1, 
 		&CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pVertexBuffer, 
@@ -379,9 +376,9 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	indexData.RowPitch = iIndexBufferSize;
 	indexData.SlicePitch = iIndexBufferSize;
 
-	UpdateSubresources(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD), m_pIndexBuffer, pIndexBufferUploadHeap, 0, 0, 1, &indexData);
+	UpdateSubresources(pCL, m_pIndexBuffer, pIndexBufferUploadHeap, 0, 0, 1, &indexData);
 
-	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->ResourceBarrier(
+	pCL->ResourceBarrier(
 		1,
 		&CD3DX12_RESOURCE_BARRIER::Transition(m_pIndexBuffer,
 			D3D12_RESOURCE_STATE_COPY_DEST,
@@ -425,7 +422,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	textureInitData.SlicePitch = pPlaneTexture->GetBytersPerRow() * pPlaneTexture->GetTextureHeight();
 
 	UpdateSubresources(
-		pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD), 
+		pCL,
 		m_pTextureBuffer, 
 		pTextureBufferUploadHeap,
 		0, 
@@ -433,14 +430,14 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 		1, 
 		&textureInitData);
 
-	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->ResourceBarrier(
+	pCL->ResourceBarrier(
 		1, 
 		&CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pTextureBuffer, 
 			D3D12_RESOURCE_STATE_COPY_DEST, 
 			D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
-	pPlaneTexture->GenerateMipMaps(m_pTextureBuffer, pFrameBuffer);
+	pPlaneTexture->GenerateMipMaps(m_pTextureBuffer, pCL);
 
 
 
@@ -472,7 +469,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	heightMapInitData.SlicePitch = pHeightMap->GetBytersPerRow() * pHeightMap->GetTextureHeight();
 
 	UpdateSubresources(
-		pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD), 
+		pCL,
 		m_pHeightBuffer, 
 		pHeightMapBufferUploadHeap, 
 		0, 
@@ -480,7 +477,7 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 		1, 
 		&heightMapInitData);
 
-	pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->ResourceBarrier(
+	pCL->ResourceBarrier(
 		1, 
 		&CD3DX12_RESOURCE_BARRIER::Transition(
 			m_pHeightBuffer, 
@@ -493,9 +490,9 @@ Plane::Plane(FrameBuffer* pFrameBuffer)
 	DxAssert(D3DClass::GetDevice()->CreateDescriptorHeap(&textureDescriptorHeapDesc, IID_PPV_ARGS(&m_pTextureDH)), S_OK);
 	m_uiTextureDescriptorSize = D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(textureDescriptorHeapDesc.Type);
 	
-	DxAssert(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD)->Close(), S_OK);
+	pCL->Close();
 
-	D3DClass::QueueGraphicsCommandList(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD));
+	D3DClass::QueueGraphicsCommandList(pCL);
 	D3DClass::ExecuteGraphicsCommandLists();
 	D3DClass::GetCommandQueue()->Signal(pUploadBufferFence, 1);
 
@@ -607,10 +604,9 @@ void Plane::Update(Camera * camera)
 
 }
 
-void Plane::Draw(FrameBuffer * pFrameBuffer, Camera * camera)
+void Plane::Draw(ID3D12GraphicsCommandList* pCL, Camera * camera)
 {
 	ID3D12DescriptorHeap* ppDescriptorHeaps[] = { m_pTextureDH };
-	ID3D12GraphicsCommandList* pCL = pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD);
 	
 	pCL->SetGraphicsRootSignature(m_pRootSignature);
 	pCL->SetPipelineState(m_pPSO);
