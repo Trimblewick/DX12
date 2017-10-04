@@ -13,6 +13,9 @@ public:
 	bool Initialize();
 	void CleanUp();
 
+	void temp_TransitionCurrentBackBufferRTVIntoRenderState(ID3D12GraphicsCommandList* pCL);
+	void temp_TransitionCurrentBackBufferRTVIntoPrecentState(ID3D12GraphicsCommandList* pCL);
+
 	ID3D12GraphicsCommandList*						temp_GetGraphicsCommandList_thisFrame();//temp, bound to currentframes commandallocator
 	
 

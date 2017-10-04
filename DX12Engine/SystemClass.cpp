@@ -162,13 +162,13 @@ void SystemClass::Run()
 
 			//s_frameBuffer.ResetList(FrameBuffer::PIPELINES::STANDARD);
 			
-			//s_bRunning = s_game.Render(&s_frameBuffer);
+			s_bRunning = s_game.Render();
 
 			//s_frameBuffer.CloseList(FrameBuffer::PIPELINES::STANDARD);
 
 			//---->>
 			//D3DClass::ExecuteGraphicsCommandLists();
-			DxAssert(D3DClass::GetSwapChain()->Present(0, 0), S_OK);
+			
 		}
 	}
 	
