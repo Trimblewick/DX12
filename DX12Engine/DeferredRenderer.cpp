@@ -54,8 +54,12 @@ void DeferredRenderer::CleanUp()
 void DeferredRenderer::temp_TransitionCurrentBackBufferRTVIntoRenderState(ID3D12GraphicsCommandList * pCL)
 {
 	pCL->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ppBackBufferRTV[D3DClass::GetFrameIndex()], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_pDHBackBufferRTVs->GetCPUDescriptorHandleForHeapStart());
+	rtvHandle.Offset(D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV) * D3DClass::GetFrameIndex());
 	pCL->OMSetRenderTargets(1, &rtvHandle, NULL, nullptr);
+	pCL->ClearRenderTargetView(rtvHandle, g_fClearColor, 0, nullptr);
 
 	return;
 }
@@ -66,16 +70,19 @@ void DeferredRenderer::temp_TransitionCurrentBackBufferRTVIntoPrecentState(ID3D1
 	
 	return;
 }
-
+int one = 0;
 ID3D12GraphicsCommandList * DeferredRenderer::temp_GetGraphicsCommandList_thisFrame()
 {
-	DxAssert(m_ppCABackBuffer[D3DClass::GetFrameIndex()]->Reset(), S_OK);
+	if (one > 3)
+	{
+		DxAssert(m_ppCABackBuffer[D3DClass::GetFrameIndex()]->Reset(), S_OK);
+	}
+	else
+	{
+		one++;
+	}
 	ID3D12GraphicsCommandList* pCL = D3DClass::CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE_DIRECT, m_ppCABackBuffer[D3DClass::GetFrameIndex()]);
-	pCL->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ppBackBufferRTV[D3DClass::GetFrameIndex()], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-	CD3DX12_CPU_DESCRIPTOR_HANDLE x = CD3DX12_CPU_DESCRIPTOR_HANDLE(m_pDHBackBufferRTVs->GetCPUDescriptorHandleForHeapStart());
-	x.Offset(D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV) * D3DClass::GetFrameIndex());
-	pCL->ClearRenderTargetView(x, g_fClearColor, 0, nullptr);
-
+	
 	return pCL;
 }
 

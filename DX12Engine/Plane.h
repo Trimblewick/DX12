@@ -37,7 +37,7 @@ public:
 		};
 	};
 public:
-	Plane(ID3D12GraphicsCommandList* pCL);
+	Plane();
 	~Plane();
 
 	void Update(Camera* camera);

@@ -1,9 +1,13 @@
 #include "Plane.h"
 
 
-Plane::Plane(ID3D12GraphicsCommandList* pCL)
+Plane::Plane()
 {
 	HRESULT hr;
+
+	ID3D12CommandAllocator * pCA = D3DClass::CreateCA(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	ID3D12GraphicsCommandList* pCL = D3DClass::CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE_DIRECT, pCA);
+
 	D3D12_SHADER_BYTECODE vsByteCode = {};
 	D3D12_SHADER_BYTECODE psByteCode = {};
 	D3D12_SHADER_BYTECODE hsByteCode = {};
@@ -261,7 +265,7 @@ Plane::Plane(ID3D12GraphicsCommandList* pCL)
 	psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	psoDesc.NumRenderTargets = 1;
-	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	//psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC();
 	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
 	//psoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
@@ -320,7 +324,7 @@ Plane::Plane(ID3D12GraphicsCommandList* pCL)
 	vertexInitData.RowPitch = iVertexBufferSize;
 	vertexInitData.SlicePitch = iVertexBufferSize;
 
-	//UpdateSubresources(pFrameBuffer->GetGraphicsCommandList(FrameBuffer::PIPELINES::STANDARD), m_pVertexBuffer, pVertexBufferUploadHeap, 0, 0, 1, &vertexInitData);
+	UpdateSubresources(pCL, m_pVertexBuffer, pVertexBufferUploadHeap, 0, 0, 1, &vertexInitData);
 
 	pCL->ResourceBarrier(
 		1, 
@@ -562,6 +566,8 @@ Plane::Plane(ID3D12GraphicsCommandList* pCL)
 	SAFE_RELEASE(pTextureBufferUploadHeap);
 	SAFE_RELEASE(pHeightMapBufferUploadHeap);
 	SAFE_RELEASE(pUploadBufferFence);
+	SAFE_RELEASE(pCL);
+	SAFE_RELEASE(pCA);
 	if (pPlaneTexture)
 	{
 		delete pPlaneTexture;

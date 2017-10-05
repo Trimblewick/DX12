@@ -203,7 +203,7 @@ bool D3DClass::Initialize()
 void D3DClass::Cleanup()
 {
 	// wait for the gpu to finish all frames
-	
+	s_ui64FenceValue[s_uiFrameIndex]--;//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<---------------------
 	for (int i = 0; i < g_cFrameBufferCount; i++)
 	{
 		s_uiFrameIndex = i;
@@ -215,7 +215,7 @@ void D3DClass::Cleanup()
 			
 			// We will wait until the fence has triggered the event that it's current value has reached "fenceValue". once it's value
 			// has reached "fenceValue", we know the command queue has finished executing
-			WaitForSingleObject(s_hFenceEventHandle, INFINITE);
+			WaitForSingleObject(s_hFenceEventHandle, 3000);
 
 		}
 	}
@@ -272,7 +272,7 @@ void D3DClass::WaitForPreviousFrame()//wait for the command Q to finish on the g
 	s_ui64FenceValue[s_uiFrameIndex]++;
 
 
-	DxAssert(s_pCommandAllocator[s_uiFrameIndex]->Reset(), S_OK);
+	//DxAssert(s_pCommandAllocator[s_uiFrameIndex]->Reset(), S_OK);
 }
 
 ID3D12CommandAllocator * D3DClass::CreateCA(D3D12_COMMAND_LIST_TYPE listType)
