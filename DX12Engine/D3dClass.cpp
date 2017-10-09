@@ -7,13 +7,9 @@ ID3D12Device* D3DClass::s_pDevice;
 IDXGISwapChain3* D3DClass::s_pSwapChain;
 ID3D12CommandQueue* D3DClass::s_pCommandQueue;
 
-
-ID3D12DescriptorHeap* D3DClass::s_pRTVDescriptorHeap;
-ID3D12Resource* D3DClass::s_pRenderTargets[g_cFrameBufferCount];//right now just for backbuffering
-ID3D12CommandAllocator* D3DClass::s_pCommandAllocator[g_cFrameBufferCount];
-ID3D12Fence* D3DClass::s_pFenceCQ[g_cFrameBufferCount];
+ID3D12Fence* D3DClass::s_pFenceCQ[g_iBackBufferCount];
 HANDLE D3DClass::s_hFenceEventHandle;
-UINT64 D3DClass::s_ui64FenceValue[g_cFrameBufferCount];
+UINT64 D3DClass::s_ui64FenceValue[g_iBackBufferCount];
 unsigned int D3DClass::s_uiFrameIndex;
 int D3DClass::s_iRTVDescriptorSize;
 
@@ -113,7 +109,7 @@ bool D3DClass::Initialize()
 
 						  // Describe and create the swap chain.
 	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
-	swapChainDesc.BufferCount = g_cFrameBufferCount; // number of buffers we have
+	swapChainDesc.BufferCount = g_iBackBufferCount; // number of buffers we have
 	swapChainDesc.BufferDesc = backBufferDesc; // our back buffer description
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // this says the pipeline will render to this swap chain
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // dxgi will discard the buffer (data) after we call present
@@ -134,7 +130,7 @@ bool D3DClass::Initialize()
 	s_uiFrameIndex = s_pSwapChain->GetCurrentBackBufferIndex();
 
 	// -- Create the Back Buffers (render target views) Descriptor Heap -- //
-
+	/*
 	// describe an rtv descriptor heap and create
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
 	rtvHeapDesc.NumDescriptors = g_cFrameBufferCount; // number of descriptors for this heap.
@@ -167,18 +163,18 @@ bool D3DClass::Initialize()
 		// we increment the rtv handle by the rtv descriptor size we got above
 		rtvHandle.Offset(1, s_iRTVDescriptorSize);
 	}
-
+	*/
 	// -- Create the Command Allocators -- //
-
+	/*
 	for (int i = 0; i < g_cFrameBufferCount; i++)
 	{
 		DxAssert(s_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&s_pCommandAllocator[i])), S_OK);
 	}
-
+	*/
 	// -- Create a Fence & Fence Event -- //
 
 	// create the fences
-	for (int i = 0; i < g_cFrameBufferCount; i++)
+	for (int i = 0; i < g_iBackBufferCount; i++)
 	{
 		hr = s_pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&s_pFenceCQ[i]));
 		if (FAILED(hr))
@@ -204,7 +200,7 @@ void D3DClass::Cleanup()
 {
 	// wait for the gpu to finish all frames
 	s_ui64FenceValue[s_uiFrameIndex]--;//<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<---------------------
-	for (int i = 0; i < g_cFrameBufferCount; i++)
+	for (int i = 0; i < g_iBackBufferCount; i++)
 	{
 		s_uiFrameIndex = i;
 		//WaitForPreviousFrame();
@@ -227,12 +223,12 @@ void D3DClass::Cleanup()
 	SAFE_RELEASE(s_pDevice);
 	SAFE_RELEASE(s_pSwapChain);
 	SAFE_RELEASE(s_pCommandQueue);
-	SAFE_RELEASE(s_pRTVDescriptorHeap);
+	
 
-	for (int i = 0; i < g_cFrameBufferCount; ++i)
+	for (int i = 0; i < g_iBackBufferCount; ++i)
 	{
-		SAFE_RELEASE(s_pRenderTargets[i]);
-		SAFE_RELEASE(s_pCommandAllocator[i]);
+
+		
 		SAFE_RELEASE(s_pFenceCQ[i]);
 	}
 	if (s_pRTVHandle)
@@ -306,19 +302,22 @@ ID3D12GraphicsCommandList * D3DClass::CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE li
 	return pCL;
 }
 
+ID3D12CommandQueue* D3DClass::CreateCQ(D3D12_COMMAND_LIST_TYPE listType)
+{
+	ID3D12CommandQueue* pCQ;
+
+	D3D12_COMMAND_QUEUE_DESC cqDesc = {};
+	cqDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+	cqDesc.Type = listType;
+
+	DxAssert(s_pDevice->CreateCommandQueue(&cqDesc, IID_PPV_ARGS(&pCQ)), S_OK);
+
+	return pCQ;
+}
+
 ID3D12Device * D3DClass::GetDevice()
 {
 	return s_pDevice;
-}
-/*
-ID3D12CommandAllocator * D3DClass::GetCurrentCommandAllocator()
-{
-	return s_pCommandAllocator[s_uiFrameIndex];
-}*/
-
-ID3D12Resource * D3DClass::GetCurrentRenderTarget()
-{
-	return s_pRenderTargets[s_uiFrameIndex];
 }
 
 IDXGISwapChain3 * D3DClass::GetSwapChain()
@@ -336,12 +335,6 @@ unsigned int D3DClass::GetFrameIndex()
 	return s_uiFrameIndex;
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE* D3DClass::GetRTVDescriptorHandle()
-{
-	*s_pRTVHandle = CD3DX12_CPU_DESCRIPTOR_HANDLE(s_pRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), s_uiFrameIndex, s_iRTVDescriptorSize);
-
-	return s_pRTVHandle;
-}
 
 void D3DClass::IncrementFenceValue()
 {

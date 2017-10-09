@@ -31,5 +31,8 @@ private:
 	Camera*												m_pMainCamera;
 	DeferredRenderer*									m_pRenderer;//deferred
 	Plane*												m_pPlaneObject;
+
+
+	ID3D12CommandAllocator* temp_ca[3];
 };
 

@@ -163,6 +163,7 @@
     <ClCompile Include="DHHandler.cpp" />
     <ClCompile Include="FrustumCulling.cpp" />
     <ClCompile Include="GameClass.cpp" />
+    <ClCompile Include="GPUbridge.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Plane.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="DHHandler.h" />
     <ClInclude Include="FrustumCulling.h" />
     <ClInclude Include="GameClass.h" />
+    <ClInclude Include="GPUbridge.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="PSOHandler.h" />

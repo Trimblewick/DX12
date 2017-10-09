@@ -16,6 +16,10 @@ bool GameClass::Initialize()
 	m_pRenderer = new DeferredRenderer();
 	m_pPlaneObject = new Plane();
 	
+	for (int i = 0; i < 3; ++i)
+	{
+		temp_ca[i] = D3DClass::CreateCA(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	}
 	
 	return true;
 }
@@ -31,14 +35,14 @@ void GameClass::Update(Input* input, float dt)
 bool GameClass::Render()
 {
 	
-	ID3D12GraphicsCommandList* pCL = m_pRenderer->temp_GetGraphicsCommandList_thisFrame();
+	ID3D12GraphicsCommandList* pCL = D3DClass::CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE_DIRECT, temp_ca[D3DClass::GetFrameIndex()]);//m_pRenderer->temp_GetGraphicsCommandList_thisFrame();
 
-	m_pRenderer->temp_TransitionCurrentBackBufferRTVIntoRenderState(pCL);
+	m_pRenderer->RenderLightPass();
 
+	m_pRenderer->temp_setRendertarget(pCL);
 	m_pPlaneObject->Draw(pCL, m_pMainCamera);
 
-	m_pRenderer->temp_TransitionCurrentBackBufferRTVIntoPrecentState(pCL);
-
+	m_pRenderer->temp_closelistNqueue(pCL);
 
 	DxAssert(pCL->Close(), S_OK);
 
@@ -48,6 +52,7 @@ bool GameClass::Render()
 	DxAssert(D3DClass::GetSwapChain()->Present(0, 0), S_OK);
 	D3DClass::WaitForPreviousFrame();
 	SAFE_RELEASE(pCL);
+	temp_ca[D3DClass::GetFrameIndex()]->Reset();
 
 	return true;
 }
@@ -58,6 +63,11 @@ void GameClass::CleanUp()
 	{
 		delete m_pMainCamera;
 		m_pMainCamera = nullptr;
+	}
+	if (m_pRenderer)
+	{
+		delete m_pRenderer;
+		m_pRenderer = nullptr;
 	}
 	if (m_pPlaneObject)
 	{

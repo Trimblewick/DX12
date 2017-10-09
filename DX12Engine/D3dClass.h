@@ -16,7 +16,7 @@
 #define BUILD_ENABLE_D3D12_DEBUG
 #endif
 
-const int g_cFrameBufferCount = 3;//eg double buffering, tripple buffering
+const int g_iBackBufferCount = 3;
 
 
 class D3DClass
@@ -36,7 +36,9 @@ public:
 	static ID3D12CommandAllocator*				CreateCA(D3D12_COMMAND_LIST_TYPE listType);
 	static ID3D12Fence*							CreateFence(UINT64 ui64InitVal, D3D12_FENCE_FLAGS fenceFlag);
 	static ID3D12DescriptorHeap*				CreateDH(int numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
-	static ID3D12GraphicsCommandList*					CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE listType, ID3D12CommandAllocator* pCA);
+	static ID3D12GraphicsCommandList*			CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE listType, ID3D12CommandAllocator* pCA);
+	static ID3D12CommandQueue*					CreateCQ(D3D12_COMMAND_LIST_TYPE listType);
+
 
 	static ID3D12Device* GetDevice();
 	//static ID3D12CommandAllocator* GetCurrentCommandAllocator();
@@ -67,12 +69,12 @@ private:
 
 	static std::vector<ID3D12CommandList*> _pGraphicsCommandLists;
 
-	static ID3D12DescriptorHeap*		s_pRTVDescriptorHeap;
+	/*static ID3D12DescriptorHeap*		s_pRTVDescriptorHeap;
 	static ID3D12Resource*				s_pRenderTargets[g_cFrameBufferCount];//right now just for backbuffering
-	static ID3D12CommandAllocator*		s_pCommandAllocator[g_cFrameBufferCount];
-	static ID3D12Fence*					s_pFenceCQ[g_cFrameBufferCount];
+	static ID3D12CommandAllocator*		s_pCommandAllocator[g_cFrameBufferCount];*/
+	static ID3D12Fence*					s_pFenceCQ[g_iBackBufferCount];
 	static HANDLE						s_hFenceEventHandle;
-	static UINT64						s_ui64FenceValue[g_cFrameBufferCount];
+	static UINT64						s_ui64FenceValue[g_iBackBufferCount];
 	static unsigned int					s_uiFrameIndex;
 	static int							s_iRTVDescriptorSize;
 };

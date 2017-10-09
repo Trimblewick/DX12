@@ -63,6 +63,9 @@
     <ClCompile Include="DeferredRenderer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GPUbridge.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Input.h">
@@ -111,6 +114,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DeferredRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GPUbridge.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
