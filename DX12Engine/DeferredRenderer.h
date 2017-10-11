@@ -11,7 +11,7 @@ private:
 public:
 	DeferredRenderer();
 	~DeferredRenderer();
-	bool Initialize();
+	bool Initialize(ID3D12CommandQueue* pCQ);
 	void CleanUp();
 
 	void RenderLightPass(ID3D12GraphicsCommandList* pCL);
@@ -19,11 +19,12 @@ public:
 
 	void temp_setRendertarget(ID3D12GraphicsCommandList* pCL);
 	
-
+	void temp_swap();
 private:
 	//ID3D12CommandAllocator*							m_ppCADeferredBuffer[g_iBackBufferCount];//Used when recording geometrypass
 	//ID3D12CommandAllocator*							m_ppCALightPass[g_iBackBufferCount];//Used when recording for lightpass
 	//ID3D12GraphicsCommandList*						m_ppCLLightPass[g_iBackBufferCount];
+	IDXGISwapChain3*								m_pSwapChain;
 
 	ID3D12DescriptorHeap*							m_pDHDeferredBufferRTVs;
 	ID3D12DescriptorHeap*							m_pDHBackBufferRTVs;

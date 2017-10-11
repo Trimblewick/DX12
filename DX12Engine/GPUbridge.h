@@ -10,6 +10,9 @@ public:
 	void CleanUp();
 
 	static const int							s_iPoolSize = 5;
+
+
+	ID3D12CommandQueue*							GetCQ();
 	
 	ID3D12GraphicsCommandList*					GetFreshCL();//return an unused CL from the pool
 	void										QueueGraphicsCL(ID3D12GraphicsCommandList* pCL);

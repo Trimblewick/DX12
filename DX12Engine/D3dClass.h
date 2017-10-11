@@ -38,6 +38,7 @@ public:
 	static ID3D12DescriptorHeap*				CreateDH(int numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
 	static ID3D12GraphicsCommandList*			CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE listType, ID3D12CommandAllocator* pCA);
 	static ID3D12CommandQueue*					CreateCQ(D3D12_COMMAND_LIST_TYPE listType);
+	static IDXGISwapChain3*						CreateSwapChain(DXGI_SWAP_CHAIN_DESC* desc, ID3D12CommandQueue* pCQ);
 
 
 	static ID3D12Device* GetDevice();
@@ -61,6 +62,7 @@ public:
 
 
 private:
+	static IDXGIFactory4*				s_pDXGIFactory;
 	static ID3D12Device*				s_pDevice;
 	static IDXGISwapChain3*				s_pSwapChain;
 	static ID3D12CommandQueue*			s_pCommandQueue;

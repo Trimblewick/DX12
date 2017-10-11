@@ -36,6 +36,11 @@ void GPUbridge::CleanUp()
 {
 }
 
+ID3D12CommandQueue * GPUbridge::GetCQ()
+{
+	return m_pCQDirect;
+}
+
 ID3D12GraphicsCommandList* GPUbridge::GetFreshCL()
 {
 	int iIndex = D3DClass::GetFrameIndex();
@@ -44,7 +49,7 @@ ID3D12GraphicsCommandList* GPUbridge::GetFreshCL()
 	bool bCAoccupied = false;
 	for (int i = 0; i < s_iPoolSize && iFirstUnoccupiedCL == -1; ++i)
 	{
-		if (!m_bppCADirectPoolFreeFromGPU[iIndex][i])//is CA unoccupied by gpu?
+		if (m_bppCADirectPoolFreeFromGPU[iIndex][i])//is CA unoccupied by gpu?
 		{
 			
 			for (int k = 0; k < g_iBackBufferCount * s_iPoolSize && !bCAoccupied; ++k)//is CA occupied by another CL? 

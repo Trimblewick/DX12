@@ -15,6 +15,7 @@ int D3DClass::s_iRTVDescriptorSize;
 
 D3D12_CPU_DESCRIPTOR_HANDLE* D3DClass::s_pRTVHandle;
 std::vector<ID3D12CommandList*> D3DClass::_pGraphicsCommandLists;
+IDXGIFactory4* D3DClass::s_pDXGIFactory;
 
 
 D3DClass::D3DClass()
@@ -39,8 +40,8 @@ bool D3DClass::Initialize()
 
 	// -- Create the Device -- //
 
-	IDXGIFactory4* dxgiFactory;
-	hr = CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory));
+	
+	hr = CreateDXGIFactory1(IID_PPV_ARGS(&s_pDXGIFactory));
 	if (FAILED(hr))
 	{
 		return false;
@@ -53,7 +54,7 @@ bool D3DClass::Initialize()
 	bool adapterFound = false; // set this to true when a good one was found
 
 							   // find first hardware gpu that supports d3d 12
-	while (dxgiFactory->EnumAdapters1(adapterIndex, &adapter) != DXGI_ERROR_NOT_FOUND)
+	while (s_pDXGIFactory->EnumAdapters1(adapterIndex, &adapter) != DXGI_ERROR_NOT_FOUND)
 	{
 		DXGI_ADAPTER_DESC1 desc;
 		adapter->GetDesc1(&desc);
@@ -122,12 +123,13 @@ bool D3DClass::Initialize()
 	// the queue will be flushed once the swap chain is created
 	// give it the swap chain description we created above
 	// store the created swap chain in a temp IDXGISwapChain interface
-	dxgiFactory->CreateSwapChain(s_pCommandQueue, &swapChainDesc, &tempSwapChain);
+	
+	//dxgiFactory->CreateSwapChain(s_pCommandQueue, &swapChainDesc, &tempSwapChain);
+	//s_pSwapChain = CreateSwapChain(&swapChainDesc, s_pCommandQueue);
+
 	
 
-	s_pSwapChain = static_cast<IDXGISwapChain3*>(tempSwapChain);
-
-	s_uiFrameIndex = s_pSwapChain->GetCurrentBackBufferIndex();
+	s_uiFrameIndex = 0;// s_pSwapChain->GetCurrentBackBufferIndex();
 
 	// -- Create the Back Buffers (render target views) Descriptor Heap -- //
 	/*
@@ -313,6 +315,18 @@ ID3D12CommandQueue* D3DClass::CreateCQ(D3D12_COMMAND_LIST_TYPE listType)
 	DxAssert(s_pDevice->CreateCommandQueue(&cqDesc, IID_PPV_ARGS(&pCQ)), S_OK);
 
 	return pCQ;
+}
+
+IDXGISwapChain3 * D3DClass::CreateSwapChain(DXGI_SWAP_CHAIN_DESC* desc, ID3D12CommandQueue * pCQ)
+{
+	IDXGISwapChain* pTemp = nullptr;
+	IDXGISwapChain3* pSwapChain = nullptr;
+
+	HRESULT hr = s_pDXGIFactory->CreateSwapChain(s_pCommandQueue, desc, &pTemp);
+
+	pSwapChain = static_cast<IDXGISwapChain3*>(pTemp);
+
+	return pSwapChain;
 }
 
 ID3D12Device * D3DClass::GetDevice()

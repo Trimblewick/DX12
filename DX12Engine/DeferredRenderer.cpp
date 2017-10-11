@@ -4,10 +4,6 @@
 
 DeferredRenderer::DeferredRenderer()
 {
-	if (!Initialize())
-	{
-		int stopper = 0;
-	}
 	
 }
 
@@ -18,7 +14,7 @@ DeferredRenderer::~DeferredRenderer()
 
 
 
-bool DeferredRenderer::Initialize()
+bool DeferredRenderer::Initialize(ID3D12CommandQueue* pCQ)
 {
 	m_pDHBackBufferRTVs = D3DClass::CreateDH(g_iBackBufferCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	//m_pDHDeferredBufferRTVs = D3DClass::CreateDH(g_iBackBufferCount * 2, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);//right now diffuse and (normals, with depth)
@@ -27,16 +23,36 @@ bool DeferredRenderer::Initialize()
 	CD3DX12_CPU_DESCRIPTOR_HANDLE handleDHBackBufferRTVs(m_pDHBackBufferRTVs->GetCPUDescriptorHandleForHeapStart());
 	//CD3DX12_CPU_DESCRIPTOR_HANDLE handleDHDeferredBufferRTVs(m_pDHDeferredBufferRTVs->GetCPUDescriptorHandleForHeapStart());
 	
+	/*
+	////CREATE SWAP CHAIN
+	*/
+
+	DXGI_MODE_DESC backBufferDesc = {}; // this is to describe our display mode
+	backBufferDesc.Width = WindowClass::GetWidth(); // buffer width
+	backBufferDesc.Height = WindowClass::GetHeight(); // buffer height
+	backBufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // format of the buffer (rgba 32 bits, 8 bits for each chanel)
+
+	// describe our multi-sampling. We are not multi-sampling, so we set the count to 1 (we need at least one sample of course)
+	DXGI_SAMPLE_DESC sampleDesc = {};
+	sampleDesc.Count = 1;
+
+	DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+	swapChainDesc.BufferCount = g_iBackBufferCount; // number of buffers we have
+	swapChainDesc.BufferDesc = backBufferDesc; // our back buffer description
+	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; // this says the pipeline will render to this swap chain
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // dxgi will discard the buffer (data) after we call present
+	swapChainDesc.OutputWindow = WindowClass::GetWindowHandler(); // handle to our window
+	swapChainDesc.SampleDesc = sampleDesc; // our multi-sampling description
+	swapChainDesc.Windowed = !WindowClass::IsFullscreen(); // set to true, then if in fullscreen must call SetFullScreenState with true for full screen to get uncapped fps
+
+	m_pSwapChain = D3DClass::CreateSwapChain(&swapChainDesc, pCQ);
 
 	for (int i = 0; i < g_iBackBufferCount; i++)
 	{
 		D3DClass::GetSwapChain()->GetBuffer(i, IID_PPV_ARGS(&m_ppBackBufferRTV[i]));
 		D3DClass::GetDevice()->CreateRenderTargetView(m_ppBackBufferRTV[i], nullptr, handleDHBackBufferRTVs);
 
-		//Set up lightpass bundles
-		m_ppCALightPass[i] = D3DClass::CreateCA(D3D12_COMMAND_LIST_TYPE_DIRECT);
-		m_ppCLLightPass[i] = D3DClass::CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE_DIRECT, m_ppCALightPass[i]);
-		m_ppCLLightPass[i]->Close();
+		
 		
 		//m_ppCLLightPassBundles[i]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ppBackBufferRTV[D3DClass::GetFrameIndex()], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
@@ -65,8 +81,7 @@ void DeferredRenderer::CleanUp()
 	for (int i = 0; i < g_iBackBufferCount; ++i)
 	{
 		SAFE_RELEASE(m_ppBackBufferRTV[i]);
-		SAFE_RELEASE(m_ppCALightPass[i]);
-		SAFE_RELEASE(m_ppCLLightPass[i]);
+		
 		SAFE_RELEASE(m_ppFenceBackBuffer[i]);
 	}
 	return;
@@ -75,20 +90,16 @@ void DeferredRenderer::CleanUp()
 void DeferredRenderer::RenderLightPass(ID3D12GraphicsCommandList* pCL)
 {
 	int iIndex = D3DClass::GetFrameIndex();
-	m_ppCALightPass[i]->Reset();
-	m_ppCLLightPass[i]->Reset(m_ppCALightPass[i], nullptr);
 	
-	m_ppCLLightPass[i]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ppBackBufferRTV[D3DClass::GetFrameIndex()], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+	pCL->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ppBackBufferRTV[D3DClass::GetFrameIndex()], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	int iDHIncrementSizeRTV = D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	CD3DX12_CPU_DESCRIPTOR_HANDLE handleDHBackBufferRTVs(m_pDHBackBufferRTVs->GetCPUDescriptorHandleForHeapStart());
 	handleDHBackBufferRTVs.Offset(iDHIncrementSizeRTV * D3DClass::GetFrameIndex());
 
-	m_ppCLLightPass[i]->OMSetRenderTargets(1, &handleDHBackBufferRTVs, NULL, nullptr);
-	m_ppCLLightPass[i]->ClearRenderTargetView(handleDHBackBufferRTVs, m_fClearColor, 0, nullptr);
+	pCL->OMSetRenderTargets(1, &handleDHBackBufferRTVs, NULL, nullptr);
+	pCL->ClearRenderTargetView(handleDHBackBufferRTVs, m_fClearColor, 0, nullptr);
 
-	m_ppCLLightPass[i]->Close();
-	D3DClass::QueueGraphicsCommandList(m_ppCLLightPass[i]);
 }
 
 void DeferredRenderer::temp_closelistNqueue(ID3D12GraphicsCommandList * pCL)
@@ -109,6 +120,11 @@ void DeferredRenderer::temp_setRendertarget(ID3D12GraphicsCommandList * pCL)
 	pCL->OMSetRenderTargets(1, &handleDHBackBufferRTVs, NULL, nullptr);
 	
 	return;
+}
+
+void DeferredRenderer::temp_swap()
+{
+	m_pSwapChain->Present(0, 0);
 }
 
 

@@ -15,6 +15,7 @@ bool GameClass::Initialize()
 	m_pMainCamera = new Camera(DirectX::XMFLOAT3(-20.0f, 34.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f));
 	m_pRenderer = new DeferredRenderer();
 	m_pGPUbridge = new GPUbridge();
+	m_pRenderer->Initialize(m_pGPUbridge->GetCQ());
 	m_pPlaneObject = new Plane();
 	
 
@@ -40,22 +41,19 @@ bool GameClass::Render()
 	//ID3D12GraphicsCommandList* pCL = D3DClass::CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE_DIRECT, temp_ca[D3DClass::GetFrameIndex()]);//m_pRenderer->temp_GetGraphicsCommandList_thisFrame();
 	ID3D12GraphicsCommandList* pCL = m_pGPUbridge->GetFreshCL();
 
-	m_pRenderer->RenderLightPass();
+	m_pRenderer->RenderLightPass(pCL);
 
-	m_pRenderer->temp_setRendertarget(pCL);
+	//m_pRenderer->temp_setRendertarget(pCL);
 	m_pPlaneObject->Draw(pCL, m_pMainCamera);
 
 	m_pRenderer->temp_closelistNqueue(pCL);
 
-	DxAssert(pCL->Close(), S_OK);
+	m_pGPUbridge->QueueGraphicsCL(pCL);
+	m_pGPUbridge->ExecuteGrapichsCLs();
 
-	D3DClass::QueueGraphicsCommandList(pCL);
-	D3DClass::ExecuteGraphicsCommandLists();
-
-	DxAssert(D3DClass::GetSwapChain()->Present(0, 0), S_OK);
-	D3DClass::WaitForPreviousFrame();
-	SAFE_RELEASE(pCL);
-	temp_ca[D3DClass::GetFrameIndex()]->Reset();
+	m_pRenderer->temp_swap();
+//	DxAssert(D3DClass::GetSwapChain()->Present(0, 0), S_OK);
+	
 
 	return true;
 }
