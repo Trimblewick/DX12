@@ -531,7 +531,7 @@ Plane::Plane()
 	cpuHandle.Offset(m_uiTextureDescriptorSize);
 
 	//create matrix buffer
-	for (unsigned int i = 0; i < g_cFrameBufferCount; ++i)
+	for (unsigned int i = 0; i < g_iBackBufferCount; ++i)
 	{
 		DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -588,7 +588,7 @@ Plane::~Plane()
 	SAFE_RELEASE(m_pTextureBuffer);
 	SAFE_RELEASE(m_pHeightBuffer);
 	SAFE_RELEASE(m_pTextureDH);
-	for (int i = 0; i < g_cFrameBufferCount; ++i)
+	for (int i = 0; i < g_iBackBufferCount; ++i)
 	{
 		SAFE_RELEASE(m_pWVPMatUpploadHeaps[i]);
 	}

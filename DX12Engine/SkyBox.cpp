@@ -384,7 +384,7 @@ SkyBox::SkyBox()
 
 
 	//create matrix buffer
-	for (unsigned int i = 0; i < g_cFrameBufferCount; ++i)
+	for (unsigned int i = 0; i < g_iBackBufferCount; ++i)
 	{
 		DxAssert(D3DClass::GetDevice()->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -434,7 +434,7 @@ SkyBox::~SkyBox()
 	SAFE_RELEASE(m_pDH);
 	SAFE_RELEASE(m_pPSO);
 	SAFE_RELEASE(m_pRS);
-	for (int i = 0; i < g_cFrameBufferCount; ++i)
+	for (int i = 0; i < g_iBackBufferCount; ++i)
 	{
 		SAFE_RELEASE(m_pWVPMatUpploadHeaps[i]);
 	}

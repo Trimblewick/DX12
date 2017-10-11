@@ -72,9 +72,9 @@ void DeferredRenderer::CleanUp()
 	return;
 }
 
-void DeferredRenderer::RenderLightPass()
+void DeferredRenderer::RenderLightPass(ID3D12GraphicsCommandList* pCL)
 {
-	int i = D3DClass::GetFrameIndex();
+	int iIndex = D3DClass::GetFrameIndex();
 	m_ppCALightPass[i]->Reset();
 	m_ppCLLightPass[i]->Reset(m_ppCALightPass[i], nullptr);
 	

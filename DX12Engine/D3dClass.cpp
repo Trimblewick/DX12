@@ -133,7 +133,7 @@ bool D3DClass::Initialize()
 	/*
 	// describe an rtv descriptor heap and create
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
-	rtvHeapDesc.NumDescriptors = g_cFrameBufferCount; // number of descriptors for this heap.
+	rtvHeapDesc.NumDescriptors = g_iBackBufferCount; // number of descriptors for this heap.
 	rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV; // this heap is a render target view heap
 
 	// This heap will not be directly referenced by the shaders (not shader visible), as this will store the output from the pipeline
@@ -151,7 +151,7 @@ bool D3DClass::Initialize()
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(s_pRTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
 	// Create a RTV for each buffer (double buffering is two buffers, tripple buffering is 3).
-	for (int i = 0; i < g_cFrameBufferCount; i++)
+	for (int i = 0; i < g_iBackBufferCount; i++)
 	{
 		// first we get the n'th buffer in the swap chain and store it in the n'th
 		// position of our ID3D12Resource array
@@ -166,7 +166,7 @@ bool D3DClass::Initialize()
 	*/
 	// -- Create the Command Allocators -- //
 	/*
-	for (int i = 0; i < g_cFrameBufferCount; i++)
+	for (int i = 0; i < g_iBackBufferCount; i++)
 	{
 		DxAssert(s_pDevice->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&s_pCommandAllocator[i])), S_OK);
 	}
@@ -332,7 +332,7 @@ ID3D12CommandQueue * D3DClass::GetCommandQueue()
 
 unsigned int D3DClass::GetFrameIndex()
 {
-	return s_uiFrameIndex;
+	return s_pSwapChain->GetCurrentBackBufferIndex();
 }
 
 

@@ -50,8 +50,8 @@ private:
 	int								m_iDHsize;
 	
 	WVPMatrixBufferStruct			m_wvpMat;
-	ID3D12Resource*					m_pWVPMatUpploadHeaps[g_cFrameBufferCount];
-	UINT8*							m_pWVPGPUAdress[g_cFrameBufferCount];
+	ID3D12Resource*					m_pWVPMatUpploadHeaps[g_iBackBufferCount];
+	UINT8*							m_pWVPGPUAdress[g_iBackBufferCount];
 
 };
 

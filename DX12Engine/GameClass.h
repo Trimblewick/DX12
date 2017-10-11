@@ -5,6 +5,8 @@
 #include "DeferredRenderer.h"
 #include "Input.h"
 
+
+#include "GPUbridge.h"
 //#include "BoxObject.h"
 
 
@@ -32,7 +34,8 @@ private:
 	DeferredRenderer*									m_pRenderer;//deferred
 	Plane*												m_pPlaneObject;
 
-
+	GPUbridge*											m_pGPUbridge;
+	
 	ID3D12CommandAllocator* temp_ca[3];
 };
-
+ 

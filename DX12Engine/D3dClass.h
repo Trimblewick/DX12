@@ -70,8 +70,8 @@ private:
 	static std::vector<ID3D12CommandList*> _pGraphicsCommandLists;
 
 	/*static ID3D12DescriptorHeap*		s_pRTVDescriptorHeap;
-	static ID3D12Resource*				s_pRenderTargets[g_cFrameBufferCount];//right now just for backbuffering
-	static ID3D12CommandAllocator*		s_pCommandAllocator[g_cFrameBufferCount];*/
+	static ID3D12Resource*				s_pRenderTargets[g_iBackBufferCount];//right now just for backbuffering
+	static ID3D12CommandAllocator*		s_pCommandAllocator[g_iBackBufferCount];*/
 	static ID3D12Fence*					s_pFenceCQ[g_iBackBufferCount];
 	static HANDLE						s_hFenceEventHandle;
 	static UINT64						s_ui64FenceValue[g_iBackBufferCount];
