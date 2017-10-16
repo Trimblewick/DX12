@@ -15,15 +15,18 @@ bool GameClass::Initialize()
 	m_pMainCamera = new Camera(DirectX::XMFLOAT3(-20.0f, 34.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f));
 	m_pRenderer = new DeferredRenderer();
 	m_pGPUbridge = new GPUbridge();
-	m_pRenderer->Initialize(m_pGPUbridge->GetCQ());
-	m_pPlaneObject = new Plane();
-	
 
-	for (int i = 0; i < 3; ++i)
-	{
-		temp_ca[i] = D3DClass::CreateCA(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	}
-	
+	m_pRenderer->Initialize(m_pGPUbridge->GetCQ());
+
+	ID3D12CommandAllocator* pCA = D3DClass::CreateCA(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	ID3D12GraphicsCommandList* pCL = D3DClass::CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE_DIRECT, pCA);
+
+	m_pPlaneObject = new Plane(m_pGPUbridge);
+	/*pCL->Close();
+	ID3D12CommandList* ppCLs[] = { pCL };
+	m_pGPUbridge->ExecuteDecoupledCLs(1, ppCLs);*/
+
+
 	return true;
 }
 

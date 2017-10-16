@@ -3,6 +3,7 @@
 #include "D3dClass.h"
 #include <DirectXMath.h>
 #include "Texture.h"
+#include "GPUbridge.h"
 
 class Plane
 {
@@ -37,7 +38,7 @@ public:
 		};
 	};
 public:
-	Plane();
+	Plane(GPUbridge* pGPUbridge);
 	~Plane();
 
 	void Update(Camera* camera);

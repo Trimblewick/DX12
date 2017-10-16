@@ -1,7 +1,7 @@
 #include "Plane.h"
 
 
-Plane::Plane()
+Plane::Plane(GPUbridge* pGPUbridge)
 {
 	HRESULT hr;
 
@@ -494,11 +494,8 @@ Plane::Plane()
 	DxAssert(D3DClass::GetDevice()->CreateDescriptorHeap(&textureDescriptorHeapDesc, IID_PPV_ARGS(&m_pTextureDH)), S_OK);
 	m_uiTextureDescriptorSize = D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(textureDescriptorHeapDesc.Type);
 	
-	pCL->Close();
 
-	D3DClass::QueueGraphicsCommandList(pCL);
-	D3DClass::ExecuteGraphicsCommandLists();
-	D3DClass::GetCommandQueue()->Signal(pUploadBufferFence, 1);
+
 
 
 	m_vertexBufferView.BufferLocation = m_pVertexBuffer->GetGPUVirtualAddress();
@@ -552,7 +549,9 @@ Plane::Plane()
 		memcpy(m_pWVPGPUAdress[i], &m_wvpMat, sizeof(m_wvpMat));
 
 	}
-
+	DxAssert(pCL->Close(), S_OK);
+	ID3D12CommandList* ppCLs[] = { pCL };
+	pGPUbridge->ExecuteDecoupledCLs(1, ppCLs, pUploadBufferFence);
 	
 
 	//release vertexbuffer upload heap

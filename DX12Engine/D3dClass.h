@@ -40,7 +40,7 @@ public:
 	static ID3D12CommandQueue*					CreateCQ(D3D12_COMMAND_LIST_TYPE listType);
 	static IDXGISwapChain3*						CreateSwapChain(DXGI_SWAP_CHAIN_DESC* desc, ID3D12CommandQueue* pCQ);
 
-
+	static void temp_setsw(IDXGISwapChain3* pSW);
 	static ID3D12Device* GetDevice();
 	//static ID3D12CommandAllocator* GetCurrentCommandAllocator();
 	static ID3D12Resource* GetCurrentRenderTarget();
@@ -57,8 +57,8 @@ public:
 
 	//static ID3D12GraphicsCommandList* GetNewOffGraphicsCommandList(_In_opt_ ID3D12PipelineState* pso = nullptr);
 
-	static void QueueGraphicsCommandList(ID3D12CommandList* pCL);
-	static void ExecuteGraphicsCommandLists();
+	//static void QueueGraphicsCommandList(ID3D12CommandList* pCL);
+	//static void ExecuteGraphicsCommandLists();
 
 
 private:

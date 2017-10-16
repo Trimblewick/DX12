@@ -86,7 +86,7 @@ bool D3DClass::Initialize()
 	
 
 	// -- Create a direct command queue -- //
-
+	/*
 	D3D12_COMMAND_QUEUE_DESC cqDesc = {};
 	cqDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	cqDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT; // direct means the gpu can directly execute this command queue
@@ -95,10 +95,10 @@ bool D3DClass::Initialize()
 	if (FAILED(hr))
 	{
 		return false;
-	}
+	}*/
 
 	// -- Create the Swap Chain (double/tripple buffering) -- //
-
+	/*
 	DXGI_MODE_DESC backBufferDesc = {}; // this is to describe our display mode
 	backBufferDesc.Width = WindowClass::GetWidth(); // buffer width
 	backBufferDesc.Height = WindowClass::GetHeight(); // buffer height
@@ -118,7 +118,7 @@ bool D3DClass::Initialize()
 	swapChainDesc.SampleDesc = sampleDesc; // our multi-sampling description
 	swapChainDesc.Windowed = !WindowClass::IsFullscreen(); // set to true, then if in fullscreen must call SetFullScreenState with true for full screen to get uncapped fps
 
-	IDXGISwapChain* tempSwapChain;
+	IDXGISwapChain* tempSwapChain;*/
 
 	// the queue will be flushed once the swap chain is created
 	// give it the swap chain description we created above
@@ -322,11 +322,16 @@ IDXGISwapChain3 * D3DClass::CreateSwapChain(DXGI_SWAP_CHAIN_DESC* desc, ID3D12Co
 	IDXGISwapChain* pTemp = nullptr;
 	IDXGISwapChain3* pSwapChain = nullptr;
 
-	HRESULT hr = s_pDXGIFactory->CreateSwapChain(s_pCommandQueue, desc, &pTemp);
+	HRESULT hr = s_pDXGIFactory->CreateSwapChain(pCQ, desc, &pTemp);
 
 	pSwapChain = static_cast<IDXGISwapChain3*>(pTemp);
 
 	return pSwapChain;
+}
+
+void D3DClass::temp_setsw(IDXGISwapChain3 * pSW)
+{
+	s_pSwapChain = pSW;
 }
 
 ID3D12Device * D3DClass::GetDevice()
@@ -339,10 +344,7 @@ IDXGISwapChain3 * D3DClass::GetSwapChain()
 	return s_pSwapChain;
 }
 
-ID3D12CommandQueue * D3DClass::GetCommandQueue()
-{
-	return s_pCommandQueue;
-}
+
 
 unsigned int D3DClass::GetFrameIndex()
 {
@@ -363,22 +365,4 @@ ID3D12Fence * D3DClass::GetCurrentFence()
 UINT64 D3DClass::GetCurrentFenceValue()
 {
 	return s_ui64FenceValue[s_uiFrameIndex];
-}
-
-void D3DClass::QueueGraphicsCommandList(ID3D12CommandList* pCL)
-{
-	_pGraphicsCommandLists.push_back(pCL);
-}
-
-void D3DClass::ExecuteGraphicsCommandLists()
-{
-	// execute the array of command lists
-	s_pCommandQueue->ExecuteCommandLists(_pGraphicsCommandLists.size(), _pGraphicsCommandLists.data());
-
-	// this command goes in at the end of our command queue. we will know when our command queue 
-	// has finished because the fence value will be set to "fenceValue" from the GPU since the command
-	// queue is being executed on the GPU
-	s_pCommandQueue->Signal(s_pFenceCQ[s_uiFrameIndex], s_ui64FenceValue[s_uiFrameIndex]);
-	
-	_pGraphicsCommandLists.clear();
 }

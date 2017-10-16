@@ -169,7 +169,6 @@
     <ClCompile Include="Plane.cpp" />
     <ClCompile Include="PSOHandler.cpp" />
     <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="SkyBox.cpp" />
     <ClCompile Include="SystemClass.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="WindowClass.cpp" />
@@ -188,7 +187,6 @@
     <ClInclude Include="Plane.h" />
     <ClInclude Include="PSOHandler.h" />
     <ClInclude Include="Shader.h" />
-    <ClInclude Include="SkyBox.h" />
     <ClInclude Include="SystemClass.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="WindowClass.h" />

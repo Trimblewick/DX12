@@ -46,11 +46,12 @@ bool DeferredRenderer::Initialize(ID3D12CommandQueue* pCQ)
 	swapChainDesc.Windowed = !WindowClass::IsFullscreen(); // set to true, then if in fullscreen must call SetFullScreenState with true for full screen to get uncapped fps
 
 	m_pSwapChain = D3DClass::CreateSwapChain(&swapChainDesc, pCQ);
-
+	D3DClass::temp_setsw(m_pSwapChain);
 	for (int i = 0; i < g_iBackBufferCount; i++)
 	{
-		D3DClass::GetSwapChain()->GetBuffer(i, IID_PPV_ARGS(&m_ppBackBufferRTV[i]));
+		m_pSwapChain->GetBuffer(i, IID_PPV_ARGS(&m_ppBackBufferRTV[i]));
 		D3DClass::GetDevice()->CreateRenderTargetView(m_ppBackBufferRTV[i], nullptr, handleDHBackBufferRTVs);
+		
 
 		
 		

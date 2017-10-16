@@ -20,7 +20,7 @@ GPUbridge::GPUbridge()
 	m_fenceEventDirectHandle = CreateEvent(nullptr, NULL, NULL, nullptr);
 	assert(m_fenceEventDirectHandle != nullptr);
 
-	for (int i = 0; i < g_iBackBufferCount * s_iPoolSize; ++i)
+	for (int i = 0; i < s_iPoolSize; ++i)
 	{
 		m_ppCLGraphicsDirectPool[i] = D3DClass::CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE_DIRECT, m_pppCADirectPool[0][0]);
 		m_ppCLGraphicsDirectPool[i]->Close();
@@ -52,15 +52,12 @@ ID3D12GraphicsCommandList* GPUbridge::GetFreshCL()
 		if (m_bppCADirectPoolFreeFromGPU[iIndex][i])//is CA unoccupied by gpu?
 		{
 			
-			for (int k = 0; k < g_iBackBufferCount * s_iPoolSize && !bCAoccupied; ++k)//is CA occupied by another CL? 
+			for (int k = 0; k < s_iPoolSize && iFirstUnoccupiedCL == -1; ++k)//is CA occupied by another CL? 
 			{
-				if (iFirstUnoccupiedCL == -1 && m_ppCLsAssociatedWithCAsInCAPool[k] == nullptr)
+				
+				if (m_ppCLsAssociatedWithCAsInCAPool[k] == nullptr)// m_pppCADirectPool[iIndex][i])
 				{
 					iFirstUnoccupiedCL = k;
-				}
-				if (m_ppCLsAssociatedWithCAsInCAPool[k] == m_pppCADirectPool[iIndex][i])
-				{
-					bCAoccupied = true;
 				}
 				
 			}
@@ -75,7 +72,7 @@ ID3D12GraphicsCommandList* GPUbridge::GetFreshCL()
 	}
 	if (iFirstUnoccupiedCL == -1)
 	{
-		assert(false);//<<--- this section is fragile?
+		assert(false);//<<--- this section is fragile? If s_iPoolSize nr of CLs are occupied, it will break
 		return nullptr;
 	}
 	return pCL;
@@ -83,7 +80,7 @@ ID3D12GraphicsCommandList* GPUbridge::GetFreshCL()
 
 void GPUbridge::QueueGraphicsCL(ID3D12GraphicsCommandList* pCL)
 {
-	for (int i = 0; i < g_iBackBufferCount * s_iPoolSize; ++i)
+	for (int i = 0; i < s_iPoolSize; ++i)
 	{
 		if (pCL == m_ppCLGraphicsDirectPool[i])
 		{
@@ -103,6 +100,16 @@ void GPUbridge::ExecuteGrapichsCLs()
 
 	m_pCQDirect->Signal(m_ppFenceDirect[iIndex], m_ipFenceValueDirect[iIndex]);
 	_pCLqueue.clear();
+}
+
+void GPUbridge::ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList ** ppCLs, _In_opt_ ID3D12Fence* pFenceHandle)
+{
+	m_pCQDirect->ExecuteCommandLists(iNOCLs, ppCLs);
+
+	if (pFenceHandle)
+	{
+		m_pCQDirect->Signal(pFenceHandle, 1);
+	}
 }
 
 void GPUbridge::WaitForPreviousFrame()
