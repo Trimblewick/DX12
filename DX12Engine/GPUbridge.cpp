@@ -30,10 +30,35 @@ GPUbridge::GPUbridge()
 
 GPUbridge::~GPUbridge()
 {
+	CleanUp();
 }
 
 void GPUbridge::CleanUp()
 {
+	for (int i = 0; i < g_iBackBufferCount; ++i)
+	{
+		if (m_ppFenceDirect[i]->GetCompletedValue() < m_ipFenceValueDirect[i])
+		{
+			DxAssert(m_ppFenceDirect[i]->SetEventOnCompletion(m_ipFenceValueDirect[i], m_fenceEventDirectHandle), S_OK);
+
+			WaitForSingleObject(m_fenceEventDirectHandle, INFINITE);
+		}
+	}
+	for (int i = 0; i < g_iBackBufferCount; ++i)
+	{
+		for (int j = 0; j < s_iPoolSize; ++j)
+		{
+			SAFE_RELEASE(m_pppCADirectPool[i][j]);
+		}
+	}
+	for (int i = 0; i < g_iBackBufferCount; ++i)
+	{
+
+		SAFE_RELEASE(m_ppCLGraphicsDirectPool[i]);
+		SAFE_RELEASE(m_ppFenceDirect[i]);
+		
+
+	}
 }
 
 ID3D12CommandQueue * GPUbridge::GetCQ()
@@ -41,15 +66,14 @@ ID3D12CommandQueue * GPUbridge::GetCQ()
 	return m_pCQDirect;
 }
 
-ID3D12GraphicsCommandList* GPUbridge::GetFreshCL()
+ID3D12GraphicsCommandList* GPUbridge::GetFreshCL(int iBackBufferIndex)
 {
-	int iIndex = D3DClass::GetFrameIndex();
 	int iFirstUnoccupiedCL = -1;
 	ID3D12GraphicsCommandList* pCL = nullptr;
 	bool bCAoccupied = false;
 	for (int i = 0; i < s_iPoolSize && iFirstUnoccupiedCL == -1; ++i)
 	{
-		if (m_bppCADirectPoolFreeFromGPU[iIndex][i])//is CA unoccupied by gpu?
+		if (m_bppCADirectPoolFreeFromGPU[iBackBufferIndex][i])//is CA unoccupied by gpu?
 		{
 			
 			for (int k = 0; k < s_iPoolSize && iFirstUnoccupiedCL == -1; ++k)//is CA occupied by another CL? 
@@ -63,9 +87,9 @@ ID3D12GraphicsCommandList* GPUbridge::GetFreshCL()
 			}
 			if (!bCAoccupied)//if CA is unoccupied
 			{
-				DxAssert(m_ppCLGraphicsDirectPool[iFirstUnoccupiedCL]->Reset(m_pppCADirectPool[iIndex][i], nullptr), S_OK);
+				DxAssert(m_ppCLGraphicsDirectPool[iFirstUnoccupiedCL]->Reset(m_pppCADirectPool[iBackBufferIndex][i], nullptr), S_OK);
 				pCL = m_ppCLGraphicsDirectPool[iFirstUnoccupiedCL];
-				m_ppCLsAssociatedWithCAsInCAPool[iFirstUnoccupiedCL] = m_pppCADirectPool[iIndex][i];
+				m_ppCLsAssociatedWithCAsInCAPool[iFirstUnoccupiedCL] = m_pppCADirectPool[iBackBufferIndex][i];
 			}
 			
 		}
@@ -93,12 +117,11 @@ void GPUbridge::QueueGraphicsCL(ID3D12GraphicsCommandList* pCL)
 	_pCLqueue.push_back(pCL);
 }
 
-void GPUbridge::ExecuteGrapichsCLs()
+void GPUbridge::ExecuteGrapichsCLs(int iBackBufferIndex)
 {
-	int iIndex = D3DClass::GetFrameIndex();
 	m_pCQDirect->ExecuteCommandLists(_pCLqueue.size(), _pCLqueue.data());
 
-	m_pCQDirect->Signal(m_ppFenceDirect[iIndex], m_ipFenceValueDirect[iIndex]);
+	m_pCQDirect->Signal(m_ppFenceDirect[iBackBufferIndex], m_ipFenceValueDirect[iBackBufferIndex]);
 	_pCLqueue.clear();
 }
 
@@ -112,13 +135,11 @@ void GPUbridge::ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList ** ppCLs, _In_
 	}
 }
 
-void GPUbridge::WaitForPreviousFrame()
+void GPUbridge::WaitForPreviousFrame(int iBackBufferIndex)
 {
-	int iIndex = D3DClass::GetFrameIndex();
-
-	if (m_ppFenceDirect[iIndex]->GetCompletedValue() < m_ipFenceValueDirect[iIndex])
+	if (m_ppFenceDirect[iBackBufferIndex]->GetCompletedValue() < m_ipFenceValueDirect[iBackBufferIndex])
 	{
-		DxAssert(m_ppFenceDirect[iIndex]->SetEventOnCompletion(m_ipFenceValueDirect[iIndex], m_fenceEventDirectHandle), S_OK);
+		DxAssert(m_ppFenceDirect[iBackBufferIndex]->SetEventOnCompletion(m_ipFenceValueDirect[iBackBufferIndex], m_fenceEventDirectHandle), S_OK);
 
 		WaitForSingleObject(m_fenceEventDirectHandle, INFINITE);
 
@@ -126,14 +147,14 @@ void GPUbridge::WaitForPreviousFrame()
 	//reset used CAs
 	for (int i = 0; i < s_iPoolSize; ++i)
 	{
-		if (!m_bppCADirectPoolFreeFromGPU[iIndex][i])
+		if (!m_bppCADirectPoolFreeFromGPU[iBackBufferIndex][i])
 		{
-			DxAssert(m_pppCADirectPool[iIndex][i]->Reset(), S_OK);
-			m_bppCADirectPoolFreeFromGPU[iIndex][i] = true;
+			DxAssert(m_pppCADirectPool[iBackBufferIndex][i]->Reset(), S_OK);
+			m_bppCADirectPoolFreeFromGPU[iBackBufferIndex][i] = true;
 		}
 	}
 
-	m_ipFenceValueDirect[iIndex]++;
+	m_ipFenceValueDirect[iBackBufferIndex]++;
 
 }
 

@@ -38,11 +38,13 @@ public:
 		};
 	};
 public:
-	Plane(GPUbridge* pGPUbridge);
+	Plane(GPUbridge* pGPUbridge, IDXGISwapChain3* temp_swapchain);
 	~Plane();
 
-	void Update(Camera* camera);
-	void Draw(ID3D12GraphicsCommandList* pCL, Camera* camera);
+	
+
+	void Update(Camera* camera, int iBackBufferIndex);
+	void Draw(ID3D12GraphicsCommandList* pCL, Camera* camera, int iBackBufferIndex);
 
 
 private:

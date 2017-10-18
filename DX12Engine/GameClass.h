@@ -27,7 +27,7 @@ public:
 	void Update(Input* input, float dt);
 	bool Render();
 	void CleanUp();
-
+	
 
 private:
 	Camera*												m_pMainCamera;

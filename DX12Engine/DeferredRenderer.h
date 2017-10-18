@@ -13,6 +13,8 @@ public:
 	~DeferredRenderer();
 	bool Initialize(ID3D12CommandQueue* pCQ);
 	void CleanUp();
+	IDXGISwapChain3*					GetSwapChain();
+	int									GetBackBufferIndex();
 
 	void RenderLightPass(ID3D12GraphicsCommandList* pCL);
 	void temp_closelistNqueue(ID3D12GraphicsCommandList * pCL);

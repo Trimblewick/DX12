@@ -14,11 +14,11 @@ public:
 
 	ID3D12CommandQueue*							GetCQ();
 	
-	ID3D12GraphicsCommandList*					GetFreshCL();//return an unused CL from the pool
+	ID3D12GraphicsCommandList*					GetFreshCL(int iBackBufferIndex);//return an unused CL from the pool
 	void										QueueGraphicsCL(ID3D12GraphicsCommandList* pCL);
-	void										ExecuteGrapichsCLs();
+	void										ExecuteGrapichsCLs(int iBackBufferIndex);
 	void										ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList** ppCLs, _In_opt_ ID3D12Fence* pFenceHandle);
-	void										WaitForPreviousFrame();
+	void										WaitForPreviousFrame(int iBackBufferIndex);
 	
 private:
 	bool										m_bppCADirectPoolFreeFromGPU[g_iBackBufferCount][s_iPoolSize];//occupied by GPU == false, free == true

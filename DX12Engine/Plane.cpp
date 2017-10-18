@@ -1,7 +1,7 @@
 #include "Plane.h"
 
 
-Plane::Plane(GPUbridge* pGPUbridge)
+Plane::Plane(GPUbridge* pGPUbridge, IDXGISwapChain3* temp_swapchain)
 {
 	HRESULT hr;
 
@@ -249,7 +249,7 @@ Plane::Plane(GPUbridge* pGPUbridge)
 
 	//fetch the swapchain desc
 	DXGI_SWAP_CHAIN_DESC tempSwapChainDesc;
-	D3DClass::GetSwapChain()->GetDesc(&tempSwapChainDesc);
+	temp_swapchain->GetDesc(&tempSwapChainDesc);
 
 	psoDesc.InputLayout = inputLayoutDesc;
 	psoDesc.pRootSignature = m_pRootSignature;
@@ -557,7 +557,7 @@ Plane::Plane(GPUbridge* pGPUbridge)
 	//release vertexbuffer upload heap
 	
 	DxAssert(pUploadBufferFence->SetEventOnCompletion(1, fenceHandle), S_OK);
-	
+
 	WaitForSingleObject(fenceHandle, INFINITE);
 	
 	SAFE_RELEASE(pVertexBufferUploadHeap);
@@ -600,16 +600,16 @@ Plane::~Plane()
 
 
 
-void Plane::Update(Camera * camera)
+void Plane::Update(Camera * camera, int iBackBufferIndex)
 {
 	
 	DirectX::XMMATRIX transposedWVPMat = DirectX::XMMatrixTranspose(camera->GetVPMatrix());//DirectX::XMMatrixMultiplyTranspose(DirectX::XMMatrixTranslation(-20, -20, -20), camera->GetVPMatrix());
 	DirectX::XMStoreFloat4x4(&m_wvpMat.wvpMat, transposedWVPMat);
-	memcpy(m_pWVPGPUAdress[D3DClass::GetFrameIndex()], &m_wvpMat, sizeof(m_wvpMat));
+	memcpy(m_pWVPGPUAdress[iBackBufferIndex], &m_wvpMat, sizeof(m_wvpMat));
 
 }
 
-void Plane::Draw(ID3D12GraphicsCommandList* pCL, Camera * camera)
+void Plane::Draw(ID3D12GraphicsCommandList* pCL, Camera * camera, int iBackBufferIndex)
 {
 	ID3D12DescriptorHeap* ppDescriptorHeaps[] = { m_pTextureDH };
 	
@@ -636,7 +636,7 @@ void Plane::Draw(ID3D12GraphicsCommandList* pCL, Camera * camera)
 	pCL->IASetVertexBuffers(0, 1, &m_vertexBufferView);
 	pCL->IASetIndexBuffer(&m_indexBufferView);
 	
-	pCL->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[D3DClass::GetFrameIndex()]->GetGPUVirtualAddress());
+	pCL->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[iBackBufferIndex]->GetGPUVirtualAddress());
 
 	pCL->DrawIndexedInstanced(m_uiNrOfIndices, 1, 0, 0, 0);
 

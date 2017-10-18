@@ -132,9 +132,6 @@ void SystemClass::Run()
 		}
 		else //loop logics
 		{
-			//--->>>__>_>
-			//D3DClass::WaitForPreviousFrame();
-
 			s_input.UpdateMouse();
 
 			//dt
@@ -151,23 +148,10 @@ void SystemClass::Run()
 			WindowClass::SetWindowTitle(titleFPS);
 
 
-
-
-			//____________fix
-			//DxAssert(D3DClass::GetCurrentCommandAllocator()->Reset(), S_OK);
-			
-			
-
 			s_game.Update(&s_input, s_fDeltaTime);
 
-			//s_frameBuffer.ResetList(FrameBuffer::PIPELINES::STANDARD);
-			
 			s_bRunning = s_game.Render();
 
-			//s_frameBuffer.CloseList(FrameBuffer::PIPELINES::STANDARD);
-
-			//---->>
-			//D3DClass::ExecuteGraphicsCommandLists();
 			
 		}
 	}
@@ -187,7 +171,6 @@ void SystemClass::Stop()
 void SystemClass::CleanUp()
 {
 	s_game.CleanUp();
-	//s_frameBuffer.CleanUp();
-	WindowClass::Destroy();
 	D3DClass::Cleanup();
+	WindowClass::Destroy();
 }
