@@ -24,9 +24,6 @@ LRESULT CALLBACK SystemClass::EventHandler(HWND hWnd, UINT message, WPARAM wPara
 {
 	//If one case is hit the code will execute everything down until a break;
 
-	//s_input.UpdateMouse();
-
-	
 	switch (message)
 	{
 

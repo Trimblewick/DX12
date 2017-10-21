@@ -9,18 +9,21 @@ public:
 	~GPUbridge();
 	void CleanUp();
 
-	static const int							s_iPoolSize = 5;
+	
 
 
 	ID3D12CommandQueue*							GetCQ();
 	
-	ID3D12GraphicsCommandList*					GetFreshCL(int iBackBufferIndex);//return an unused CL from the pool
+	ID3D12GraphicsCommandList*					GetFreshCL();//return an unused CL from the pool
 	void										QueueGraphicsCL(ID3D12GraphicsCommandList* pCL);
-	void										ExecuteGrapichsCLs(int iBackBufferIndex);
-	void										ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList** ppCLs, _In_opt_ ID3D12Fence* pFenceHandle);
+	void										ExecuteGrapichsCLs();
+	void										ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList** ppCLs, _In_opt_ ID3D12Fence* pFenceHandle, _In_opt_ int iFenceValue);
 	void										WaitForPreviousFrame(int iBackBufferIndex);
 	
 private:
+	static const int							s_iPoolSize = 5;
+	int											_iBackBufferIndex;
+
 	bool										m_bppCADirectPoolFreeFromGPU[g_iBackBufferCount][s_iPoolSize];//occupied by GPU == false, free == true
 	ID3D12CommandAllocator*						m_pppCADirectPool[g_iBackBufferCount][s_iPoolSize];
 

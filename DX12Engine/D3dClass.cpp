@@ -4,7 +4,6 @@
 
 
 ID3D12Device* D3DClass::s_pDevice;
-
 IDXGIFactory4* D3DClass::s_pDXGIFactory;
 
 

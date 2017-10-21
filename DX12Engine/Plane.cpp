@@ -551,7 +551,7 @@ Plane::Plane(GPUbridge* pGPUbridge, IDXGISwapChain3* temp_swapchain)
 	}
 	DxAssert(pCL->Close(), S_OK);
 	ID3D12CommandList* ppCLs[] = { pCL };
-	pGPUbridge->ExecuteDecoupledCLs(1, ppCLs, pUploadBufferFence);
+	pGPUbridge->ExecuteDecoupledCLs(1, ppCLs, pUploadBufferFence, 1);
 	
 
 	//release vertexbuffer upload heap

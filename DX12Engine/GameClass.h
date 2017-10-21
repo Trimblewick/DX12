@@ -36,6 +36,5 @@ private:
 
 	GPUbridge*											m_pGPUbridge;
 	
-	ID3D12CommandAllocator* temp_ca[3];
 };
  

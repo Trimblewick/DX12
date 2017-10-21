@@ -125,8 +125,6 @@ void DeferredRenderer::temp_closelistNqueue(ID3D12GraphicsCommandList * pCL)
 	int iIndex = this->GetBackBufferIndex();
 	pCL->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ppBackBufferRTV[iIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
-	//pCL->Close();
-	//D3DClass::QueueGraphicsCommandList(pCL);
 }
 
 void DeferredRenderer::temp_setRendertarget(ID3D12GraphicsCommandList * pCL)
@@ -140,9 +138,9 @@ void DeferredRenderer::temp_setRendertarget(ID3D12GraphicsCommandList * pCL)
 	return;
 }
 
-void DeferredRenderer::temp_swap()
+void DeferredRenderer::PrecentNextFrame()
 {
-	m_pSwapChain->Present(0, 0);
+	DxAssert(m_pSwapChain->Present(0, 0), S_OK);
 }
 
 

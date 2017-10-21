@@ -3,10 +3,9 @@
 
 GPUbridge::GPUbridge()
 {
+	_iBackBufferIndex = 0;
 	m_pCQDirect = D3DClass::CreateCQ(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	
-	
-
 	for (int k = 0; k < g_iBackBufferCount; ++k)
 	{
 		for (int i = 0; i < s_iPoolSize; ++i)
@@ -37,13 +36,13 @@ void GPUbridge::CleanUp()
 {
 	for (int i = 0; i < g_iBackBufferCount; ++i)
 	{
-		if (m_ppFenceDirect[i]->GetCompletedValue() < m_ipFenceValueDirect[i])
-		{
-			DxAssert(m_ppFenceDirect[i]->SetEventOnCompletion(m_ipFenceValueDirect[i], m_fenceEventDirectHandle), S_OK);
+		m_ipFenceValueDirect[i]++;											//Increment each fencevalue to be above the completed value in the fence.
+		m_pCQDirect->Signal(m_ppFenceDirect[i], m_ipFenceValueDirect[i]);	//Signal the CQ again for each frame and wait to make sure the GPU is finished with it.
 
-			WaitForSingleObject(m_fenceEventDirectHandle, INFINITE);
-		}
+		DxAssert(m_ppFenceDirect[i]->SetEventOnCompletion(m_ipFenceValueDirect[i], m_fenceEventDirectHandle), S_OK);
+		WaitForSingleObject(m_fenceEventDirectHandle, INFINITE);
 	}
+
 	for (int i = 0; i < g_iBackBufferCount; ++i)
 	{
 		for (int j = 0; j < s_iPoolSize; ++j)
@@ -56,9 +55,10 @@ void GPUbridge::CleanUp()
 
 		SAFE_RELEASE(m_ppCLGraphicsDirectPool[i]);
 		SAFE_RELEASE(m_ppFenceDirect[i]);
-		
-
 	}
+
+
+	SAFE_RELEASE(m_pCQDirect);
 }
 
 ID3D12CommandQueue * GPUbridge::GetCQ()
@@ -66,14 +66,14 @@ ID3D12CommandQueue * GPUbridge::GetCQ()
 	return m_pCQDirect;
 }
 
-ID3D12GraphicsCommandList* GPUbridge::GetFreshCL(int iBackBufferIndex)
+ID3D12GraphicsCommandList* GPUbridge::GetFreshCL()
 {
 	int iFirstUnoccupiedCL = -1;
 	ID3D12GraphicsCommandList* pCL = nullptr;
 	bool bCAoccupied = false;
 	for (int i = 0; i < s_iPoolSize && iFirstUnoccupiedCL == -1; ++i)
 	{
-		if (m_bppCADirectPoolFreeFromGPU[iBackBufferIndex][i])//is CA unoccupied by gpu?
+		if (m_bppCADirectPoolFreeFromGPU[_iBackBufferIndex][i])//is CA unoccupied by gpu?
 		{
 			
 			for (int k = 0; k < s_iPoolSize && iFirstUnoccupiedCL == -1; ++k)//is CA occupied by another CL? 
@@ -87,9 +87,9 @@ ID3D12GraphicsCommandList* GPUbridge::GetFreshCL(int iBackBufferIndex)
 			}
 			if (!bCAoccupied)//if CA is unoccupied
 			{
-				DxAssert(m_ppCLGraphicsDirectPool[iFirstUnoccupiedCL]->Reset(m_pppCADirectPool[iBackBufferIndex][i], nullptr), S_OK);
+				DxAssert(m_ppCLGraphicsDirectPool[iFirstUnoccupiedCL]->Reset(m_pppCADirectPool[_iBackBufferIndex][i], nullptr), S_OK);
 				pCL = m_ppCLGraphicsDirectPool[iFirstUnoccupiedCL];
-				m_ppCLsAssociatedWithCAsInCAPool[iFirstUnoccupiedCL] = m_pppCADirectPool[iBackBufferIndex][i];
+				m_ppCLsAssociatedWithCAsInCAPool[iFirstUnoccupiedCL] = m_pppCADirectPool[_iBackBufferIndex][i];
 			}
 			
 		}
@@ -117,26 +117,28 @@ void GPUbridge::QueueGraphicsCL(ID3D12GraphicsCommandList* pCL)
 	_pCLqueue.push_back(pCL);
 }
 
-void GPUbridge::ExecuteGrapichsCLs(int iBackBufferIndex)
+void GPUbridge::ExecuteGrapichsCLs()
 {
 	m_pCQDirect->ExecuteCommandLists(_pCLqueue.size(), _pCLqueue.data());
 
-	m_pCQDirect->Signal(m_ppFenceDirect[iBackBufferIndex], m_ipFenceValueDirect[iBackBufferIndex]);
+	m_pCQDirect->Signal(m_ppFenceDirect[_iBackBufferIndex], m_ipFenceValueDirect[_iBackBufferIndex]);
 	_pCLqueue.clear();
 }
 
-void GPUbridge::ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList ** ppCLs, _In_opt_ ID3D12Fence* pFenceHandle)
+void GPUbridge::ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList ** ppCLs, _In_opt_ ID3D12Fence* pFenceHandle, _In_opt_ int iFenceValue)
 {
 	m_pCQDirect->ExecuteCommandLists(iNOCLs, ppCLs);
 
 	if (pFenceHandle)
 	{
-		m_pCQDirect->Signal(pFenceHandle, 1);
+		m_pCQDirect->Signal(pFenceHandle, iFenceValue);
 	}
 }
 
 void GPUbridge::WaitForPreviousFrame(int iBackBufferIndex)
 {
+	_iBackBufferIndex = iBackBufferIndex;
+
 	if (m_ppFenceDirect[iBackBufferIndex]->GetCompletedValue() < m_ipFenceValueDirect[iBackBufferIndex])
 	{
 		DxAssert(m_ppFenceDirect[iBackBufferIndex]->SetEventOnCompletion(m_ipFenceValueDirect[iBackBufferIndex], m_fenceEventDirectHandle), S_OK);
@@ -144,6 +146,7 @@ void GPUbridge::WaitForPreviousFrame(int iBackBufferIndex)
 		WaitForSingleObject(m_fenceEventDirectHandle, INFINITE);
 
 	}
+
 	//reset used CAs
 	for (int i = 0; i < s_iPoolSize; ++i)
 	{
