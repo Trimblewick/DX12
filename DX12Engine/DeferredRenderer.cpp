@@ -78,19 +78,19 @@ bool DeferredRenderer::Initialize(ID3D12CommandQueue* pCQ)
 
 void DeferredRenderer::CleanUp()
 {
-	BOOL fs = false;
+	/*BOOL fs = false;
 	if (m_pSwapChain->GetFullscreenState(&fs, NULL))
 		m_pSwapChain->SetFullscreenState(false, NULL);
+		*/
 
-
-	SAFE_RELEASE(m_pDHBackBufferRTVs);
+	
 	for (int i = 0; i < g_iBackBufferCount; ++i)
 	{
 		SAFE_RELEASE(m_ppBackBufferRTV[i]);
 		
 		SAFE_RELEASE(m_ppFenceBackBuffer[i]);
 	}
-
+	SAFE_RELEASE(m_pDHBackBufferRTVs);
 	SAFE_RELEASE(m_pSwapChain);
 	return;
 }

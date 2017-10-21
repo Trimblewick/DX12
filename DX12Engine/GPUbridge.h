@@ -10,8 +10,6 @@ public:
 	void CleanUp();
 
 	
-
-
 	ID3D12CommandQueue*							GetCQ();
 	
 	ID3D12GraphicsCommandList*					GetFreshCL();//return an unused CL from the pool

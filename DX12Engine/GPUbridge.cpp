@@ -50,13 +50,16 @@ void GPUbridge::CleanUp()
 			SAFE_RELEASE(m_pppCADirectPool[i][j]);
 		}
 	}
-	for (int i = 0; i < g_iBackBufferCount; ++i)
+	for (int i = 0; i < s_iPoolSize; ++i)
 	{
 
 		SAFE_RELEASE(m_ppCLGraphicsDirectPool[i]);
-		SAFE_RELEASE(m_ppFenceDirect[i]);
 	}
 
+	for (int i = 0; i < g_iBackBufferCount; ++i)
+	{
+		SAFE_RELEASE(m_ppFenceDirect[i]);
+	}
 
 	SAFE_RELEASE(m_pCQDirect);
 }
