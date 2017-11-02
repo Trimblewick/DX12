@@ -19,7 +19,9 @@ bool GameClass::Initialize()
 	m_pRenderer->Initialize(m_pGPUbridge->GetCQ());
 
 	m_pPlaneObject = new Plane(m_pGPUbridge, m_pRenderer->GetSwapChain());
-	
+	m_pResourceLoader = new ResourceLoader();
+	m_pResourceLoader->LoadMeshFromFile("../Resources/Teapot/teapot_n_glass.obj", Mesh::MeshLayout::VERTEXNORMAL);
+
 	return true;
 }
 
@@ -44,12 +46,14 @@ bool GameClass::Render()
 
 	m_pRenderer->temp_closelistNqueue(pCL);
 
+
+
+
 	m_pGPUbridge->QueueGraphicsCL(pCL);
 	m_pGPUbridge->ExecuteGrapichsCLs();
 
 	m_pRenderer->PrecentNextFrame();
 	
-
 	return true;
 }
 

@@ -9,7 +9,7 @@
 #include "GPUbridge.h"
 //#include "BoxObject.h"
 
-
+#include "ResourceLoader.h"
 #include "Plane.h"
 
 
@@ -31,10 +31,11 @@ public:
 
 private:
 	Camera*												m_pMainCamera;
-	DeferredRenderer*									m_pRenderer;//deferred
+	DeferredRenderer*									m_pRenderer;
 	Plane*												m_pPlaneObject;
 
 	GPUbridge*											m_pGPUbridge;
-	
+
+	ResourceLoader*	m_pResourceLoader;
 };
  

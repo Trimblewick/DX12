@@ -420,9 +420,4 @@ void Texture::GenerateMipMaps(ID3D12Resource* pGPUresource, ID3D12GraphicsComman
 	}
 	pCL->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pGPUresource, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE));
 
-
-
-
-	//pCL->Close();
-	//D3DClass::QueueGraphicsCommandList(pCL);
 }
