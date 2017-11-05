@@ -19,8 +19,9 @@ bool GameClass::Initialize()
 	m_pRenderer->Initialize(m_pGPUbridge->GetCQ());
 
 	m_pPlaneObject = new Plane(m_pGPUbridge, m_pRenderer->GetSwapChain());
+
 	m_pResourceLoader = new ResourceLoader();
-	m_pResourceLoader->LoadMeshFromFile("../Resources/Teapot/teapot_n_glass.obj", Mesh::MeshLayout::VERTEXNORMAL);
+	Mesh* pMesh = m_pResourceLoader->LoadMeshFromFile("../Resources/Teapot/teapot_n_glass.obj", Mesh::MeshLayout::VERTEXNORMAL, m_pGPUbridge);
 
 	return true;
 }

@@ -33,11 +33,12 @@ public:
 	
 
 	static ID3D12CommandAllocator*				CreateCA(D3D12_COMMAND_LIST_TYPE listType);
-	static ID3D12Fence*							CreateFence(UINT64 ui64InitVal, D3D12_FENCE_FLAGS fenceFlag);
+	static ID3D12Fence*							CreateFence();
 	static ID3D12DescriptorHeap*				CreateDH(int numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type);
 	static ID3D12GraphicsCommandList*			CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE listType, ID3D12CommandAllocator* pCA);
 	static ID3D12CommandQueue*					CreateCQ(D3D12_COMMAND_LIST_TYPE listType);
 	static IDXGISwapChain3*						CreateSwapChain(DXGI_SWAP_CHAIN_DESC* desc, ID3D12CommandQueue* pCQ);
+	static ID3D12Resource*						CreateCommittedResource(D3D12_HEAP_TYPE heapType, UINT iBufferSize, D3D12_RESOURCE_STATES resourceState, __in_opt LPCWSTR bufferName);
 
 	static ID3D12Device*						GetDevice();
 	

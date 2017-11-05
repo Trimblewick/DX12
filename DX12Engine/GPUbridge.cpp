@@ -13,7 +13,7 @@ GPUbridge::GPUbridge()
 			m_bppCADirectPoolFreeFromGPU[k][i] = true;
 			m_pppCADirectPool[k][i] = D3DClass::CreateCA(D3D12_COMMAND_LIST_TYPE_DIRECT);
 		}
-		m_ppFenceDirect[k] = D3DClass::CreateFence(0, D3D12_FENCE_FLAG_NONE);
+		m_ppFenceDirect[k] = D3DClass::CreateFence();
 		m_ipFenceValueDirect[k] = 0;
 	}
 	m_fenceEventDirectHandle = CreateEvent(nullptr, NULL, NULL, nullptr);

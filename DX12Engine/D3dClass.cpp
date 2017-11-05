@@ -92,10 +92,10 @@ ID3D12CommandAllocator * D3DClass::CreateCA(D3D12_COMMAND_LIST_TYPE listType)
 	return pCA;
 }
 
-ID3D12Fence * D3DClass::CreateFence(UINT64 ui64InitVal, D3D12_FENCE_FLAGS fenceFlag)
+ID3D12Fence * D3DClass::CreateFence()
 {
 	ID3D12Fence* pFence;
-	DxAssert(s_pDevice->CreateFence(ui64InitVal, fenceFlag, IID_PPV_ARGS(&pFence)), S_OK);
+	DxAssert(s_pDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&pFence)), S_OK);
 	return pFence;
 }
 
@@ -134,11 +134,23 @@ IDXGISwapChain3 * D3DClass::CreateSwapChain(DXGI_SWAP_CHAIN_DESC* desc, ID3D12Co
 	IDXGISwapChain* pTemp = nullptr;
 	IDXGISwapChain3* pSwapChain = nullptr;
 
-	HRESULT hr = s_pDXGIFactory->CreateSwapChain(pCQ, desc, &pTemp);
+	DxAssert(s_pDXGIFactory->CreateSwapChain(pCQ, desc, &pTemp), S_OK);
 
 	pSwapChain = static_cast<IDXGISwapChain3*>(pTemp);
 
 	return pSwapChain;
+}
+
+ID3D12Resource * D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE heapType, UINT iBufferSize, D3D12_RESOURCE_STATES resourceState, LPCWSTR bufferName)
+{
+	ID3D12Resource* pCommittedResource;
+
+	DxAssert(s_pDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(heapType), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(iBufferSize), resourceState, nullptr, IID_PPV_ARGS(&pCommittedResource)), S_OK);
+	
+	if (bufferName != NULL)
+		pCommittedResource->SetName(bufferName);
+
+	return pCommittedResource;
 }
 
 ID3D12Device * D3DClass::GetDevice()

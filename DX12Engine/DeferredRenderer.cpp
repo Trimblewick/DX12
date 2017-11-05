@@ -65,7 +65,7 @@ bool DeferredRenderer::Initialize(ID3D12CommandQueue* pCQ)
 		handleDHDeferredBufferRTVs.Offset(iDHIncrementSizeRTV);*/
 		
 		
-		m_ppFenceBackBuffer[i] = D3DClass::CreateFence(0, D3D12_FENCE_FLAG_NONE);
+		m_ppFenceBackBuffer[i] = D3DClass::CreateFence();
 
 	}
 

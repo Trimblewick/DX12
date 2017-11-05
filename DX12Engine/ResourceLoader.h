@@ -1,6 +1,7 @@
 #pragma once
 
 #include "D3dClass.h"
+#include "GPUbridge.h"
 #include "Mesh.h"
 #include "Texture.h"
 #include <fstream>
@@ -15,8 +16,8 @@ private:
 public:
 	ResourceLoader();
 	~ResourceLoader();
+
 	//Mesh
-	
 	struct Vertex
 	{
 		DirectX::XMFLOAT3 position;
@@ -33,7 +34,7 @@ public:
 		DirectX::XMFLOAT3 normal;
 	};
 
-	Mesh*						LoadMeshFromFile(std::string sFileName, Mesh::MeshLayout meshLayout);
+	Mesh*						LoadMeshFromFile(std::string sFileName, Mesh::MeshLayout meshLayout, GPUbridge* pGPUbridge);
 	Texture*					LoadTextureFromFile();
 
 
