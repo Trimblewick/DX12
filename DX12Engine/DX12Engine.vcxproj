@@ -167,6 +167,7 @@
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="Object.cpp" />
     <ClCompile Include="Plane.cpp" />
     <ClCompile Include="PSOHandler.cpp" />
     <ClCompile Include="ResourceLoader.cpp" />
@@ -187,6 +188,7 @@
     <ClInclude Include="GPUbridge.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Object.h" />
     <ClInclude Include="Plane.h" />
     <ClInclude Include="PSOHandler.h" />
     <ClInclude Include="ResourceLoader.h" />

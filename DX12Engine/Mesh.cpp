@@ -4,10 +4,12 @@ Mesh::Mesh()
 {
 	m_pVertexBuffer = nullptr;
 	m_iNrOfVertices = 0;
+	m_meshLayout = UNKNOWN;
 }
 
 Mesh::~Mesh()
 {
+	SAFE_RELEASE(m_pVertexBuffer);
 }
 
 void Mesh::SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology)
@@ -26,6 +28,11 @@ void Mesh::SetNrOfVertices(UINT iNrOfVertices)
 	m_iNrOfVertices = iNrOfVertices;
 }
 
+void Mesh::SetMeshLayout(MeshLayout meshLayout)
+{
+	m_meshLayout = meshLayout;
+}
+
 D3D12_PRIMITIVE_TOPOLOGY Mesh::GetPrimitiveTopology()
 {
 	return m_primitiveTopology;
@@ -39,4 +46,9 @@ D3D12_VERTEX_BUFFER_VIEW Mesh::GetVertexBufferView()
 UINT Mesh::GetNrOfVertices()
 {
 	return m_iNrOfVertices;
+}
+
+Mesh::MeshLayout Mesh::GetMeshLayout()
+{
+	return m_meshLayout;
 }

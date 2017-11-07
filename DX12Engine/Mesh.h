@@ -18,11 +18,12 @@ public:
 	void									SetPrimitiveTopology(D3D12_PRIMITIVE_TOPOLOGY primitiveTopology);
 	void									SetVertexBufferAndView(ID3D12Resource* pVertexBuffer, D3D12_VERTEX_BUFFER_VIEW vertexBufferView);
 	void									SetNrOfVertices(UINT iNrOfVertices);
-
+	void									SetMeshLayout(MeshLayout meshLayout);
 	
 	D3D12_PRIMITIVE_TOPOLOGY				GetPrimitiveTopology();
 	D3D12_VERTEX_BUFFER_VIEW				GetVertexBufferView();
 	UINT									GetNrOfVertices();
+	MeshLayout								GetMeshLayout();
 	//D3D12_INDEX_BUFFER_VIEW					GetIndexBufferView();
 	//UINT									GetNrOfIndices();
 	
@@ -33,6 +34,8 @@ private:
 	D3D12_VERTEX_BUFFER_VIEW				m_vertexBufferView;
 
 	UINT									m_iNrOfVertices;
+
+	MeshLayout								m_meshLayout;
 	/*
 	ID3D12Resource*							m_pIndexBuffer;
 	D3D12_INDEX_BUFFER_VIEW					m_indexBufferView;

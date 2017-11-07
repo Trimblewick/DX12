@@ -1,13 +1,13 @@
 struct VS_INPUT
 {
-    float4 pos : POSITION;
-    float4 color: COLOR;
+    float4 position : POSITION;
+    float4 normal: NORMAL;
 };
 
 struct VS_OUTPUT
 {
-    float4 pos: SV_POSITION;
-    float4 color: COLOR;
+    float4 position: SV_POSITION;
+    float4 normal: NORMAL;
 };
 
 cbuffer ConstantBuffer : register(b0)
@@ -19,7 +19,7 @@ cbuffer ConstantBuffer : register(b0)
 VS_OUTPUT main(VS_INPUT input)
 {
     VS_OUTPUT output;
-    output.pos = mul(input.pos, wvpMat);
-    output.color = input.color;
+    output.position = mul(input.position, wvpMat);
+    output.normal = input.normal;
     return output;
 }

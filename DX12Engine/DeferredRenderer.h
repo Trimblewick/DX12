@@ -1,7 +1,7 @@
 #pragma once
 #include "D3dClass.h"
 #include "Common.h"
-
+#include "Object.h"
 
 class DeferredRenderer
 {
@@ -15,6 +15,8 @@ public:
 	void CleanUp();
 	IDXGISwapChain3*					GetSwapChain();
 	int									GetBackBufferIndex();
+
+	void								DrawObjects(Object** ppObjects, int iNrOfObjects, ID3D12GraphicsCommandList* pCL);
 
 	void RenderLightPass(ID3D12GraphicsCommandList* pCL);
 	void temp_closelistNqueue(ID3D12GraphicsCommandList * pCL);

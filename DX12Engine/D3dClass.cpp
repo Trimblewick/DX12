@@ -131,8 +131,8 @@ ID3D12CommandQueue* D3DClass::CreateCQ(D3D12_COMMAND_LIST_TYPE listType)
 
 IDXGISwapChain3 * D3DClass::CreateSwapChain(DXGI_SWAP_CHAIN_DESC* desc, ID3D12CommandQueue * pCQ)
 {
-	IDXGISwapChain* pTemp = nullptr;
-	IDXGISwapChain3* pSwapChain = nullptr;
+	IDXGISwapChain*		pTemp = nullptr;
+	IDXGISwapChain3*	pSwapChain = nullptr;
 
 	DxAssert(s_pDXGIFactory->CreateSwapChain(pCQ, desc, &pTemp), S_OK);
 
@@ -151,6 +151,26 @@ ID3D12Resource * D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE heapType, UIN
 		pCommittedResource->SetName(bufferName);
 
 	return pCommittedResource;
+}
+
+ID3D12RootSignature * D3DClass::CreateRS(D3D12_ROOT_SIGNATURE_DESC* desc)
+{
+	ID3DBlob*				pBlob;
+	ID3D12RootSignature*	pRootSignature;
+
+	DxAssert(D3D12SerializeRootSignature(desc, D3D_ROOT_SIGNATURE_VERSION_1, &pBlob, nullptr), S_OK);
+	DxAssert(s_pDevice->CreateRootSignature(0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(&pRootSignature)), S_OK);
+
+	return pRootSignature;
+}
+
+ID3D12PipelineState * D3DClass::CreateGraphicsPSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC* desc)
+{
+	ID3D12PipelineState*	pPSO;
+
+	DxAssert(s_pDevice->CreateGraphicsPipelineState(desc, IID_PPV_ARGS(&pPSO)), S_OK);
+
+	return pPSO;
 }
 
 ID3D12Device * D3DClass::GetDevice()

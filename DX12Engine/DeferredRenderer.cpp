@@ -105,6 +105,16 @@ int DeferredRenderer::GetBackBufferIndex()
 	return m_pSwapChain->GetCurrentBackBufferIndex();
 }
 
+void DeferredRenderer::DrawObjects(Object ** ppObjects, int iNrOfObjects, ID3D12GraphicsCommandList* pCL)
+{
+	for (int i = 0; i < iNrOfObjects; ++i)
+	{
+		pCL->IASetPrimitiveTopology(ppObjects[i]->GetMesh()->GetPrimitiveTopology());
+		pCL->IASetVertexBuffers(0, 1, &ppObjects[i]->GetMesh()->GetVertexBufferView());
+		pCL->DrawInstanced(ppObjects[i]->GetMesh()->GetNrOfVertices(), 1, 0, 0);
+	}
+}
+
 void DeferredRenderer::RenderLightPass(ID3D12GraphicsCommandList* pCL)
 {
 	int iIndex = this->GetBackBufferIndex();

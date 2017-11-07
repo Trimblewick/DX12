@@ -225,7 +225,7 @@ Mesh * ResourceLoader::LoadMeshFromFile(std::string sFileName, Mesh::MeshLayout 
 
 	pCL->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(pVertexBuffer, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER));
 
-	pCL->Close();
+	DxAssert(pCL->Close(), S_OK);
 
 	
 

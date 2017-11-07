@@ -26,3 +26,38 @@ D3D12_SHADER_BYTECODE Shader::CompileShader(LPCWSTR path, LPCSTR entrypoint, LPC
 
 	return shaderBytecode;
 }
+
+
+void Shader::SetShader(D3D12_SHADER_BYTECODE shaderByteCode, LPCSTR shadermodel)
+{
+	char c = shadermodel[0];
+	if (c == 'v')
+	{
+		m_vertexShader = shaderByteCode;
+	}
+	else if (c == 'p')
+	{
+		m_pixelShader = shaderByteCode;
+	}
+}
+
+void Shader::AddSampler(D3D12_STATIC_SAMPLER_DESC descSampler)
+{
+	m_vSamplers.push_back(descSampler);
+}
+
+std::vector<D3D12_STATIC_SAMPLER_DESC> Shader::GetSamplers()
+{
+	return m_vSamplers;
+}
+
+
+D3D12_SHADER_BYTECODE Shader::GetVertexShaderByteCode()
+{
+	return m_vertexShader;
+}
+
+D3D12_SHADER_BYTECODE Shader::GetPixelShaderByteCode()
+{
+	return m_pixelShader;
+}

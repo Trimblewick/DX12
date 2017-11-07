@@ -19,9 +19,14 @@ bool GameClass::Initialize()
 	m_pRenderer->Initialize(m_pGPUbridge->GetCQ());
 
 	m_pPlaneObject = new Plane(m_pGPUbridge, m_pRenderer->GetSwapChain());
+	m_pObject = new Object();
 
 	m_pResourceLoader = new ResourceLoader();
-	Mesh* pMesh = m_pResourceLoader->LoadMeshFromFile("../Resources/Teapot/teapot_n_glass.obj", Mesh::MeshLayout::VERTEXNORMAL, m_pGPUbridge);
+	m_pObject->SetMesh(m_pResourceLoader->LoadMeshFromFile("../Resources/Teapot/teapot_n_glass.obj", Mesh::MeshLayout::VERTEXNORMAL, m_pGPUbridge));
+	Shader* pShader = new Shader();
+	pShader->SetShader(Shader::CompileShader(L"VertexShader.hlsl", "main", "vs_5_0"), "vs_5_0");
+	pShader->SetShader(Shader::CompileShader(L"PixelShader.hlsl", "main", "ps_5_0"), "ps_5_0");
+	m_pObject->SetShader(pShader);
 
 	return true;
 }
@@ -81,5 +86,10 @@ void GameClass::CleanUp()
 	{
 		delete m_pRenderer;
 		m_pRenderer = nullptr;
+	}
+	if (m_pObject)
+	{
+		delete m_pObject;
+		m_pObject = nullptr;
 	}
 }

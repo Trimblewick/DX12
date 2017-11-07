@@ -11,7 +11,7 @@
 
 #include "ResourceLoader.h"
 #include "Plane.h"
-
+#include "Object.h"
 
 //#include "GrassBlades.h"
 //#include "FrustumCulling.h"
@@ -33,6 +33,7 @@ private:
 	Camera*												m_pMainCamera;
 	DeferredRenderer*									m_pRenderer;
 	Plane*												m_pPlaneObject;
+	Object*												m_pObject;
 
 	GPUbridge*											m_pGPUbridge;
 
