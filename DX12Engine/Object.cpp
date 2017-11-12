@@ -68,6 +68,7 @@ void Object::InitializeObject(DXGI_SWAP_CHAIN_DESC tempSwapChainDesc)
 	descRS.Init(rootParameters.size(), rootParameters.data(), vSamplers.size(), vSamplers.data());
 	m_pRootSignature = D3DClass::CreateRS(&descRS);
 
+
 	descPSO.InputLayout = descInputLayout;
 	descPSO.pRootSignature = m_pRootSignature;
 	descPSO.VS = m_pShader->GetVertexShaderByteCode();

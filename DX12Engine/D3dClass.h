@@ -9,7 +9,6 @@
 
 #include "PSOHandler.h"
 #include "WindowClass.h"
-#include "Camera.h"
 #include "Common.h"
 
 #ifdef _DEBUG
@@ -41,6 +40,7 @@ public:
 	static ID3D12Resource*						CreateCommittedResource(D3D12_HEAP_TYPE heapType, UINT iBufferSize, D3D12_RESOURCE_STATES resourceState, __in_opt LPCWSTR bufferName);
 	static ID3D12RootSignature*					CreateRS(D3D12_ROOT_SIGNATURE_DESC* desc);
 	static ID3D12PipelineState*					CreateGraphicsPSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC* desc);
+	
 
 	static ID3D12Device*						GetDevice();
 	

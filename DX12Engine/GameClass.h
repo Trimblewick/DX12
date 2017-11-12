@@ -12,6 +12,7 @@
 #include "ResourceLoader.h"
 #include "Plane.h"
 #include "Object.h"
+#include "Pipeline.h"
 
 //#include "GrassBlades.h"
 //#include "FrustumCulling.h"
@@ -36,7 +37,7 @@ private:
 	Object*												m_pObject;
 
 	GPUbridge*											m_pGPUbridge;
-
-	ResourceLoader*	m_pResourceLoader;
+	std::vector<Pipeline*>								m_vPipelines;
+	ResourceLoader*										m_pResourceLoader;
 };
  

@@ -22,7 +22,7 @@ Plane::Plane(GPUbridge* pGPUbridge, IDXGISwapChain3* temp_swapchain)
 
 	D3D12_INPUT_ELEMENT_DESC inputLayoutElementDesc[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 	};
 	//fill input layout desc
 	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
@@ -66,7 +66,7 @@ Plane::Plane(GPUbridge* pGPUbridge, IDXGISwapChain3* temp_swapchain)
 
 	//compile vertexshader
 	hr = D3DCompileFromFile(
-		L"PlaneVS.hlsl",
+		L"VertexShader.hlsl",
 		nullptr,
 		nullptr,
 		"main",
@@ -87,7 +87,7 @@ Plane::Plane(GPUbridge* pGPUbridge, IDXGISwapChain3* temp_swapchain)
 
 	//compile pixelshader
 	hr = D3DCompileFromFile(
-		L"PlanePS.hlsl",
+		L"PixelShader.hlsl",
 		nullptr,
 		nullptr,
 		"main",
@@ -255,10 +255,8 @@ Plane::Plane(GPUbridge* pGPUbridge, IDXGISwapChain3* temp_swapchain)
 	psoDesc.pRootSignature = m_pRootSignature;
 	psoDesc.VS = vsByteCode;
 	psoDesc.PS = psByteCode;
-	psoDesc.HS = hsByteCode;
-	psoDesc.DS = dsByteCode;
-	psoDesc.GS = gsByteCode;
-	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_PATCH;
+	
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
 	psoDesc.SampleDesc = tempSwapChainDesc.SampleDesc;
 	psoDesc.SampleMask = 0xffffffff;
@@ -626,19 +624,20 @@ void Plane::Draw(ID3D12GraphicsCommandList* pCL, Camera * camera, int iBackBuffe
 	pCL->SetGraphicsRoot32BitConstant(3, DWParam(camera->GetPosition().x).Uint, 0);
 	pCL->SetGraphicsRoot32BitConstant(3, DWParam(camera->GetPosition().y).Uint, 1);
 	pCL->SetGraphicsRoot32BitConstant(3, DWParam(camera->GetPosition().z).Uint, 2);
-
-	pCL->RSSetViewports(1, &camera->GetViewport());
-	pCL->RSSetScissorRects(1, &camera->GetScissorRect());
+	
+	//pCL->RSSetViewports(1, &camera->GetViewport());
+	//pCL->RSSetScissorRects(1, &camera->GetScissorRect());
 
 	
 
-	pCL->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);//D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	pCL->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-	pCL->IASetIndexBuffer(&m_indexBufferView);
+	//pCL->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);//D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//pCL->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//pCL->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+	//pCL->IASetIndexBuffer(&m_indexBufferView);
 	
-	pCL->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[iBackBufferIndex]->GetGPUVirtualAddress());
+	//pCL->SetGraphicsRootConstantBufferView(0, m_pWVPMatUpploadHeaps[iBackBufferIndex]->GetGPUVirtualAddress());
 
-	pCL->DrawIndexedInstanced(m_uiNrOfIndices, 1, 0, 0, 0);
+	//pCL->DrawIndexedInstanced(m_uiNrOfIndices, 1, 0, 0, 0);
 
 	return;
 }

@@ -4,6 +4,8 @@
 #include <DirectXMath.h>
 #include "Texture.h"
 #include "GPUbridge.h"
+#include "Shader.h"
+#include "Camera.h"
 
 class Plane
 {

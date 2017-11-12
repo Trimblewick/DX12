@@ -45,6 +45,6 @@ private:
 	HANDLE											m_handleFenceEvent;
 	
 
-	const float										m_fClearColor[4] = { 1.0f, 0.0f, 0.5f, 1.0f };
+	const float										m_fClearColor[4] = { 1.0f, 0.0f, 0.8f, 1.0f };
 };
 

@@ -40,14 +40,50 @@ Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 	m_fForwardSpeed = 35.0f;
 	m_fHorizontalSpeed = 20.0f;
 	m_fVerticalSpeed = 20.0f;
+
+	
+	DirectX::XMFLOAT3 tempVec;
+	DirectX::XMFLOAT4X4 tempMat;
+	DirectX::XMStoreFloat3(&tempVec, m_forward);
+	m_cameraBufferStruct.forward = tempVec;
+	DirectX::XMStoreFloat3(&tempVec, m_right);
+	m_cameraBufferStruct.right = tempVec;
+	DirectX::XMStoreFloat3(&tempVec, up);
+	m_cameraBufferStruct.up = tempVec;
+	m_cameraBufferStruct.position = initPosition;
+	DirectX::XMMATRIX transposedViewMatrix = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_viewMatrix));
+	DirectX::XMStoreFloat4x4(&tempMat, transposedViewMatrix);
+	m_cameraBufferStruct.viewMatrix = tempMat;
+	m_transposedProjMatrix = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_projMatrix));
+	DirectX::XMStoreFloat4x4(&tempMat, m_transposedProjMatrix);
+	m_cameraBufferStruct.projMatrix = tempMat;
+	DirectX::XMStoreFloat4x4(&tempMat, transposedViewMatrix * m_transposedProjMatrix);
+	m_cameraBufferStruct.vpMatrix = tempMat;
+
+	//create matrix buffer
+	for (unsigned int i = 0; i < g_iBackBufferCount; ++i)
+	{
+		m_pCameraBuffer[i] = D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE_UPLOAD, 65536, D3D12_RESOURCE_STATE_GENERIC_READ, L"Camera upload heap" + i);
+		//ZeroMemory(&m_cameraBufferStruct, sizeof(m_cameraBufferStruct));
+
+		CD3DX12_RANGE readRange(0, 0);
+
+		DxAssert(m_pCameraBuffer[i]->Map(0, &readRange, reinterpret_cast<void**>(&m_pCameraBufferAddress[i])), S_OK);
+
+		memcpy(m_pCameraBufferAddress[i], &m_cameraBufferStruct, sizeof(m_cameraBufferStruct));
+	}
+
 }
 
 Camera::~Camera()
 {
-	
+	for (int i = 0; i < g_iBackBufferCount; ++i)
+	{
+		SAFE_RELEASE(m_pCameraBuffer[i]);
+	}
 }
 
-void Camera::Update(Input * pInput, float dt)
+void Camera::Update(Input * pInput, float dt, int iBackBufferIndex)
 {
 	m_fPitch += pInput->GetMouseDelta().y * dt;
 	m_fYaw += pInput->GetMouseDelta().x * dt;
@@ -90,10 +126,42 @@ void Camera::Update(Input * pInput, float dt)
 	m_position.y += DirectX::XMVectorGetY(m_forward) * f + DirectX::XMVectorGetY(m_right) * r + u;
 	m_position.z += DirectX::XMVectorGetZ(m_forward) * f + DirectX::XMVectorGetZ(m_right) * r;
 	
+	DirectX::XMVECTOR up = DirectX::XMVector3Cross(m_forward, m_right);
+	DirectX::XMMATRIX newViewMatrix = DirectX::XMMatrixLookToLH(DirectX::XMLoadFloat3(&m_position), m_forward, up);
+	DirectX::XMStoreFloat4x4(&m_viewMatrix, newViewMatrix);
 
-	DirectX::XMStoreFloat4x4(&m_viewMatrix, DirectX::XMMatrixLookToLH(DirectX::XMLoadFloat3(&m_position), m_forward, DirectX::XMVector3Cross(m_forward, m_right)));
+
+
+	DirectX::XMFLOAT3 tempVec;
+	DirectX::XMFLOAT4X4 tempMat;
+	DirectX::XMStoreFloat3(&tempVec, m_forward);
+	m_cameraBufferStruct.forward = tempVec;
+	DirectX::XMStoreFloat3(&tempVec, m_right);
+	m_cameraBufferStruct.right = tempVec;
+	DirectX::XMStoreFloat3(&tempVec, up);
+	m_cameraBufferStruct.up = tempVec;
+	m_cameraBufferStruct.position = m_position;
+	DirectX::XMMATRIX transposedViewMatrix = DirectX::XMMatrixTranspose(newViewMatrix);
+	DirectX::XMStoreFloat4x4(&tempMat, transposedViewMatrix);
+	m_cameraBufferStruct.viewMatrix = tempMat;
+	DirectX::XMStoreFloat4x4(&tempMat, DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_viewMatrix) * DirectX::XMLoadFloat4x4(&m_projMatrix)));//transposedViewMatrix * m_transposedProjMatrix);
+	m_cameraBufferStruct.vpMatrix = tempMat;
+
+
+	memcpy(m_pCameraBufferAddress[iBackBufferIndex], &m_cameraBufferStruct, sizeof(m_cameraBufferStruct));
+
 	return;
 }
+
+void Camera::BindCameraBuffer(int iCBVResourceSlot, ID3D12GraphicsCommandList * pCL, int iBackBufferIndex)
+{
+	pCL->RSSetViewports(1, &m_viewport);
+	pCL->RSSetScissorRects(1, &m_scissorRect);
+
+	pCL->SetGraphicsRootConstantBufferView(iCBVResourceSlot, m_pCameraBuffer[iBackBufferIndex]->GetGPUVirtualAddress());
+}
+
+
 
 D3D12_VIEWPORT Camera::GetViewport()
 {
