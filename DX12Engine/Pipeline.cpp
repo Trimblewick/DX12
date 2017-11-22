@@ -15,11 +15,16 @@ void Pipeline::AddObject(Object * pObject)
 	m_vObjects.push_back(pObject);
 }
 
-void Pipeline::DrawObjects(ID3D12GraphicsCommandList * pCL)
+bool Pipeline::DrawObjects(ID3D12GraphicsCommandList * pCL, Camera* pCamera, int iBackBufferIndex)
 {
-	//pCL->SetGraphicsRootSignature(m_pRS);
-	//pCL->SetPipelineState(m_pPSO);
+	if (!m_pRS || !m_pPSO || m_vObjects.size() == 0)
+		return false;
+
+	pCL->SetGraphicsRootSignature(m_pRS);
+	pCL->SetPipelineState(m_pPSO);
 	
+	pCamera->BindCameraBuffer(0, pCL, iBackBufferIndex);
+
 	for (Object* pObject : m_vObjects)
 	{
 		pCL->IASetPrimitiveTopology(pObject->GetMesh()->GetPrimitiveTopology());

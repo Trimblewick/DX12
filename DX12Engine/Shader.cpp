@@ -1,15 +1,23 @@
 #include "Shader.h"
 
+#define flase = false;
 
 Shader::Shader()
 {
+	m_pVSblob = nullptr;
+	m_pPSblob = nullptr;
+
+	m_bHasInputLayout = false;
+	m_bHasVS = false;
+	m_bHasPS = false;
+	m_bHasSampleDesc = false;
 }
 
 Shader::~Shader()
 {
 }
 
-D3D12_SHADER_BYTECODE Shader::CompileShader(LPCWSTR path, LPCSTR entrypoint, LPCSTR shadermodel)
+D3D12_SHADER_BYTECODE Shader::CompileShader(LPCWSTR path, LPCSTR entrypoint, LPCSTR shadermodel, D3D12_SHADER_BYTECODE& sb)
 {
 	ID3DBlob* shaderBlob; // d3d blob for holding shader bytecode
 	ID3DBlob* errorBlob; // a buffer holding the error data if any
@@ -27,18 +35,68 @@ D3D12_SHADER_BYTECODE Shader::CompileShader(LPCWSTR path, LPCSTR entrypoint, LPC
 	return shaderBytecode;
 }
 
-
-void Shader::SetShader(D3D12_SHADER_BYTECODE shaderByteCode, LPCSTR shadermodel)
+void Shader::SetVertexShader(ID3DBlob* pVSblob)
 {
-	char c = shadermodel[0];
-	if (c == 'v')
+	m_pVSblob = pVSblob;
+	m_bHasVS = true;
+}
+
+void Shader::SetPixelShader(ID3DBlob* pPSblob)
+{
+	m_pPSblob = pPSblob;
+	m_bHasPS = true;
+}
+
+void Shader::SetInputLayout(D3D12_INPUT_LAYOUT_DESC* desc)
+{
+	m_inputLayoutDesc = desc;
+	m_bHasInputLayout = true;
+}
+
+void Shader::SetSampleDesc(DXGI_SAMPLE_DESC desc)
+{
+	m_sampleDesc = desc;
+	m_bHasSampleDesc = true;
+}
+
+bool Shader::AddRootParameter(D3D12_ROOT_PARAMETER rootParameter)
+{
+	bool bPass = true;
+
+	for (D3D12_ROOT_PARAMETER rp : m_vRootParameters)
 	{
-		m_vertexShader = shaderByteCode;
+		if (rootParameter.ParameterType == rp.ParameterType)
+		{
+			if (rootParameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_CBV ||
+				rootParameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_SRV ||
+				rootParameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_UAV)
+			{
+				if (rp.Descriptor.ShaderRegister == rootParameter.Descriptor.ShaderRegister)
+				{
+					bPass = false;
+				}
+			}
+			if (rootParameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS)
+			{
+				if (rp.Constants.ShaderRegister == rootParameter.Constants.ShaderRegister)
+				{
+					bPass = false;
+				}
+			}
+			if (rootParameter.ParameterType == D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE)
+			{
+				if (rp.DescriptorTable.pDescriptorRanges->BaseShaderRegister == rootParameter.DescriptorTable.pDescriptorRanges->BaseShaderRegister)
+				{
+					bPass = false;
+				}
+			}
+		}
 	}
-	else if (c == 'p')
-	{
-		m_pixelShader = shaderByteCode;
-	}
+
+	if (bPass)//if it doesn't bPass, then there already is a rootparameter in the pipeline that is assigned to the same register -> of the same type....
+		m_vRootParameters.push_back(rootParameter);
+
+	return bPass;
 }
 
 void Shader::AddSampler(D3D12_STATIC_SAMPLER_DESC descSampler)
@@ -46,18 +104,57 @@ void Shader::AddSampler(D3D12_STATIC_SAMPLER_DESC descSampler)
 	m_vSamplers.push_back(descSampler);
 }
 
+std::vector<D3D12_ROOT_PARAMETER> Shader::GetRootParameters()
+{
+	return m_vRootParameters;
+}
+
+D3D12_ROOT_PARAMETER * Shader::GetRootParameterData()
+{
+	return m_vRootParameters.data();
+}
+
 std::vector<D3D12_STATIC_SAMPLER_DESC> Shader::GetSamplers()
 {
 	return m_vSamplers;
 }
 
+bool Shader::HasInputLayout()
+{
+	return m_bHasInputLayout;
+}
+
+bool Shader::HasVS()
+{
+	return m_bHasVS;
+}
+
+bool Shader::HasPS()
+{
+	return m_bHasPS;
+}
+
+bool Shader::HasSampleDesc()
+{
+	return m_bHasSampleDesc;
+}
+
+D3D12_INPUT_LAYOUT_DESC* Shader::GetInputLayout()
+{
+	return m_inputLayoutDesc;
+}
 
 D3D12_SHADER_BYTECODE Shader::GetVertexShaderByteCode()
 {
-	return m_vertexShader;
+	return { m_pVSblob->GetBufferPointer(), m_pVSblob->GetBufferSize() };
 }
 
 D3D12_SHADER_BYTECODE Shader::GetPixelShaderByteCode()
 {
-	return m_pixelShader;
+	return { m_pPSblob->GetBufferPointer(), m_pPSblob->GetBufferSize() };
+}
+
+DXGI_SAMPLE_DESC Shader::GetSampleDesc()
+{
+	return m_sampleDesc;
 }

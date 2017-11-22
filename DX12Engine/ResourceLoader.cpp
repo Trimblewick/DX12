@@ -10,6 +10,16 @@ BYTE * ResourceLoader::ParseOBJ()
 	return nullptr;
 }
 
+ID3DBlob * ResourceLoader::CompileShader(LPCWSTR filePath, LPCSTR entrypoint, LPCSTR shadermodel)
+{
+	ID3DBlob* shaderBlob; 
+	
+	DxAssert(D3DCompileFromFile(filePath, nullptr, nullptr, entrypoint, shadermodel,
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION, 0, &shaderBlob, nullptr), S_OK);
+
+	return shaderBlob;
+}
+
 ResourceLoader::ResourceLoader()
 {
 }
@@ -253,4 +263,12 @@ Mesh * ResourceLoader::LoadMeshFromFile(std::string sFileName, Mesh::MeshLayout 
 Texture * ResourceLoader::LoadTextureFromFile()
 {
 	return nullptr;
+}
+
+Shader * ResourceLoader::CreateShader(LPCWSTR vsFilePath, LPCWSTR psFilePath)
+{
+	Shader* pShader = new Shader();
+	pShader->SetVertexShader(CompileShader(vsFilePath, "main", "vs_5_1"));
+	pShader->SetPixelShader(CompileShader(psFilePath, "main", "ps_5_1"));
+	return pShader;
 }

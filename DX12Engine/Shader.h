@@ -11,20 +11,48 @@ public:
 	Shader();
 	~Shader();
 
-	static D3D12_SHADER_BYTECODE				CompileShader(LPCWSTR path, LPCSTR entrypoint, LPCSTR shadermodel);
+	static D3D12_SHADER_BYTECODE				CompileShader(LPCWSTR path, LPCSTR entrypoint, LPCSTR shadermodel, D3D12_SHADER_BYTECODE& sb);
 
-	void										SetShader(D3D12_SHADER_BYTECODE shaderByteCode, LPCSTR shadermodel);//this seems pretty bad
+	void										SetVertexShader(ID3DBlob* pVSblob);
+	void										SetPixelShader(ID3DBlob* pPSblob);
+
+	void										SetInputLayout(D3D12_INPUT_LAYOUT_DESC* desc);
+	void										SetSampleDesc(DXGI_SAMPLE_DESC desc);
+	
+	bool										AddRootParameter(D3D12_ROOT_PARAMETER rootParameter);
 	void										AddSampler(D3D12_STATIC_SAMPLER_DESC descSampler);
+
+
+	D3D12_INPUT_LAYOUT_DESC*					GetInputLayout();
 
 	D3D12_SHADER_BYTECODE						GetVertexShaderByteCode();
 	D3D12_SHADER_BYTECODE						GetPixelShaderByteCode();
 
+	DXGI_SAMPLE_DESC							GetSampleDesc();
+
+	std::vector<D3D12_ROOT_PARAMETER>			GetRootParameters();
+	D3D12_ROOT_PARAMETER*						GetRootParameterData();
 	std::vector<D3D12_STATIC_SAMPLER_DESC>		GetSamplers();
 
-private:
-	D3D12_SHADER_BYTECODE						m_vertexShader;
-	D3D12_SHADER_BYTECODE						m_pixelShader;
+	bool										HasInputLayout();
+	bool										HasVS();
+	bool										HasPS();
+	bool										HasSampleDesc();
 
+private:
+	D3D12_INPUT_LAYOUT_DESC*					m_inputLayoutDesc;
+	DXGI_SAMPLE_DESC							m_sampleDesc;
+
+	bool										m_bHasInputLayout;
+	bool										m_bHasVS;
+	bool										m_bHasPS;
+	bool										m_bHasSampleDesc;
+
+	ID3DBlob*									m_pVSblob;
+	ID3DBlob*									m_pPSblob;
+	
+
+	std::vector<D3D12_ROOT_PARAMETER>			m_vRootParameters;
 	std::vector<D3D12_STATIC_SAMPLER_DESC>		m_vSamplers;
 };
 

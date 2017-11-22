@@ -87,10 +87,6 @@ bool SystemClass::Initialize(HINSTANCE hInstance, HINSTANCE hPrevInstance, int n
 	{
 		return false;
 	}
-	/*if (!s_frameBuffer.Initialize())
-	{
-		return false;
-	}*/
 	if (!s_game.Initialize())
 	{
 		return false;

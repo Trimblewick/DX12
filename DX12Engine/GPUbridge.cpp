@@ -88,18 +88,19 @@ ID3D12GraphicsCommandList* GPUbridge::GetFreshCL()
 				}
 				
 			}
-			if (!bCAoccupied)//if CA is unoccupied
+			if (iFirstUnoccupiedCL > -1)//if CA is unoccupied
 			{
 				DxAssert(m_ppCLGraphicsDirectPool[iFirstUnoccupiedCL]->Reset(m_pppCADirectPool[_iBackBufferIndex][i], nullptr), S_OK);
 				pCL = m_ppCLGraphicsDirectPool[iFirstUnoccupiedCL];
 				m_ppCLsAssociatedWithCAsInCAPool[iFirstUnoccupiedCL] = m_pppCADirectPool[_iBackBufferIndex][i];
+				m_bppCADirectPoolFreeFromGPU[_iBackBufferIndex][i] = false;
 			}
 			
 		}
 	}
 	if (iFirstUnoccupiedCL == -1)
 	{
-		assert(false);//<<--- this section is fragile? If s_iPoolSize nr of CLs are occupied, it will break
+		assert(false);//No CLs availible. Make sure they get queued
 		return nullptr;
 	}
 	return pCL;
@@ -111,7 +112,7 @@ void GPUbridge::QueueGraphicsCL(ID3D12GraphicsCommandList* pCL)
 	{
 		if (pCL == m_ppCLGraphicsDirectPool[i])
 		{
-			m_ppCLsAssociatedWithCAsInCAPool[i] = nullptr;//Enable CA to cpu
+			m_ppCLsAssociatedWithCAsInCAPool[i] = nullptr;//Enable CL to cpu
 			break;
 		}
 	}
@@ -126,6 +127,7 @@ void GPUbridge::ExecuteGrapichsCLs()
 
 	m_pCQDirect->Signal(m_ppFenceDirect[_iBackBufferIndex], m_ipFenceValueDirect[_iBackBufferIndex]);
 	_pCLqueue.clear();
+	_pCLqueue.shrink_to_fit();
 }
 
 void GPUbridge::ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList ** ppCLs, _In_opt_ ID3D12Fence* pFenceHandle, _In_opt_ int iFenceValue)
@@ -153,7 +155,7 @@ void GPUbridge::WaitForPreviousFrame(int iBackBufferIndex)
 	//reset used CAs
 	for (int i = 0; i < s_iPoolSize; ++i)
 	{
-		if (!m_bppCADirectPoolFreeFromGPU[iBackBufferIndex][i])
+		if (!m_bppCADirectPoolFreeFromGPU[iBackBufferIndex][i] && m_ppCLsAssociatedWithCAsInCAPool[i] == nullptr)
 		{
 			DxAssert(m_pppCADirectPool[iBackBufferIndex][i]->Reset(), S_OK);
 			m_bppCADirectPoolFreeFromGPU[iBackBufferIndex][i] = true;

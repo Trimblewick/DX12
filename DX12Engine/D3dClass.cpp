@@ -129,12 +129,12 @@ ID3D12CommandQueue* D3DClass::CreateCQ(D3D12_COMMAND_LIST_TYPE listType)
 	return pCQ;
 }
 
-IDXGISwapChain3 * D3DClass::CreateSwapChain(DXGI_SWAP_CHAIN_DESC* desc, ID3D12CommandQueue * pCQ)
+IDXGISwapChain3 * D3DClass::CreateSwapChain(DXGI_SWAP_CHAIN_DESC* pDesc, ID3D12CommandQueue * pCQ)
 {
 	IDXGISwapChain*		pTemp = nullptr;
 	IDXGISwapChain3*	pSwapChain = nullptr;
 
-	DxAssert(s_pDXGIFactory->CreateSwapChain(pCQ, desc, &pTemp), S_OK);
+	DxAssert(s_pDXGIFactory->CreateSwapChain(pCQ, pDesc, &pTemp), S_OK);
 
 	pSwapChain = static_cast<IDXGISwapChain3*>(pTemp);
 
@@ -153,22 +153,86 @@ ID3D12Resource * D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE heapType, UIN
 	return pCommittedResource;
 }
 
-ID3D12RootSignature * D3DClass::CreateRS(D3D12_ROOT_SIGNATURE_DESC* desc)
+ID3D12RootSignature * D3DClass::CreateRS(D3D12_ROOT_SIGNATURE_DESC* pDesc)
 {
 	ID3DBlob*				pBlob;
 	ID3D12RootSignature*	pRootSignature;
 
-	DxAssert(D3D12SerializeRootSignature(desc, D3D_ROOT_SIGNATURE_VERSION_1, &pBlob, nullptr), S_OK);
+	DxAssert(D3D12SerializeRootSignature(pDesc, D3D_ROOT_SIGNATURE_VERSION_1, &pBlob, nullptr), S_OK);
 	DxAssert(s_pDevice->CreateRootSignature(0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(&pRootSignature)), S_OK);
 
 	return pRootSignature;
 }
 
-ID3D12PipelineState * D3DClass::CreateGraphicsPSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC* desc)
+ID3D12RootSignature * D3DClass::CreateRS(Shader* pShader)
+{
+	ID3DBlob*				pBlob;
+	ID3D12RootSignature*	pRootSignature;
+
+	D3D12_ROOT_SIGNATURE_DESC desc = {};
+	if (pShader->HasInputLayout())
+		desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+	else
+		desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
+
+	desc.NumParameters = pShader->GetRootParameters().size();
+	if (desc.NumParameters > 0)
+		desc.pParameters = pShader->GetRootParameterData();
+	
+	desc.NumStaticSamplers = pShader->GetSamplers().size();
+	if (desc.NumStaticSamplers > 0)
+		desc.pStaticSamplers = pShader->GetSamplers().data();
+
+	DxAssert(D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &pBlob, nullptr), S_OK);
+	DxAssert(s_pDevice->CreateRootSignature(0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(&pRootSignature)), S_OK);
+
+	return pRootSignature;
+}
+
+
+ID3D12PipelineState * D3DClass::CreateGraphicsPSO(D3D12_GRAPHICS_PIPELINE_STATE_DESC* pDesc)
 {
 	ID3D12PipelineState*	pPSO;
 
-	DxAssert(s_pDevice->CreateGraphicsPipelineState(desc, IID_PPV_ARGS(&pPSO)), S_OK);
+	DxAssert(s_pDevice->CreateGraphicsPipelineState(pDesc, IID_PPV_ARGS(&pPSO)), S_OK);
+
+	return pPSO;
+}
+
+ID3D12PipelineState * D3DClass::CreateGraphicsPSO(Shader * pShader, ID3D12RootSignature * pRS)
+{
+	ID3D12PipelineState*	pPSO;
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC desc = {};
+	
+	if (pShader->HasInputLayout())
+		desc.InputLayout = *pShader->GetInputLayout();
+	if (pShader->HasVS())
+		desc.VS = pShader->GetVertexShaderByteCode();
+	//if (pShader->HasPS())
+		//desc.PS = pShader->GetPixelShaderByteCode();
+	if (pShader->HasSampleDesc())
+		desc.SampleDesc = pShader->GetSampleDesc();
+	else
+	{
+		DXGI_SAMPLE_DESC sampleDesc = {};
+		sampleDesc.Count = 1;
+
+		desc.SampleDesc = sampleDesc;
+	}
+
+	desc.pRootSignature = pRS;
+	desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	
+	desc.SampleMask = 0xffffffff;
+	desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	desc.NumRenderTargets = 1;
+	//psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC();
+	desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+
+	HRESULT hr = s_pDevice->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pPSO));
 
 	return pPSO;
 }

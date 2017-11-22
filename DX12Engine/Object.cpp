@@ -6,9 +6,6 @@ Object::Object()
 {
 	m_pMesh = nullptr;
 	m_pTexture = nullptr;
-	m_pShader = nullptr;
-	m_pRootSignature = nullptr;
-	m_pPSO = nullptr;
 }
 
 Object::~Object()
@@ -25,11 +22,6 @@ void Object::SetTexture(Texture * pTexture)
 	m_pTexture = pTexture;
 }
 
-void Object::SetShader(Shader * pShader)
-{
-	m_pShader = pShader;
-}
-
 Mesh * Object::GetMesh()
 {
 	return m_pMesh;
@@ -39,12 +31,7 @@ Texture * Object::GetTexture()
 {
 	return m_pTexture;
 }
-
-Shader * Object::GetShader()
-{
-	return m_pShader;
-}
-
+/*
 void Object::InitializeObject(DXGI_SWAP_CHAIN_DESC tempSwapChainDesc)
 {
 	
@@ -86,13 +73,4 @@ void Object::InitializeObject(DXGI_SWAP_CHAIN_DESC tempSwapChainDesc)
 	m_pPSO = D3DClass::CreateGraphicsPSO(&descPSO);
 
 }
-
-ID3D12PipelineState * Object::GetPSO()
-{
-	return m_pPSO;
-}
-
-ID3D12RootSignature * Object::GetRS()
-{
-	return m_pRootSignature;
-}
+*/

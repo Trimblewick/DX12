@@ -4,6 +4,7 @@
 #include "GPUbridge.h"
 #include "Mesh.h"
 #include "Texture.h"
+#include "Shader.h"
 #include <fstream>
 #include <sstream>
 
@@ -12,6 +13,7 @@ class ResourceLoader
 private:
 	bool			IsANumber(std::string sStr);
 	BYTE*			ParseOBJ();
+	ID3DBlob*		CompileShader(LPCWSTR filePath, LPCSTR entrypoint, LPCSTR shadermodel);
 
 public:
 	ResourceLoader();
@@ -36,7 +38,7 @@ public:
 
 	Mesh*						LoadMeshFromFile(std::string sFileName, Mesh::MeshLayout meshLayout, GPUbridge* pGPUbridge);
 	Texture*					LoadTextureFromFile();
-
+	Shader*						CreateShader(LPCWSTR vsFilePath, LPCWSTR psFilePath);
 
 private:
 

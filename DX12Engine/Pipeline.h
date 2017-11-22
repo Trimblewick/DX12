@@ -3,6 +3,7 @@
 #include <d3d12.h>
 #include <vector>
 #include "Object.h"
+#include "Camera.h"
 
 class Pipeline
 {
@@ -12,7 +13,7 @@ public:
 
 
 	void										AddObject(Object* pObject);//make sure the object can be rendered with this pipeline
-	void										DrawObjects(ID3D12GraphicsCommandList* pCL);
+	bool										DrawObjects(ID3D12GraphicsCommandList* pCL, Camera* pCamera, int iBackBufferIndex);
 	void										SetRS(ID3D12RootSignature* pRS);
 	void										SetPSO(ID3D12PipelineState* pPSO);
 
