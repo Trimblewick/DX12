@@ -13,7 +13,11 @@ cbuffer CameraBuffer : register(b0)
     float4x4 projMatrix;
 };
 
-
+struct VS_INPUT
+{
+    float3 position : POSITION;
+    float3 normal : NORMAL;
+};
 
 struct VS_OUTPUT
 {
@@ -21,19 +25,13 @@ struct VS_OUTPUT
     float4 normal: NORMAL;
 };
 
-
-/*
-cbuffer ConstantBuffer : register(b0)
-{
-    float4x4 wvpMat;
-	float padding[48];
-};*/
-
-VS_OUTPUT main(float3 position : POSITION, float3 normal : NORMAL)
+VS_OUTPUT main(VS_INPUT input, uint vid : sv_vertexid)
 {
     VS_OUTPUT output;
+    
+    output.position = mul(float4(input.position, 1), vpMatrix);
+    output.normal = float4(input.normal, 1);
 
-    output.position = mul(position, (float3x4) vpMatrix);
-    output.normal = float4(normal, 1);
+
     return output;
 }

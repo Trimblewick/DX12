@@ -29,15 +29,15 @@ Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 	DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));
 	m_right = DirectX::XMVector3Cross(up, m_forward);
 
-	m_fPitch = 0.0f;// std::acos(DirectX::XMVectorGetX(DirectX::XMVector3Dot(m_fDefaultForward, m_forward)));
-	m_fYaw = 0.0f;// std::acos(DirectX::XMVectorGetX(DirectX::XMVector3Dot(m_fDefaultRight, m_right)));
+	m_fPitch = 0.0f;
+	m_fYaw = 0.0f;
 
 	DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookToLH(DirectX::XMLoadFloat3(&initPosition), m_forward, up);
 	DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);
 
 	m_rotMat = DirectX::XMMatrixIdentity();
 
-	m_fForwardSpeed = 35.0f;
+	m_fForwardSpeed = 20.0f;
 	m_fHorizontalSpeed = 20.0f;
 	m_fVerticalSpeed = 20.0f;
 
@@ -63,7 +63,7 @@ Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 	//create matrix buffer
 	for (unsigned int i = 0; i < g_iBackBufferCount; ++i)
 	{
-		m_pCameraBuffer[i] = D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE_UPLOAD, 65536, D3D12_RESOURCE_STATE_GENERIC_READ, L"Camera upload heap" + i);
+		m_pCameraBuffer[i] = D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE_UPLOAD, 65536, D3D12_RESOURCE_STATE_GENERIC_READ, L"CAMERA UPLOAD HEAP" + i);
 		//ZeroMemory(&m_cameraBufferStruct, sizeof(m_cameraBufferStruct));
 
 		CD3DX12_RANGE readRange(0, 0);

@@ -12,15 +12,12 @@ GameClass::~GameClass()
 
 bool GameClass::Initialize()
 {
-	m_pMainCamera = new Camera(DirectX::XMFLOAT3(-5.0f, 5.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f));
+	m_pMainCamera = new Camera(DirectX::XMFLOAT3(-25.0f, 1.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f));
 	m_pRenderer = new DeferredRenderer();
 	m_pGPUbridge = new GPUbridge();
 	m_pResourceLoader = new ResourceLoader();
 
 	m_pRenderer->Initialize(m_pGPUbridge->GetCQ());
-	
-	
-	m_pPlaneObject = new Plane(m_pGPUbridge, m_pRenderer->GetSwapChain());
 
 	//LOAD MESH
 	m_pObject = new Object();
@@ -64,15 +61,16 @@ bool GameClass::Initialize()
 
 	m_vPipelines.push_back(pP);
 
+	delete pShader;
+
 	return true;
 }
 
 void GameClass::Update(Input* input, float dt)
 {
 	int iBackBufferIndex = m_pRenderer->GetBackBufferIndex();
-	//m_pMainCamera->Update(input, dt, iBackBufferIndex);
+	m_pMainCamera->Update(input, dt, iBackBufferIndex);
 
-//	m_pPlaneObject->Update(m_pMainCamera, iBackBufferIndex);
 }
 
 bool GameClass::Render()
@@ -85,15 +83,13 @@ bool GameClass::Render()
 	
 	m_pRenderer->RenderLightPass(pCL);
 
-	//m_pPlaneObject->Draw(pCL, m_pMainCamera, m_pRenderer->GetBackBufferIndex());
-	//m_pMainCamera->BindCameraBuffer(0, pCL, iBackBufferIndex);
-	
 	for (Pipeline* pPipeline : m_vPipelines)
 	{
 		pPipeline->DrawObjects(pCL, m_pMainCamera, iBackBufferIndex);
 	}
 	
 	m_pRenderer->temp_closelistNqueue(pCL);
+
 
 	m_pGPUbridge->QueueGraphicsCL(pCL);
 	m_pGPUbridge->ExecuteGrapichsCLs();
@@ -109,11 +105,6 @@ void GameClass::CleanUp()
 	{
 		delete m_pMainCamera;
 		m_pMainCamera = nullptr;
-	}
-	if (m_pPlaneObject)
-	{
-		delete m_pPlaneObject;
-		m_pPlaneObject = nullptr;
 	}
 	
 	if (m_pGPUbridge)
@@ -132,4 +123,10 @@ void GameClass::CleanUp()
 		delete m_pObject;
 		m_pObject = nullptr;
 	}
+
+	for (Pipeline* pP : m_vPipelines)
+	{
+		delete pP;
+	}
+	m_vPipelines.clear();
 }

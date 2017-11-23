@@ -209,8 +209,8 @@ ID3D12PipelineState * D3DClass::CreateGraphicsPSO(Shader * pShader, ID3D12RootSi
 		desc.InputLayout = *pShader->GetInputLayout();
 	if (pShader->HasVS())
 		desc.VS = pShader->GetVertexShaderByteCode();
-	//if (pShader->HasPS())
-		//desc.PS = pShader->GetPixelShaderByteCode();
+	if (pShader->HasPS())
+		desc.PS = pShader->GetPixelShaderByteCode();
 	if (pShader->HasSampleDesc())
 		desc.SampleDesc = pShader->GetSampleDesc();
 	else
@@ -227,6 +227,7 @@ ID3D12PipelineState * D3DClass::CreateGraphicsPSO(Shader * pShader, ID3D12RootSi
 	
 	desc.SampleMask = 0xffffffff;
 	desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+	desc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
 	desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
 	desc.NumRenderTargets = 1;
 	//psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC();

@@ -58,24 +58,12 @@ Mesh * ResourceLoader::LoadMeshFromFile(std::string sFileName, Mesh::MeshLayout 
 	ID3D12Fence* pFence = D3DClass::CreateFence();
 	HANDLE fenceHandle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
-	bool once = true;
-	
-
 	while (std::getline(infile, sLine))
 	{
 		std::istringstream iss(sLine);
 		std::string sWord;
 		iss >> sWord;
 		
-		if (sWord == "o")
-		{
-			if (once)
-				once = false;
-			else
-				break;
-		}
-		
-
 		
 		if (sWord == "v")
 		{

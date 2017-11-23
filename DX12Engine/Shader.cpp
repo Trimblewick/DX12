@@ -15,6 +15,8 @@ Shader::Shader()
 
 Shader::~Shader()
 {
+	SAFE_RELEASE(m_pVSblob);
+	SAFE_RELEASE(m_pPSblob);
 }
 
 D3D12_SHADER_BYTECODE Shader::CompileShader(LPCWSTR path, LPCSTR entrypoint, LPCSTR shadermodel, D3D12_SHADER_BYTECODE& sb)

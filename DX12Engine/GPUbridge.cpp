@@ -100,7 +100,7 @@ ID3D12GraphicsCommandList* GPUbridge::GetFreshCL()
 	}
 	if (iFirstUnoccupiedCL == -1)
 	{
-		assert(false);//No CLs availible. Make sure they get queued
+		assert(false);//No CLs availible. Have you made sure they get queued?
 		return nullptr;
 	}
 	return pCL;
@@ -127,7 +127,6 @@ void GPUbridge::ExecuteGrapichsCLs()
 
 	m_pCQDirect->Signal(m_ppFenceDirect[_iBackBufferIndex], m_ipFenceValueDirect[_iBackBufferIndex]);
 	_pCLqueue.clear();
-	_pCLqueue.shrink_to_fit();
 }
 
 void GPUbridge::ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList ** ppCLs, _In_opt_ ID3D12Fence* pFenceHandle, _In_opt_ int iFenceValue)
@@ -155,14 +154,14 @@ void GPUbridge::WaitForPreviousFrame(int iBackBufferIndex)
 	//reset used CAs
 	for (int i = 0; i < s_iPoolSize; ++i)
 	{
-		if (!m_bppCADirectPoolFreeFromGPU[iBackBufferIndex][i] && m_ppCLsAssociatedWithCAsInCAPool[i] == nullptr)
+		if (!m_bppCADirectPoolFreeFromGPU[iBackBufferIndex][i] && m_ppCLsAssociatedWithCAsInCAPool[i] == nullptr)//if the cl is queued, and now has finished it's executeion. Reset CA.
 		{
 			DxAssert(m_pppCADirectPool[iBackBufferIndex][i]->Reset(), S_OK);
 			m_bppCADirectPoolFreeFromGPU[iBackBufferIndex][i] = true;
 		}
 	}
 
-	m_ipFenceValueDirect[iBackBufferIndex]++;
+	m_ipFenceValueDirect[iBackBufferIndex]++;//Frame has transitioned, increment value
 
 }
 

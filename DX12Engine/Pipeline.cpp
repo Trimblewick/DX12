@@ -8,6 +8,9 @@ Pipeline::Pipeline()
 
 Pipeline::~Pipeline()
 {
+	SAFE_RELEASE(m_pPSO);
+	SAFE_RELEASE(m_pRS);
+	m_vObjects.clear();
 }
 
 void Pipeline::AddObject(Object * pObject)
