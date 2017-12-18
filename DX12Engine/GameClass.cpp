@@ -12,33 +12,21 @@ GameClass::~GameClass()
 
 bool GameClass::Initialize()
 {
-	m_pMainCamera = new Camera(DirectX::XMFLOAT3(-25.0f, 1.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f));
+	m_pMainCamera = new Camera(DirectX::XMFLOAT3(-15.0f, 1.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f));
 	m_pRenderer = new DeferredRenderer();
 	m_pGPUbridge = new GPUbridge();
 	m_pResourceLoader = new ResourceLoader();
 
+
 	m_pRenderer->Initialize(m_pGPUbridge->GetCQ());
 
 	//LOAD MESH
-	m_pObject = new Object();
-	m_pObject->SetMesh(m_pResourceLoader->LoadMeshFromFile("../Resources/Teapot/teapot_n_glass.obj", Mesh::MeshLayout::VERTEXNORMAL, m_pGPUbridge));
+	//m_pObject = new Object();
+	//m_pObject->SetMesh(m_pResourceLoader->LoadMeshFromFile("../Resources/Teapot/teapot_n_glass.obj", Mesh::MeshLayout::VERTEXNORMAL, m_pGPUbridge));
 
 	//CREATE SHADER
+	Shader* pComputeShader = m_pResourceLoader->CreateComputeShader(L"RayTracerCS.hlsl");
 
-	Shader* pShader = m_pResourceLoader->CreateShader(L"VertexShader.hlsl", L"PixelShader.hlsl");
-
-	D3D12_INPUT_ELEMENT_DESC inputLayoutElementDesc[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-	};
-
-
-	//fill input layout desc
-	D3D12_INPUT_LAYOUT_DESC inputLayoutDesc = {};
-	inputLayoutDesc.NumElements = sizeof(inputLayoutElementDesc) / sizeof(D3D12_INPUT_ELEMENT_DESC);
-	inputLayoutDesc.pInputElementDescs = inputLayoutElementDesc;
-	
-	pShader->SetInputLayout(&inputLayoutDesc);
 	
 	
 	D3D12_ROOT_PARAMETER cameraRootParameter;
@@ -46,22 +34,24 @@ bool GameClass::Initialize()
 	cameraRootParameter.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
 	cameraRootParameter.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
 
-	pShader->AddRootParameter(cameraRootParameter);
+	D3D12_ROOT_PARAMETER rtvRP;
+	rtvRP.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	rtvRP.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	rtvRP.DescriptorTable = m_pRenderer->GetRTVDescriptorTable();
 
-	//SUPPLY PIPELINE
+	D3D12_ROOT_PARAMETER indexRP;
+	indexRP.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
+	indexRP.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	indexRP.Constants = CD3DX12_ROOT_CONSTANTS(2, 1);
 
-	Pipeline* pP = new Pipeline();
+	pComputeShader->AddRootParameter(cameraRootParameter);
+	pComputeShader->AddRootParameter(rtvRP);
+	pComputeShader->AddRootParameter(indexRP);
 	
-	ID3D12RootSignature* pRS = D3DClass::CreateRS(pShader);
+	m_pRS = D3DClass::CreateRS(pComputeShader);
+	m_pPSO = D3DClass::CreateComputePSO(pComputeShader, m_pRS);
 
-	pP->SetRS(pRS);
-	pP->SetPSO(D3DClass::CreateGraphicsPSO(pShader, pRS));
-	
-	pP->AddObject(m_pObject);
-
-	m_vPipelines.push_back(pP);
-
-	delete pShader;
+	delete pComputeShader;
 
 	return true;
 }
@@ -75,22 +65,24 @@ void GameClass::Update(Input* input, float dt)
 
 bool GameClass::Render()
 {
+	ID3D12DescriptorHeap* ppDescriptorHeaps[] = { m_pRenderer->GetDH() };
 	int iBackBufferIndex = m_pRenderer->GetBackBufferIndex();
 	m_pGPUbridge->WaitForPreviousFrame(iBackBufferIndex);
-	
 	ID3D12GraphicsCommandList* pCL = m_pGPUbridge->GetFreshCL();
 
+	pCL->SetDescriptorHeaps(1, ppDescriptorHeaps);
+	pCL->SetComputeRootSignature(m_pRS);
+	pCL->SetPipelineState(m_pPSO);
 	
-	m_pRenderer->RenderLightPass(pCL);
+	m_pMainCamera->BindCameraBuffer(0, pCL, iBackBufferIndex);
+	pCL->SetComputeRootDescriptorTable(1, CD3DX12_GPU_DESCRIPTOR_HANDLE(m_pRenderer->GetRTVDHhandle()));
+	pCL->SetComputeRoot32BitConstant(2, iBackBufferIndex, 0);
+	pCL->SetComputeRoot32BitConstant(2, D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV), 1);
 
-	for (Pipeline* pPipeline : m_vPipelines)
-	{
-		pPipeline->DrawObjects(pCL, m_pMainCamera, iBackBufferIndex);
-	}
+	pCL->Dispatch(1, 1, 1);
+
+	pCL->Close();
 	
-	m_pRenderer->temp_closelistNqueue(pCL);
-
-
 	m_pGPUbridge->QueueGraphicsCL(pCL);
 	m_pGPUbridge->ExecuteGrapichsCLs();
 
@@ -118,15 +110,9 @@ void GameClass::CleanUp()
 		delete m_pRenderer;
 		m_pRenderer = nullptr;
 	}
-	if (m_pObject)
+	if (m_pResourceLoader)
 	{
-		delete m_pObject;
-		m_pObject = nullptr;
+		delete m_pResourceLoader;
+		m_pResourceLoader = nullptr;
 	}
-
-	for (Pipeline* pP : m_vPipelines)
-	{
-		delete pP;
-	}
-	m_vPipelines.clear();
 }

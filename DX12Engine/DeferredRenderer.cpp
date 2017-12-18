@@ -15,7 +15,7 @@ DeferredRenderer::~DeferredRenderer()
 
 
 bool DeferredRenderer::Initialize(ID3D12CommandQueue* pCQ)
-{
+{	
 	m_pDHBackBufferRTVs = D3DClass::CreateDH(g_iBackBufferCount, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	//m_pDHDeferredBufferRTVs = D3DClass::CreateDH(g_iBackBufferCount * 2, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);//right now diffuse and (normals, with depth)
 
@@ -52,9 +52,13 @@ bool DeferredRenderer::Initialize(ID3D12CommandQueue* pCQ)
 		m_pSwapChain->GetBuffer(i, IID_PPV_ARGS(&m_ppBackBufferRTV[i]));
 		D3DClass::GetDevice()->CreateRenderTargetView(m_ppBackBufferRTV[i], nullptr, handleDHBackBufferRTVs);
 		
+		m_pRTVDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
+		m_pRTVDescriptorRanges[0].NumDescriptors = 3;
+		m_pRTVDescriptorRanges[0].BaseShaderRegister = 0;
+		m_pRTVDescriptorRanges[0].RegisterSpace = 0;
+		m_pRTVDescriptorRanges[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_UAV;
 
-		
-		
+
 		//m_ppCLLightPassBundles[i]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ppBackBufferRTV[D3DClass::GetFrameIndex()], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
 		//m_pRTVhandle[i] = handleDHBackBufferRTVs;
@@ -64,10 +68,12 @@ bool DeferredRenderer::Initialize(ID3D12CommandQueue* pCQ)
 		D3DClass::GetDevice()->CreateRenderTargetView(m_ppNormalAndDepthRT[i], nullptr, handleDHDeferredBufferRTVs);
 		handleDHDeferredBufferRTVs.Offset(iDHIncrementSizeRTV);*/
 		
-		
 		m_ppFenceBackBuffer[i] = D3DClass::CreateFence();
 
 	}
+
+	m_RTVDescriptorTable.NumDescriptorRanges = 1;
+	m_RTVDescriptorTable.pDescriptorRanges = m_pRTVDescriptorRanges;
 
 	//CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_pDHBackBufferRTVs->GetCPUDescriptorHandleForHeapStart());
 	//rtvHandle.Offset(D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV) * D3DClass::GetFrameIndex());
@@ -114,6 +120,40 @@ void DeferredRenderer::DrawObjects(Object ** ppObjects, int iNrOfObjects, ID3D12
 		pCL->DrawInstanced(ppObjects[i]->GetMesh()->GetNrOfVertices(), 1, 0, 0);
 	}
 }
+
+void DeferredRenderer::UnlockNextRTV(ID3D12CommandList* pCL)
+{
+	int iBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
+	if (m_ppFenceBackBuffer[iBackBufferIndex]->GetCompletedValue() < m_pFenceValuesBackBuffer[iBackBufferIndex])
+	{
+		DxAssert(m_ppFenceBackBuffer[iBackBufferIndex]->SetEventOnCompletion(m_pFenceValuesBackBuffer[iBackBufferIndex], m_handleFenceEvent), S_OK);
+
+		WaitForSingleObject(m_handleFenceEvent, INFINITE);
+	}
+	m_pFenceValuesBackBuffer[iBackBufferIndex]++;
+
+
+}
+
+void DeferredRenderer::PresentCurrentRTV()
+{
+}
+
+D3D12_ROOT_DESCRIPTOR_TABLE DeferredRenderer::GetRTVDescriptorTable()
+{
+	return m_RTVDescriptorTable;
+}
+
+D3D12_GPU_DESCRIPTOR_HANDLE DeferredRenderer::GetRTVDHhandle()
+{
+	return m_pDHBackBufferRTVs->GetGPUDescriptorHandleForHeapStart();
+}
+
+ID3D12DescriptorHeap * DeferredRenderer::GetDH()
+{
+	return m_pDHBackBufferRTVs;
+}
+
 
 void DeferredRenderer::RenderLightPass(ID3D12GraphicsCommandList* pCL)
 {

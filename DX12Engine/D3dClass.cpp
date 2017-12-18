@@ -116,6 +116,13 @@ ID3D12GraphicsCommandList * D3DClass::CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE li
 	return pCL;
 }
 
+ID3D12CommandList * D3DClass::CreateCL(D3D12_COMMAND_LIST_TYPE listType, ID3D12CommandAllocator * pCA)
+{
+	ID3D12CommandList* pCL;
+	DxAssert(s_pDevice->CreateCommandList(0, listType, pCA, nullptr, IID_PPV_ARGS(&pCL)), S_OK);
+	return pCL;
+}
+
 ID3D12CommandQueue* D3DClass::CreateCQ(D3D12_COMMAND_LIST_TYPE listType)
 {
 	ID3D12CommandQueue* pCQ;
@@ -170,6 +177,7 @@ ID3D12RootSignature * D3DClass::CreateRS(Shader* pShader)
 	ID3D12RootSignature*	pRootSignature;
 
 	D3D12_ROOT_SIGNATURE_DESC desc = {};
+
 	if (pShader->HasInputLayout())
 		desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 	else
@@ -234,6 +242,20 @@ ID3D12PipelineState * D3DClass::CreateGraphicsPSO(Shader * pShader, ID3D12RootSi
 	desc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
 
 	HRESULT hr = s_pDevice->CreateGraphicsPipelineState(&desc, IID_PPV_ARGS(&pPSO));
+
+	return pPSO;
+}
+
+ID3D12PipelineState * D3DClass::CreateComputePSO(Shader * pShader, ID3D12RootSignature * pRS)
+{
+	ID3D12PipelineState* pPSO;
+
+	D3D12_COMPUTE_PIPELINE_STATE_DESC desc = {};
+
+	desc.pRootSignature = pRS;
+	desc.CS = pShader->GetComputeShaderByteCode();
+
+	s_pDevice->CreateComputePipelineState(&desc, IID_PPV_ARGS(&pPSO));
 
 	return pPSO;
 }

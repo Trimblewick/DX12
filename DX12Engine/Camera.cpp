@@ -158,7 +158,7 @@ void Camera::BindCameraBuffer(int iCBVResourceSlot, ID3D12GraphicsCommandList * 
 	pCL->RSSetViewports(1, &m_viewport);
 	pCL->RSSetScissorRects(1, &m_scissorRect);
 
-	pCL->SetGraphicsRootConstantBufferView(iCBVResourceSlot, m_pCameraBuffer[iBackBufferIndex]->GetGPUVirtualAddress());
+	pCL->SetComputeRootConstantBufferView(iCBVResourceSlot, m_pCameraBuffer[iBackBufferIndex]->GetGPUVirtualAddress());
 }
 
 

@@ -11,12 +11,15 @@ public:
 
 	
 	ID3D12CommandQueue*							GetCQ();
+
 	
 	ID3D12GraphicsCommandList*					GetFreshCL();//return an unused CL from the pool
 	void										QueueGraphicsCL(ID3D12GraphicsCommandList* pCL);
 	void										ExecuteGrapichsCLs();
 	void										ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList** ppCLs, _In_opt_ ID3D12Fence* pFenceHandle, _In_opt_ int iFenceValue);
 	void										WaitForPreviousFrame(int iBackBufferIndex);
+
+	void										ExecuteDecoupledComputeCL(ID3D12CommandList* pCL, _In_opt_ ID3D12Fence* pFenceHandle, _In_opt_ int iFenceValue);
 	
 private:
 	static const int							s_iPoolSize = 5;
@@ -34,5 +37,8 @@ private:
 	ID3D12Fence*								m_ppFenceDirect[g_iBackBufferCount];
 	UINT64										m_ipFenceValueDirect[g_iBackBufferCount];
 	HANDLE										m_fenceEventDirectHandle;
+
+	ID3D12CommandQueue*							m_pCQCompute;
+
 };
 

@@ -16,6 +16,8 @@ public:
 	void										SetVertexShader(ID3DBlob* pVSblob);
 	void										SetPixelShader(ID3DBlob* pPSblob);
 
+	void										SetComputeShader(ID3DBlob* pCSblob);
+
 	void										SetInputLayout(D3D12_INPUT_LAYOUT_DESC* desc);
 	void										SetSampleDesc(DXGI_SAMPLE_DESC desc);
 	
@@ -27,6 +29,7 @@ public:
 
 	D3D12_SHADER_BYTECODE						GetVertexShaderByteCode();
 	D3D12_SHADER_BYTECODE						GetPixelShaderByteCode();
+	D3D12_SHADER_BYTECODE						GetComputeShaderByteCode();
 
 	DXGI_SAMPLE_DESC							GetSampleDesc();
 
@@ -39,6 +42,7 @@ public:
 	bool										HasPS();
 	bool										HasSampleDesc();
 
+	bool										HasCS();
 private:
 	D3D12_INPUT_LAYOUT_DESC*					m_inputLayoutDesc;
 	DXGI_SAMPLE_DESC							m_sampleDesc;
@@ -48,9 +52,11 @@ private:
 	bool										m_bHasPS;
 	bool										m_bHasSampleDesc;
 
+	bool										m_bHasCS;
+
 	ID3DBlob*									m_pVSblob;
 	ID3DBlob*									m_pPSblob;
-	
+	ID3DBlob*									m_pCSblob;
 
 	std::vector<D3D12_ROOT_PARAMETER>			m_vRootParameters;
 	std::vector<D3D12_STATIC_SAMPLER_DESC>		m_vSamplers;

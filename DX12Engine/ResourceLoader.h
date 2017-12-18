@@ -39,6 +39,7 @@ public:
 	Mesh*						LoadMeshFromFile(std::string sFileName, Mesh::MeshLayout meshLayout, GPUbridge* pGPUbridge);
 	Texture*					LoadTextureFromFile();
 	Shader*						CreateShader(LPCWSTR vsFilePath, LPCWSTR psFilePath);
+	Shader*						CreateComputeShader(LPCWSTR csFilePath);
 
 private:
 

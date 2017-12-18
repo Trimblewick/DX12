@@ -30,10 +30,12 @@ public:
 private:
 	Camera*												m_pMainCamera;
 	DeferredRenderer*									m_pRenderer;
-	Object*												m_pObject;
+
+	ID3D12RootSignature*								m_pRS;
+	ID3D12PipelineState*								m_pPSO;
+
 
 	GPUbridge*											m_pGPUbridge;
-	std::vector<Pipeline*>								m_vPipelines;
 	ResourceLoader*										m_pResourceLoader;
 };
  

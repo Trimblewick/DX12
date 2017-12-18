@@ -5,6 +5,7 @@ GPUbridge::GPUbridge()
 {
 	_iBackBufferIndex = 0;
 	m_pCQDirect = D3DClass::CreateCQ(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_pCQCompute = D3DClass::CreateCQ(D3D12_COMMAND_LIST_TYPE_COMPUTE);
 	
 	for (int k = 0; k < g_iBackBufferCount; ++k)
 	{
@@ -163,5 +164,16 @@ void GPUbridge::WaitForPreviousFrame(int iBackBufferIndex)
 
 	m_ipFenceValueDirect[iBackBufferIndex]++;//Frame has transitioned, increment value
 
+}
+
+void GPUbridge::ExecuteDecoupledComputeCL(ID3D12CommandList * pCL, ID3D12Fence * pFenceHandle, int iFenceValue)
+{
+	ID3D12CommandList* ppCLs[] = { pCL };
+	m_pCQCompute->ExecuteCommandLists(1, ppCLs);
+
+	if (pFenceHandle)
+	{
+		m_pCQCompute->Signal(pFenceHandle, iFenceValue);
+	}
 }
 

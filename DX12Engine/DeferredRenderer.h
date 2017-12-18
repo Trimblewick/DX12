@@ -18,6 +18,12 @@ public:
 
 	void								DrawObjects(Object** ppObjects, int iNrOfObjects, ID3D12GraphicsCommandList* pCL);
 
+	void								UnlockNextRTV(ID3D12CommandList* pCL);
+	void								PresentCurrentRTV();
+	D3D12_ROOT_DESCRIPTOR_TABLE			GetRTVDescriptorTable();
+	D3D12_GPU_DESCRIPTOR_HANDLE			GetRTVDHhandle();
+	ID3D12DescriptorHeap*				GetDH();
+
 	void RenderLightPass(ID3D12GraphicsCommandList* pCL);
 	void temp_closelistNqueue(ID3D12GraphicsCommandList * pCL);
 
@@ -32,6 +38,9 @@ private:
 
 	//ID3D12DescriptorHeap*							m_pDHDeferredBufferRTVs;
 	ID3D12DescriptorHeap*							m_pDHBackBufferRTVs;
+
+	D3D12_DESCRIPTOR_RANGE							m_pRTVDescriptorRanges[g_iBackBufferCount];
+	D3D12_ROOT_DESCRIPTOR_TABLE						m_RTVDescriptorTable;
 	//int											m_iDHIncrementSizeRTV;
 	//CD3DX12_CPU_DESCRIPTOR_HANDLE					m_DHHandleBackBufferRTVs;
 
@@ -41,6 +50,7 @@ private:
 	ID3D12Resource*									m_ppBackBufferRTV[g_iBackBufferCount];
 	//CD3DX12_CPU_DESCRIPTOR_HANDLE					m_pRTVhandle[g_iBackBufferCount];
 
+	unsigned long long								m_pFenceValuesBackBuffer[g_iBackBufferCount];
 	ID3D12Fence*									m_ppFenceBackBuffer[g_iBackBufferCount];
 	HANDLE											m_handleFenceEvent;
 	

@@ -260,3 +260,11 @@ Shader * ResourceLoader::CreateShader(LPCWSTR vsFilePath, LPCWSTR psFilePath)
 	pShader->SetPixelShader(CompileShader(psFilePath, "main", "ps_5_1"));
 	return pShader;
 }
+
+Shader * ResourceLoader::CreateComputeShader(LPCWSTR csFilePath)
+{
+	Shader* pShader = new Shader();
+	pShader->SetComputeShader(CompileShader(csFilePath, "main", "cs_5_1"));
+
+	return pShader;
+}

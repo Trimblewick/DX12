@@ -11,6 +11,7 @@ Shader::Shader()
 	m_bHasVS = false;
 	m_bHasPS = false;
 	m_bHasSampleDesc = false;
+	m_bHasCS = false;
 }
 
 Shader::~Shader()
@@ -47,6 +48,12 @@ void Shader::SetPixelShader(ID3DBlob* pPSblob)
 {
 	m_pPSblob = pPSblob;
 	m_bHasPS = true;
+}
+
+void Shader::SetComputeShader(ID3DBlob * pCSblob)
+{
+	m_pCSblob = pCSblob;
+	m_bHasCS = true;
 }
 
 void Shader::SetInputLayout(D3D12_INPUT_LAYOUT_DESC* desc)
@@ -136,6 +143,11 @@ bool Shader::HasPS()
 	return m_bHasPS;
 }
 
+bool Shader::HasCS()
+{
+	return m_bHasCS;
+}
+
 bool Shader::HasSampleDesc()
 {
 	return m_bHasSampleDesc;
@@ -154,6 +166,11 @@ D3D12_SHADER_BYTECODE Shader::GetVertexShaderByteCode()
 D3D12_SHADER_BYTECODE Shader::GetPixelShaderByteCode()
 {
 	return { m_pPSblob->GetBufferPointer(), m_pPSblob->GetBufferSize() };
+}
+
+D3D12_SHADER_BYTECODE Shader::GetComputeShaderByteCode()
+{
+	return { m_pCSblob->GetBufferPointer(), m_pCSblob->GetBufferSize() };
 }
 
 DXGI_SAMPLE_DESC Shader::GetSampleDesc()
