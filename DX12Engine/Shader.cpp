@@ -118,6 +118,11 @@ std::vector<D3D12_ROOT_PARAMETER> Shader::GetRootParameters()
 	return m_vRootParameters;
 }
 
+int Shader::GetNumRootParameters()
+{
+	return m_vRootParameters.size();
+}
+
 D3D12_ROOT_PARAMETER * Shader::GetRootParameterData()
 {
 	return m_vRootParameters.data();
@@ -126,6 +131,16 @@ D3D12_ROOT_PARAMETER * Shader::GetRootParameterData()
 std::vector<D3D12_STATIC_SAMPLER_DESC> Shader::GetSamplers()
 {
 	return m_vSamplers;
+}
+
+int Shader::GetNumStaticSamplers()
+{
+	return m_vSamplers.size();
+}
+
+D3D12_STATIC_SAMPLER_DESC * Shader::GetStaticSamplerData()
+{
+	return m_vSamplers.data();
 }
 
 bool Shader::HasInputLayout()

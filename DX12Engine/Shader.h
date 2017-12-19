@@ -34,8 +34,11 @@ public:
 	DXGI_SAMPLE_DESC							GetSampleDesc();
 
 	std::vector<D3D12_ROOT_PARAMETER>			GetRootParameters();
+	int											GetNumRootParameters();
 	D3D12_ROOT_PARAMETER*						GetRootParameterData();
 	std::vector<D3D12_STATIC_SAMPLER_DESC>		GetSamplers();
+	int											GetNumStaticSamplers();
+	D3D12_STATIC_SAMPLER_DESC*					GetStaticSamplerData();
 
 	bool										HasInputLayout();
 	bool										HasVS();

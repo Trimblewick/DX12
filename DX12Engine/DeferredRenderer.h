@@ -18,9 +18,9 @@ public:
 
 	void								DrawObjects(Object** ppObjects, int iNrOfObjects, ID3D12GraphicsCommandList* pCL);
 
-	void								UnlockNextRTV(ID3D12CommandList* pCL);
-	void								PresentCurrentRTV();
-	D3D12_ROOT_DESCRIPTOR_TABLE			GetRTVDescriptorTable();
+	void								UnlockNextRTV(ID3D12GraphicsCommandList* pCL);
+	void								TransitionCurrentRTVIntoPrecentState(ID3D12GraphicsCommandList* pCL);
+
 	D3D12_GPU_DESCRIPTOR_HANDLE			GetRTVDHhandle();
 	ID3D12DescriptorHeap*				GetDH();
 

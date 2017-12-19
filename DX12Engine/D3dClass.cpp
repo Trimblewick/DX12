@@ -99,12 +99,14 @@ ID3D12Fence * D3DClass::CreateFence()
 	return pFence;
 }
 
-ID3D12DescriptorHeap * D3DClass::CreateDH(int numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type)
+ID3D12DescriptorHeap * D3DClass::CreateDH(int numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type, bool bShaderVisible)
 {
 	ID3D12DescriptorHeap* pDH;
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 	desc.NumDescriptors = numDescriptors;
 	desc.Type = type;
+	if (bShaderVisible)
+		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
 	DxAssert(s_pDevice->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&pDH)), S_OK);
 	return pDH;
 }
@@ -183,13 +185,13 @@ ID3D12RootSignature * D3DClass::CreateRS(Shader* pShader)
 	else
 		desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
 
-	desc.NumParameters = pShader->GetRootParameters().size();
+	desc.NumParameters = pShader->GetNumRootParameters();
 	if (desc.NumParameters > 0)
 		desc.pParameters = pShader->GetRootParameterData();
 	
-	desc.NumStaticSamplers = pShader->GetSamplers().size();
+	desc.NumStaticSamplers = pShader->GetNumStaticSamplers();
 	if (desc.NumStaticSamplers > 0)
-		desc.pStaticSamplers = pShader->GetSamplers().data();
+		desc.pStaticSamplers = pShader->GetStaticSamplerData();
 
 	DxAssert(D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &pBlob, nullptr), S_OK);
 	DxAssert(s_pDevice->CreateRootSignature(0, pBlob->GetBufferPointer(), pBlob->GetBufferSize(), IID_PPV_ARGS(&pRootSignature)), S_OK);

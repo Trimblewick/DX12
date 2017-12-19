@@ -122,22 +122,27 @@ void DeferredRenderer::DrawObjects(Object ** ppObjects, int iNrOfObjects, ID3D12
 	}
 }
 
-void DeferredRenderer::UnlockNextRTV(ID3D12CommandList* pCL)
+void DeferredRenderer::UnlockNextRTV(ID3D12GraphicsCommandList* pCL)
 {
-	int iBackBufferIndex = m_pSwapChain->GetCurrentBackBufferIndex();
-	if (m_ppFenceBackBuffer[iBackBufferIndex]->GetCompletedValue() < m_pFenceValuesBackBuffer[iBackBufferIndex])
-	{
-		DxAssert(m_ppFenceBackBuffer[iBackBufferIndex]->SetEventOnCompletion(m_pFenceValuesBackBuffer[iBackBufferIndex], m_handleFenceEvent), S_OK);
+	int iIndex = this->GetBackBufferIndex();
 
-		WaitForSingleObject(m_handleFenceEvent, INFINITE);
-	}
-	m_pFenceValuesBackBuffer[iBackBufferIndex]++;
+	pCL->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ppBackBufferRTV[iIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+	int iDHIncrementSizeRTV = D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE handleDHBackBufferRTVs(m_pDHBackBufferRTVs->GetCPUDescriptorHandleForHeapStart());
+	handleDHBackBufferRTVs.Offset(iDHIncrementSizeRTV * iIndex);
+
+	pCL->OMSetRenderTargets(1, &handleDHBackBufferRTVs, NULL, nullptr);
+	pCL->ClearRenderTargetView(handleDHBackBufferRTVs, m_fClearColor, 0, nullptr);
 
 
 }
 
-void DeferredRenderer::PresentCurrentRTV()
+void DeferredRenderer::TransitionCurrentRTVIntoPrecentState(ID3D12GraphicsCommandList* pCL)
 {
+	int iIndex = this->GetBackBufferIndex();
+	pCL->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ppBackBufferRTV[iIndex], D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
+	
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE DeferredRenderer::GetRTVDHhandle()
@@ -156,9 +161,7 @@ void DeferredRenderer::RenderLightPass(ID3D12GraphicsCommandList* pCL)
 	int iIndex = this->GetBackBufferIndex();
 	
 	pCL->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_ppBackBufferRTV[iIndex], D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
-
 	
-
 	int iDHIncrementSizeRTV = D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	CD3DX12_CPU_DESCRIPTOR_HANDLE handleDHBackBufferRTVs(m_pDHBackBufferRTVs->GetCPUDescriptorHandleForHeapStart());
 	handleDHBackBufferRTVs.Offset(iDHIncrementSizeRTV * iIndex);
