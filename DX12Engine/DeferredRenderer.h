@@ -39,8 +39,7 @@ private:
 	//ID3D12DescriptorHeap*							m_pDHDeferredBufferRTVs;
 	ID3D12DescriptorHeap*							m_pDHBackBufferRTVs;
 
-	D3D12_DESCRIPTOR_RANGE							m_pRTVDescriptorRanges[g_iBackBufferCount];
-	D3D12_ROOT_DESCRIPTOR_TABLE						m_RTVDescriptorTable;
+	
 	//int											m_iDHIncrementSizeRTV;
 	//CD3DX12_CPU_DESCRIPTOR_HANDLE					m_DHHandleBackBufferRTVs;
 

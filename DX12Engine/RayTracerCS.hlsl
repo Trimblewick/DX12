@@ -13,14 +13,14 @@ cbuffer CameraBuffer : register(b0)
 	float4x4 projMatrix;
 };
 
-RWTexture2D<float4> target : register(u0);
+RWTexture2D<float4> target[3] : register(u0);
 
-uint2 rootConstants : register(b1);
+uint bufferIndex : register(b1);
 
 
 [numthreads(128, 1, 1)]
 void main( uint3 DTid : SV_DispatchThreadID )
 {
-	target[DTid.xy] = float4(1, 0, 0, 1);
+	target[rootConstants.x][DTid.xy] = float4(1, 0, 0, 1);
 
 }
