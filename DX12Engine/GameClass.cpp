@@ -24,11 +24,25 @@ bool GameClass::Initialize()
 	//m_pObject = new Object();
 	//m_pObject->SetMesh(m_pResourceLoader->LoadMeshFromFile("../Resources/Teapot/teapot_n_glass.obj", Mesh::MeshLayout::VERTEXNORMAL, m_pGPUbridge));
 
+	m_pSurfaceDescriptorHeap = D3DClass::CreateDH(3, D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
+	int iOffsetSize = D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
+	
+	desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+	desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+
+	
+
+
 	for (int i = 0; i < g_iBackBufferCount; ++i)
 	{
-		m_ppUAVTargets[i] = D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE_DEFAULT, WindowClass::GetWidth() * WindowClass::GetHeight() * sizeof(float) * 4, D3D12_RESOURCE_STATE_GENERIC_READ, L"uav");
+		m_ppUAVTargets[i] = D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE_DEFAULT, CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_R32G32B32A32_FLOAT, WindowClass::GetWidth(), WindowClass::GetHeight(), 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS), D3D12_RESOURCE_STATE_GENERIC_READ);
+
+		D3DClass::GetDevice()->CreateUnorderedAccessView(m_ppUAVTargets[i], nullptr, nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(m_pSurfaceDescriptorHeap->GetCPUDescriptorHandleForHeapStart()).Offset(iOffsetSize * i));
+		//D3DClass::GetDevice()->CreateShaderResourceView(m_ppUAVTargets[i], nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(m_pSurfaceDescriptorHeap->GetCPUDescriptorHandleForHeapStart()).Offset(iOffsetSize * i));
 	}
-	m_pSurfaceDescriptorHeap = D3DClass::CreateDH(3, D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
+	
 
 	m_pUAVDescriptorRanges[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 	m_pUAVDescriptorRanges[0].NumDescriptors = 3;
@@ -123,7 +137,7 @@ bool GameClass::Render()
 	
 	//pCL->SetComputeRoot32BitConstant(2, D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1);
 
-	pCL->Dispatch(1, 1, 1);
+	pCL->Dispatch(30, 20, 1);
 
 	m_pRenderer->UnlockNextRTV(pCL);
 	pCL->SetPipelineState(m_pGraphicsPSO);

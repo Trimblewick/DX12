@@ -162,6 +162,15 @@ ID3D12Resource * D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE heapType, UIN
 	return pCommittedResource;
 }
 
+ID3D12Resource * D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE heapType, D3D12_RESOURCE_DESC desc, D3D12_RESOURCE_STATES resourceState)
+{
+	ID3D12Resource* pCommittedResource;
+
+	DxAssert(s_pDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(heapType), D3D12_HEAP_FLAG_NONE, &desc, resourceState, nullptr, IID_PPV_ARGS(&pCommittedResource)), S_OK);
+
+	return pCommittedResource;
+}
+
 ID3D12RootSignature * D3DClass::CreateRS(D3D12_ROOT_SIGNATURE_DESC* pDesc)
 {
 	ID3DBlob*				pBlob;

@@ -15,12 +15,21 @@ cbuffer CameraBuffer : register(b0)
 
 RWTexture2D<float4> target : register(u0);
 
-uint bufferIndex : register(b1);
+cbuffer rootConstants : register(b1)
+{
+    uint bufferIndex;
+};
 
 
-[numthreads(128, 1, 1)]
+
+[numthreads(32, 32, 1)]
 void main( uint3 DTid : SV_DispatchThreadID )
 {
-	target[DTid.xy] = float4(1, 0, 0, 1);
+    if (bufferIndex == 0)
+        target[DTid.xy] = float4(0, 1, 0, 1);
+    if (bufferIndex == 1)
+        target[DTid.xy] = float4(1, 0, 0, 1);
+    if (bufferIndex == 2)
+        target[DTid.xy] = float4(0, 0, 1, 1);
 
 }
