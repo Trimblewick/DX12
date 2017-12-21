@@ -42,9 +42,10 @@ bool RayTriangleIntersection(float3 rayDir, float3 rayPos, Triangle instance)
     float t = (d + dot(rayPos, normal)) / s;
 
     if (t < 0)
-        return false;
+        return false;//behind camera
 
-    float3 intersectionPoint = rayPos + rayDir * t;
+
+    float3 intersectionPoint = rayPos + rayDir * t;//itnersection point in the plane, though it might not be inside the triangle
 
     if (dot(normal, cross(instance.p2.xyz - instance.p1.xyz, intersectionPoint - instance.p1.xyz)) < 0)
         return false;
@@ -60,20 +61,21 @@ bool RayTriangleIntersection(float3 rayDir, float3 rayPos, Triangle instance)
 void main( uint3 DTid : SV_DispatchThreadID )
 {
     Triangle anInstance;
-    anInstance.p1 = mul(float4(-0.5f, -0.5f, 0.5f, 1), vpMatrix);
-    anInstance.p2 = mul(float4(0.0f, 0.5f, -0.5f, 1), vpMatrix);
-    anInstance.p3 = mul(float4(0.5f, 0.0f, 0.0f, 1), vpMatrix);
+    anInstance.p1 = mul(float4(-1.5f, -1.5f, 1.5f, 1), vpMatrix);
+    anInstance.p3 = mul(float4(0.0f, 1.5f, -1.5f, 1), vpMatrix);
+    anInstance.p2 = mul(float4(0.5f, -0.5f, 0.0f, 1), vpMatrix);
     
-    float3 pixelPosition = mul(float4((DTid.x * 2.0f + 1.0f - (float) screenWidth) / (float) screenWidth, (DTid.y * 2.0f + 1.0f - (float) screenHeight) / (float) screenHeight, 2.0f, 1.0f), vpMatrix).xyz;
+    float3 pixelPosition = mul(float4((DTid.x * 2.0f - (float) screenWidth + 1.0f) / (float) screenWidth, (DTid.y * 2.0f - (float) screenHeight + 1.0f) / (float) screenHeight, 3.0f, 1.0f), vpMatrix).xyz;
     
-    float4 o = float4(0, 0, 0, 1);
-    float3 testCamPos = o.xyz / o.w;
-    float3 ray = normalize(pixelPosition - testCamPos);
+    //float4 temp = mul(float4(0, 0, 0, 1), vpMatrix);  //alternative way of calculating camPosition. though it is inclided in my buffer
+    //float3 camPos = temp.xyz / temp.w;
+
+    float3 ray = normalize(pixelPosition - camPosition);
     
     if (RayTriangleIntersection(ray, pixelPosition, anInstance))
-        target[DTid.xy] == float4(0, 1, 0, 1);
+        target[DTid.xy] = float4(0.5f, 0.2f, 0.1f, 1);
     else
-        target[DTid.xy] = float4(pixelPosition, 0);
+        target[DTid.xy] = float4(0.5f, 0.5f, 0.5f, 1);
 
     //if (bufferIndex == 0)
         
