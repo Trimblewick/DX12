@@ -16,7 +16,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 {
 	MSG msg = { 0 };
 
-	SystemClass::Initialize(hInstance, hPrevInstance, nShowCmd, 800, 600, L"WINDOW!");
+	SystemClass::Initialize(hInstance, hPrevInstance, nShowCmd, 800, 640, L"WINDOW!");
 
 	SystemClass::Run();
 

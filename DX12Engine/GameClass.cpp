@@ -12,7 +12,7 @@ GameClass::~GameClass()
 
 bool GameClass::Initialize()
 {
-	m_pMainCamera = new Camera(DirectX::XMFLOAT3(-15.0f, 1.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f));
+	m_pMainCamera = new Camera(DirectX::XMFLOAT3(-5.0f, 1.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f));
 	m_pRenderer = new DeferredRenderer();
 	m_pGPUbridge = new GPUbridge();
 	m_pResourceLoader = new ResourceLoader();
@@ -87,7 +87,7 @@ bool GameClass::Initialize()
 	D3D12_ROOT_PARAMETER indexRP;
 	indexRP.ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
 	indexRP.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
-	indexRP.Constants = CD3DX12_ROOT_CONSTANTS(1, 1);
+	indexRP.Constants = CD3DX12_ROOT_CONSTANTS(3, 1);
 
 	pComputeShader->AddRootParameter(cameraRootParameter);
 	pComputeShader->AddRootParameter(rtvRP);
@@ -133,11 +133,13 @@ bool GameClass::Render()
 	m_pMainCamera->BindCameraBuffer(0, pCL, iBackBufferIndex);
 	pCL->SetComputeRootDescriptorTable(1, CD3DX12_GPU_DESCRIPTOR_HANDLE(m_pSurfaceDescriptorHeap->GetGPUDescriptorHandleForHeapStart()).Offset(iDHIncrementSizeRTV));
 	pCL->SetComputeRoot32BitConstant(2, iBackBufferIndex, 0);
+	pCL->SetComputeRoot32BitConstant(2, WindowClass::GetHeight(), 1);
+	pCL->SetComputeRoot32BitConstant(2, WindowClass::GetWidth(), 2);
 	pCL->SetGraphicsRootDescriptorTable(0, CD3DX12_GPU_DESCRIPTOR_HANDLE(m_pSurfaceDescriptorHeap->GetGPUDescriptorHandleForHeapStart()).Offset(iDHIncrementSizeRTV));
 	
-	//pCL->SetComputeRoot32BitConstant(2, D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1);
+	//pCL->SetComputeRoot32BitConstant(2, D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV), 1)
 
-	pCL->Dispatch(30, 20, 1);
+	pCL->Dispatch(WindowClass::GetWidth() / 32, WindowClass::GetHeight() / 32, 1);
 
 	m_pRenderer->UnlockNextRTV(pCL);
 	pCL->SetPipelineState(m_pGraphicsPSO);
