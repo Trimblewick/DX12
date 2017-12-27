@@ -130,13 +130,13 @@ void GPUbridge::ExecuteGrapichsCLs()
 	_pCLqueue.clear();
 }
 
-void GPUbridge::ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList ** ppCLs, _In_opt_ ID3D12Fence* pFenceHandle, _In_opt_ int iFenceValue)
+void GPUbridge::ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList ** ppCLs, _In_opt_ ID3D12Fence* pFence, _In_opt_ int iFenceValue)
 {
 	m_pCQDirect->ExecuteCommandLists(iNOCLs, ppCLs);
 
-	if (pFenceHandle)
+	if (pFence)
 	{
-		m_pCQDirect->Signal(pFenceHandle, iFenceValue);
+		m_pCQDirect->Signal(pFence, iFenceValue);
 	}
 }
 

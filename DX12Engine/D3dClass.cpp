@@ -153,7 +153,7 @@ IDXGISwapChain3 * D3DClass::CreateSwapChain(DXGI_SWAP_CHAIN_DESC* pDesc, ID3D12C
 ID3D12Resource * D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE heapType, UINT iBufferSize, D3D12_RESOURCE_STATES resourceState, LPCWSTR bufferName)
 {
 	ID3D12Resource* pCommittedResource;
-
+	
 	DxAssert(s_pDevice->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(heapType), D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(iBufferSize), resourceState, nullptr, IID_PPV_ARGS(&pCommittedResource)), S_OK);
 	
 	if (bufferName != NULL)

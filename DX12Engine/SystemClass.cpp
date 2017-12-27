@@ -106,6 +106,7 @@ void SystemClass::Run()
 {
 	MSG msg;
 	ZeroMemory(&msg, sizeof(MSG));
+	srand(time(NULL));
 	auto prevTime = std::chrono::steady_clock::now();
 	auto currentTime = std::chrono::steady_clock::now();
 	while (s_bRunning)

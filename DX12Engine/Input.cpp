@@ -36,7 +36,6 @@ void Input::KeyDown(unsigned int const keyIndex)
 void Input::KeyUp(unsigned int const keyIndex)
 {
 	// If a key is released then clear that state in the key array.
-	int test = keyIndex;
 	if (keyIndex >= 0 && keyIndex <= 256)
 		m_bKeys[keyIndex] = false;
 	

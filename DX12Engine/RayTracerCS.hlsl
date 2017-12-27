@@ -15,73 +15,90 @@ cbuffer CameraBuffer : register(b0)
 
 RWTexture2D<float4> target : register(u0);
 
-cbuffer rootConstants : register(b1)
-{
-    uint bufferIndex;
-    uint screenHeight;
-    uint screenWidth;
-};
-
 struct Triangle
 {
     float4 p1;
     float4 p2;
     float4 p3;
+    float4 color;
 };
 
-bool RayTriangleIntersection(float3 rayDir, float3 rayPos, Triangle instance)
+StructuredBuffer<Triangle> triangles : register(t1);
+
+cbuffer rootConstants : register(b1)
 {
-    float3 normal = cross(instance.p2.xyz - instance.p1.xyz, instance.p3.xyz - instance.p1.xyz);
+    uint iNumberOfTriangleMatrices;
+    uint iScreenHeight;
+    uint iScreenWidth;
+};
+
+Triangle TriangleToWS(Triangle tri)
+{
+    tri.p1 = mul(tri.p1, vpMatrix);
+    tri.p2 = mul(tri.p2, vpMatrix);
+    tri.p3 = mul(tri.p3, vpMatrix);
+    return tri;
+}
+
+struct Hit
+{
+    float3 hitPoint;
+    float4 color;
+};
+
+Hit RayTriangleIntersection(float3 rayDir, float3 rayPos, Triangle tri, Hit previousHit)
+{
+    float3 normal = cross(tri.p2.xyz - tri.p1.xyz, tri.p3.xyz - tri.p1.xyz);
 
     double s = dot(normal, rayDir);
     if (s * s < 0.0000000000001)//almost parallel, might cause aliasing?
-        return false;
+        return previousHit;
 
 
-    float d = dot(normal, instance.p1.xyz);
+    float d = dot(normal, tri.p1.xyz);
     float t = (d + dot(rayPos, normal)) / s;
 
     if (t < 0)
-        return false;//behind camera
+        return previousHit; //behind camera
 
 
     float3 intersectionPoint = rayPos + rayDir * t;//itnersection point in the plane, though it might not be inside the triangle
 
-    if (dot(normal, cross(instance.p2.xyz - instance.p1.xyz, intersectionPoint - instance.p1.xyz)) < 0)
-        return false;
-    if (dot(normal, cross(instance.p1.xyz - instance.p3.xyz, intersectionPoint - instance.p3.xyz)) < 0)
-        return false;
-    if (dot(normal, cross(instance.p3.xyz - instance.p2.xyz, intersectionPoint - instance.p2.xyz)) < 0)
-        return false;
+    if (dot(normal, cross(tri.p2.xyz - tri.p1.xyz, intersectionPoint - tri.p1.xyz)) < 0)
+        return previousHit;
+    if (dot(normal, cross(tri.p1.xyz - tri.p3.xyz, intersectionPoint - tri.p3.xyz)) < 0)
+        return previousHit;
+    if (dot(normal, cross(tri.p3.xyz - tri.p2.xyz, intersectionPoint - tri.p2.xyz)) < 0)
+        return previousHit;
 
-    return true;
+    if (length(intersectionPoint - camPosition) < length(previousHit.hitPoint - camPosition))
+    {
+        previousHit.hitPoint = intersectionPoint;
+        previousHit.color = tri.color;
+    }
+
+    return previousHit;
 }
 
 [numthreads(32, 32, 1)]
 void main( uint3 DTid : SV_DispatchThreadID )
 {
-    Triangle anInstance;
-    anInstance.p1 = mul(float4(-1.5f, -1.5f, 1.5f, 1), vpMatrix);
-    anInstance.p3 = mul(float4(0.0f, 1.5f, -1.5f, 1), vpMatrix);
-    anInstance.p2 = mul(float4(0.5f, -0.5f, 0.0f, 1), vpMatrix);
-    
-    float3 pixelPosition = mul(float4((DTid.x * 2.0f - (float) screenWidth + 1.0f) / (float) screenWidth, (DTid.y * 2.0f - (float) screenHeight + 1.0f) / (float) screenHeight, 3.0f, 1.0f), vpMatrix).xyz;
-    
-    //float4 temp = mul(float4(0, 0, 0, 1), vpMatrix);  //alternative way of calculating camPosition. though it is inclided in my buffer
-    //float3 camPos = temp.xyz / temp.w;
+    Hit previousHit;
+    previousHit.color = float4(1.0f, 0.0f, 0.0f, 1.0f);
+    previousHit.hitPoint = float3(1000, 1000, 1000);
 
-    float3 ray = normalize(pixelPosition - camPosition);
+    for (int i = 0; i < 6; ++i)
+    {
+        Triangle triWS = TriangleToWS(triangles[i]);
     
-    if (RayTriangleIntersection(ray, pixelPosition, anInstance))
-        target[DTid.xy] = float4(0.5f, 0.2f, 0.1f, 1);
-    else
-        target[DTid.xy] = float4(0.5f, 0.5f, 0.5f, 1);
-
-    //if (bufferIndex == 0)
+        float3 pixelPosition = mul(float4((DTid.x * 2.0f - (float) iScreenWidth + 1.0f) / (float) iScreenWidth, (DTid.y * 2.0f - (float) iScreenHeight + 1.0f) / (float) iScreenHeight, 3.0f, 1.0f), vpMatrix).xyz;
         
-    //if (bufferIndex == 1)
-      //  target[DTid.xy] = float4(1, 0, 0, 0);
-    //if (bufferIndex == 2)
-      //  target[DTid.xy] = float4(0, 0, 1, 0);
+
+        float3 ray = normalize(pixelPosition - camPosition);
+    
+        previousHit = RayTriangleIntersection(ray, pixelPosition, triWS, previousHit);
+    }
+
+    target[DTid.xy] = previousHit.color;
 
 }

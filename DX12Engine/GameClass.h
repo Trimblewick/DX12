@@ -35,8 +35,9 @@ private:
 	D3D12_DESCRIPTOR_RANGE								m_pUAVDescriptorRanges[1];
 	D3D12_ROOT_DESCRIPTOR_TABLE							m_UAVDescriptorTable;
 	ID3D12Resource*										m_ppUAVTargets[3];
+	ID3D12Resource*										m_pTriangleMatrices;
 
-	ID3D12DescriptorHeap*								m_pSurfaceDescriptorHeap;
+	ID3D12DescriptorHeap*								m_pDHlab;
 	ID3D12RootSignature*								m_pComputeRS;
 	ID3D12RootSignature*								m_pGraphicsRS;
 	ID3D12PipelineState*								m_pComputePSO;

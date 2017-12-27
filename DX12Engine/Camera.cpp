@@ -85,9 +85,26 @@ Camera::~Camera()
 
 void Camera::Update(Input * pInput, float dt, int iBackBufferIndex)
 {
-	m_fPitch += pInput->GetMouseDelta().y * dt;
-	m_fYaw += pInput->GetMouseDelta().x * dt;
+	if (m_fPitch > 1.06f)
+	{
+		float fFrameDelta = pInput->GetMouseDelta().y * dt * 0.25f;
+		if (fFrameDelta < 0)
+			m_fPitch += fFrameDelta;
+	}
+	else if (m_fPitch < -1.06f)
+	{
+		float fFrameDelta = pInput->GetMouseDelta().y * dt * 0.25f;
+		if (fFrameDelta > 0)
+			m_fPitch += fFrameDelta;
+	}
+	else
+	{
+		m_fPitch += pInput->GetMouseDelta().y * dt * 0.25f;
+	}
+	m_fPitch = 0.0f;
 	
+	m_fYaw += pInput->GetMouseDelta().x * dt * 0.25f;
+
 	m_rotMat = DirectX::XMMatrixRotationRollPitchYaw(m_fPitch, m_fYaw, 0.0f);
 
 	m_forward = DirectX::XMVector3TransformCoord(m_fDefaultForward, m_rotMat);

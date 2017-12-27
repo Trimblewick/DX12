@@ -16,7 +16,7 @@ public:
 	ID3D12GraphicsCommandList*					GetFreshCL();//return an unused CL from the pool
 	void										QueueGraphicsCL(ID3D12GraphicsCommandList* pCL);
 	void										ExecuteGrapichsCLs();
-	void										ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList** ppCLs, _In_opt_ ID3D12Fence* pFenceHandle, _In_opt_ int iFenceValue);
+	void										ExecuteDecoupledCLs(int iNOCLs, ID3D12CommandList** ppCLs, _In_opt_ ID3D12Fence* pFence, _In_opt_ int iFenceValue);
 	void										WaitForPreviousFrame(int iBackBufferIndex);
 
 	void										ExecuteDecoupledComputeCL(ID3D12CommandList* pCL, _In_opt_ ID3D12Fence* pFenceHandle, _In_opt_ int iFenceValue);
