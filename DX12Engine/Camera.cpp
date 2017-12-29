@@ -37,8 +37,8 @@ Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 
 	m_rotMat = DirectX::XMMatrixIdentity();
 
-	m_fForwardSpeed = 20.0f;
-	m_fHorizontalSpeed = 20.0f;
+	m_fForwardSpeed = 5.0f;
+	m_fHorizontalSpeed = 5.0f;
 	m_fVerticalSpeed = 20.0f;
 
 	
@@ -101,9 +101,9 @@ void Camera::Update(Input * pInput, float dt, int iBackBufferIndex)
 	{
 		m_fPitch += pInput->GetMouseDelta().y * dt * 0.25f;
 	}
-	m_fPitch = 0.0f;
+	//m_fPitch = 0.0f;
 	
-	m_fYaw += pInput->GetMouseDelta().x * dt * 0.25f;
+	m_fYaw -= pInput->GetMouseDelta().x * dt * 0.25f;
 
 	m_rotMat = DirectX::XMMatrixRotationRollPitchYaw(m_fPitch, m_fYaw, 0.0f);
 
@@ -143,11 +143,16 @@ void Camera::Update(Input * pInput, float dt, int iBackBufferIndex)
 	m_position.y += DirectX::XMVectorGetY(m_forward) * f + DirectX::XMVectorGetY(m_right) * r + u;
 	m_position.z += DirectX::XMVectorGetZ(m_forward) * f + DirectX::XMVectorGetZ(m_right) * r;
 	
+	m_right = DirectX::XMVector3Normalize(DirectX::XMVectorSet(DirectX::XMVectorGetX(m_right), 0.0f, DirectX::XMVectorGetZ(m_right), 0.0f));
+
 	DirectX::XMVECTOR up = DirectX::XMVector3Cross(m_forward, m_right);
 	DirectX::XMMATRIX newViewMatrix = DirectX::XMMatrixLookToLH(DirectX::XMLoadFloat3(&m_position), m_forward, up);
 	DirectX::XMStoreFloat4x4(&m_viewMatrix, newViewMatrix);
 
-
+	if (std::abs(DirectX::XMVectorGetX(m_forward) - DirectX::XMVectorGetX(m_right)) < 0.1f && std::abs(DirectX::XMVectorGetY(m_forward) - DirectX::XMVectorGetY(m_right)) < 0.1f && std::abs(DirectX::XMVectorGetZ(m_forward) - DirectX::XMVectorGetZ(m_right)) < 0.1f)
+	{
+		int thisMustBeGimbalLock = 0;
+	}
 
 	DirectX::XMFLOAT3 tempVec;
 	DirectX::XMFLOAT4X4 tempMat;

@@ -27,7 +27,7 @@ StructuredBuffer<Triangle> triangles : register(t1);
 
 cbuffer rootConstants : register(b1)
 {
-    uint iNumberOfTriangleMatrices;
+    uint iNumberOfTriangles;
     uint iScreenHeight;
     uint iScreenWidth;
 };
@@ -84,18 +84,17 @@ Hit RayTriangleIntersection(float3 rayDir, float3 rayPos, Triangle tri, Hit prev
 void main( uint3 DTid : SV_DispatchThreadID )
 {
     Hit previousHit;
-    previousHit.color = float4(1.0f, 0.0f, 0.0f, 1.0f);
+    previousHit.color = float4(0.3f, 0.0f, 0.0f, 1.0f);
     previousHit.hitPoint = float3(1000, 1000, 1000);
 
-    for (int i = 0; i < 6; ++i)
+    float3 pixelPosition = mul(float4((DTid.x * 2.0f - (float) iScreenWidth + 1.0f) / (float) iScreenWidth, (DTid.y * 2.0f - (float) iScreenHeight + 1.0f) / (float) iScreenHeight, 3.0f, 1.0f), vpMatrix).xyz;
+    float3 ray = normalize(pixelPosition - camPosition);
+
+    for (int i = 0; i < iNumberOfTriangles; ++i)
     {
         Triangle triWS = TriangleToWS(triangles[i]);
     
-        float3 pixelPosition = mul(float4((DTid.x * 2.0f - (float) iScreenWidth + 1.0f) / (float) iScreenWidth, (DTid.y * 2.0f - (float) iScreenHeight + 1.0f) / (float) iScreenHeight, 3.0f, 1.0f), vpMatrix).xyz;
         
-
-        float3 ray = normalize(pixelPosition - camPosition);
-    
         previousHit = RayTriangleIntersection(ray, pixelPosition, triWS, previousHit);
     }
 

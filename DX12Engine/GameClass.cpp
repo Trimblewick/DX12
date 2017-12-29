@@ -18,24 +18,40 @@ struct Tri
 	DirectX::XMFLOAT4 color;
 };
 
+struct Light
+{
+	DirectX::XMFLOAT4 position;
+	
+};
+
+Light* CreateLights()
+{
+	Light pLights[2];
+
+	pLights[0].position = DirectX::XMFLOAT4(3, 0, 0, 1);
+	pLights[1].position = DirectX::XMFLOAT4(3, 3, 0, 1);
+
+	return pLights;
+}
+
 Tri* GetBoxMesh()
 {
-	Tri* pMesh = new Tri[36];
+	Tri* pMesh = new Tri[6];
 
 	//Front
-	pMesh[0].p1.x = 0.0f;
-	pMesh[0].p1.y = 0.0f;
-	pMesh[0].p1.z = 0.0f;
+	pMesh[0].p1.x = -2.0f;
+	pMesh[0].p1.y = -2.0f;
+	pMesh[0].p1.z = -2.0f;
 	pMesh[0].p1.w = 1.0f;
 
-	pMesh[0].p2.x = 0.0f;
-	pMesh[0].p2.y = 1.0f;
-	pMesh[0].p2.z = 0.0f;
+	pMesh[0].p2.x = -2.0f;
+	pMesh[0].p2.y = -1.0f;
+	pMesh[0].p2.z = -2.0f;
 	pMesh[0].p2.w = 1.0f;
 
-	pMesh[0].p3.x = 1.0f;
-	pMesh[0].p3.y = 0.0f;
-	pMesh[0].p3.z = 0.0f;
+	pMesh[0].p3.x = -1.0f;
+	pMesh[0].p3.y = -2.0f;
+	pMesh[0].p3.z = -2.0f;
 	pMesh[0].p3.w = 1.0f;
 
 	pMesh[0].color.x = 0.0f;
@@ -43,19 +59,19 @@ Tri* GetBoxMesh()
 	pMesh[0].color.z = 0.0f;
 	pMesh[0].color.w = 1.0f;
 
-	pMesh[1].p1.x = 0.0f;
-	pMesh[1].p1.y = 1.0f;
-	pMesh[1].p1.z = 0.0f;
+	pMesh[1].p1.x = -2.0f;
+	pMesh[1].p1.y = -1.0f;
+	pMesh[1].p1.z = -2.0f;
 	pMesh[1].p1.w = 1.0f;
 
-	pMesh[1].p2.x = 1.0f;
-	pMesh[1].p2.y = 1.0f;
-	pMesh[1].p2.z = 0.0f;
+	pMesh[1].p2.x = -1.0f;
+	pMesh[1].p2.y = -1.0f;
+	pMesh[1].p2.z = -2.0f;
 	pMesh[1].p2.w = 1.0f;
 
-	pMesh[1].p3.x = 1.0f;
-	pMesh[1].p3.y = 0.0f;
-	pMesh[1].p3.z = 0.0f;
+	pMesh[1].p3.x = -1.0f;
+	pMesh[1].p3.y = -2.0f;
+	pMesh[1].p3.z = -2.0f;
 	pMesh[1].p3.w = 1.0f;
 
 	pMesh[1].color.x = 0.0f;
@@ -64,19 +80,19 @@ Tri* GetBoxMesh()
 	pMesh[1].color.w = 1.0f;
 
 	//Back
-	pMesh[2].p1.x = 1.0f;
-	pMesh[2].p1.y = 0.0f;
-	pMesh[2].p1.z = -1.0f;
+	pMesh[2].p1.x = -1.0f;
+	pMesh[2].p1.y = -2.0f;
+	pMesh[2].p1.z = -3.0f;
 	pMesh[2].p1.w = 1.0f;
 
-	pMesh[2].p2.x = 1.0f;
-	pMesh[2].p2.y = 1.0f;
-	pMesh[2].p2.z = -1.0f;
+	pMesh[2].p2.x = -1.0f;
+	pMesh[2].p2.y = -1.0f;
+	pMesh[2].p2.z = -3.0f;
 	pMesh[2].p2.w = 1.0f;
 
-	pMesh[2].p3.x = 0.0f;
-	pMesh[2].p3.y = 0.0f;
-	pMesh[2].p3.z = -1.0f;
+	pMesh[2].p3.x = -2.0f;
+	pMesh[2].p3.y = -2.0f;
+	pMesh[2].p3.z = -3.0f;
 	pMesh[2].p3.w = 1.0f;
 
 	pMesh[2].color.x = 0.0f;
@@ -84,19 +100,19 @@ Tri* GetBoxMesh()
 	pMesh[2].color.z = 0.0f;
 	pMesh[2].color.w = 1.0f;
 
-	pMesh[3].p1.x = 1.0f;
-	pMesh[3].p1.y = 1.0f;
-	pMesh[3].p1.z = -1.0f;
+	pMesh[3].p1.x = -1.0f;
+	pMesh[3].p1.y = -1.0f;
+	pMesh[3].p1.z = -3.0f;
 	pMesh[3].p1.w = 1.0f;
 
-	pMesh[3].p2.x = 0.0f;
-	pMesh[3].p2.y = 1.0f;
-	pMesh[3].p2.z = -1.0f;
+	pMesh[3].p2.x = -2.0f;
+	pMesh[3].p2.y = -1.0f;
+	pMesh[3].p2.z = -3.0f;
 	pMesh[3].p2.w = 1.0f;
 
-	pMesh[3].p3.x = 0.0f;
-	pMesh[3].p3.y = 0.0f;
-	pMesh[3].p3.z = -1.0f;
+	pMesh[3].p3.x = -2.0f;
+	pMesh[3].p3.y = -2.0f;
+	pMesh[3].p3.z = -3.0f;
 	pMesh[3].p3.w = 1.0f;
 
 	pMesh[3].color.x = 0.0f;
@@ -105,19 +121,19 @@ Tri* GetBoxMesh()
 	pMesh[3].color.w = 1.0f;
 
 	//Right
-	pMesh[4].p1.x = 1.0f;
-	pMesh[4].p1.y = 0.0f;
-	pMesh[4].p1.z = -1.0f;
+	pMesh[4].p1.x = -1.0f;
+	pMesh[4].p1.y = -2.0f;
+	pMesh[4].p1.z = -3.0f;
 	pMesh[4].p1.w = 1.0f;
 
-	pMesh[4].p2.x = 1.0f;
-	pMesh[4].p2.y = 0.0f;
-	pMesh[4].p2.z = 0.0f;
+	pMesh[4].p2.x = -1.0f;
+	pMesh[4].p2.y = -2.0f;
+	pMesh[4].p2.z = -2.0f;
 	pMesh[4].p2.w = 1.0f;
 
-	pMesh[4].p3.x = 1.0f;
-	pMesh[4].p3.y = 1.0f;
-	pMesh[4].p3.z = 0.0f;
+	pMesh[4].p3.x = -1.0f;
+	pMesh[4].p3.y = -1.0f;
+	pMesh[4].p3.z = -2.0f;
 	pMesh[4].p3.w = 1.0f;
 
 	pMesh[4].color.x = 0.0f;
@@ -180,7 +196,7 @@ Tri* GenerateTriangles(int iNrOfTriangles)
 
 bool GameClass::Initialize()
 {
-	m_pMainCamera = new Camera(DirectX::XMFLOAT3(-15.0f, 1.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f));
+	m_pMainCamera = new Camera(DirectX::XMFLOAT3(15.0f, 1.0f, 0.0f), DirectX::XMFLOAT3(0.0f, 0.0f, 1.0f));
 	m_pRenderer = new DeferredRenderer();
 	m_pGPUbridge = new GPUbridge();
 	m_pResourceLoader = new ResourceLoader();
@@ -192,7 +208,7 @@ bool GameClass::Initialize()
 	//m_pObject = new Object();
 	//m_pObject->SetMesh(m_pResourceLoader->LoadMeshFromFile("../Resources/Teapot/teapot_n_glass.obj", Mesh::MeshLayout::VERTEXNORMAL, m_pGPUbridge));
 
-	m_pDHlab = D3DClass::CreateDH(4, D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
+	m_pDHlab = D3DClass::CreateDH(5, D3D12_DESCRIPTOR_HEAP_TYPE::D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, true);
 	int iOffsetSize = D3DClass::GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	D3D12_UNORDERED_ACCESS_VIEW_DESC desc = {};
@@ -210,22 +226,31 @@ bool GameClass::Initialize()
 		D3DClass::GetDevice()->CreateUnorderedAccessView(m_ppUAVTargets[i], nullptr, nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(m_pDHlab->GetCPUDescriptorHandleForHeapStart()).Offset(iOffsetSize * i));
 		//D3DClass::GetDevice()->CreateShaderResourceView(m_ppUAVTargets[i], nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(m_pDHlab->GetCPUDescriptorHandleForHeapStart()).Offset(iOffsetSize * i));
 	}
-
-	const int iNrOfTriangles = 6;
+	
+	iNrOfTriangles = 6;
+	iNrOfLights = 2;
 	Tri* pTiranglesData = GetBoxMesh();//GenerateTriangles(iNrOfTriangles);
+	Light* pLights = CreateLights();
 
 	ID3D12CommandAllocator* pCA = D3DClass::CreateCA(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	ID3D12GraphicsCommandList* pCL = D3DClass::CreateGaphicsCL(D3D12_COMMAND_LIST_TYPE_DIRECT, pCA);
 
 	ID3D12Resource* pTriMatUploadHeap = D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE_UPLOAD, sizeof(Tri) * iNrOfTriangles, D3D12_RESOURCE_STATE_GENERIC_READ, L"TriMatrixUploadHeap");
+	ID3D12Resource* pLightMatUploadHeap = D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE_UPLOAD, sizeof(Light) * iNrOfLights, D3D12_RESOURCE_STATE_GENERIC_READ, L"LightUploadHeap");
 	m_pTriangleMatrices = D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE_DEFAULT, sizeof(Tri) * iNrOfTriangles, D3D12_RESOURCE_STATE_COPY_DEST, L"TriMatrixHeap");
+	ID3D12Resource* pLightHeap = D3DClass::CreateCommittedResource(D3D12_HEAP_TYPE_DEFAULT, sizeof(Light) * iNrOfLights, D3D12_RESOURCE_STATE_COPY_DEST, L"LightHeap");
 	
-	D3D12_SUBRESOURCE_DATA initData = {};
-	initData.pData = reinterpret_cast<BYTE*>(pTiranglesData);
-	initData.SlicePitch = sizeof(Tri) * iNrOfTriangles;
-	initData.RowPitch = sizeof(Tri) * iNrOfTriangles;
+	D3D12_SUBRESOURCE_DATA triInitData = {};
+	triInitData.pData = reinterpret_cast<BYTE*>(pTiranglesData);
+	triInitData.SlicePitch = sizeof(Tri) * iNrOfTriangles;
+	triInitData.RowPitch = sizeof(Tri) * iNrOfTriangles;
 
-	UpdateSubresources(pCL, m_pTriangleMatrices, pTriMatUploadHeap, 0, 0, 1, &initData);
+	D3D12_SUBRESOURCE_DATA lightsInitData = {};
+	lightsInitData.pData = reinterpret_cast<BYTE*>(pTiranglesData);
+	lightsInitData.SlicePitch = sizeof(Tri) * iNrOfTriangles;
+	lightsInitData.RowPitch = sizeof(Tri) * iNrOfTriangles;
+
+	UpdateSubresources(pCL, m_pTriangleMatrices, pTriMatUploadHeap, 0, 0, 1, &triInitData);
 
 	pCL->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER().Transition(m_pTriangleMatrices, D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_GENERIC_READ));
 	ID3D12Fence* uploadFence = D3DClass::CreateFence();
@@ -242,20 +267,29 @@ bool GameClass::Initialize()
 	SAFE_RELEASE(pCA);
 	SAFE_RELEASE(pTriMatUploadHeap);
 
-	D3D12_BUFFER_SRV buf = {};
-	buf.NumElements = iNrOfTriangles;
-	buf.StructureByteStride = sizeof(Tri);
-	buf.FirstElement = 0;
-	buf.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+	D3D12_BUFFER_SRV triSrvBufferDesc = {};
+	triSrvBufferDesc.NumElements = iNrOfTriangles;
+	triSrvBufferDesc.StructureByteStride = sizeof(Tri);
+	triSrvBufferDesc.FirstElement = 0;
+	triSrvBufferDesc.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
 
 
-	D3D12_SHADER_RESOURCE_VIEW_DESC triangleMatrixDesc;
-	triangleMatrixDesc.Buffer = buf;
+	D3D12_SHADER_RESOURCE_VIEW_DESC triangleMatrixDesc;//Lets keep this artifactname just for fun.
+	triangleMatrixDesc.Buffer = triSrvBufferDesc;
 	triangleMatrixDesc.Format = DXGI_FORMAT_UNKNOWN;
 	triangleMatrixDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
 	triangleMatrixDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
 
 	D3DClass::GetDevice()->CreateShaderResourceView(m_pTriangleMatrices, &triangleMatrixDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(m_pDHlab->GetCPUDescriptorHandleForHeapStart()).Offset(iOffsetSize * 3));//HOLY SH*T!! THIS IS HARD CODED
+	 
+	D3D12_BUFFER_SRV lightsSrvBufferDesc = {};
+	lightsSrvBufferDesc.FirstElement = 0;
+	lightsSrvBufferDesc.Flags = D3D12_BUFFER_SRV_FLAG_NONE;
+	lightsSrvBufferDesc.NumElements = iNrOfLights;
+	lightsSrvBufferDesc.StructureByteStride = sizeof(Light);
+
+	triangleMatrixDesc.Buffer = lightsSrvBufferDesc; 
+	D3DClass::GetDevice()->CreateShaderResourceView(pLightHeap, &triangleMatrixDesc, CD3DX12_CPU_DESCRIPTOR_HANDLE(m_pDHlab->GetCPUDescriptorHandleForHeapStart()).Offset(iOffsetSize * 4));
 
 	m_pUAVDescriptorRanges[0].OffsetInDescriptorsFromTableStart = 0;
 	m_pUAVDescriptorRanges[0].NumDescriptors = 3;
@@ -266,16 +300,16 @@ bool GameClass::Initialize()
 	m_UAVDescriptorTable.NumDescriptorRanges = 1;
 	m_UAVDescriptorTable.pDescriptorRanges = m_pUAVDescriptorRanges;
 
-	D3D12_DESCRIPTOR_RANGE matRange[1];
-	matRange[0].BaseShaderRegister = 1;
-	matRange[0].NumDescriptors = 1;
-	matRange[0].OffsetInDescriptorsFromTableStart = 3;
-	matRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
-	matRange[0].RegisterSpace = 0;
+	D3D12_DESCRIPTOR_RANGE lightDescriptorRange[1];
+	lightDescriptorRange[0].BaseShaderRegister = 2;
+	lightDescriptorRange[0].NumDescriptors = 1;
+	lightDescriptorRange[0].OffsetInDescriptorsFromTableStart = 4;
+	lightDescriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
+	lightDescriptorRange[0].RegisterSpace = 0;
 
-	D3D12_ROOT_DESCRIPTOR_TABLE matTable;
-	matTable.NumDescriptorRanges = 1;
-	matTable.pDescriptorRanges = matRange;
+	D3D12_ROOT_DESCRIPTOR_TABLE lightsDescriptortable;
+	lightsDescriptortable.NumDescriptorRanges = 1;
+	lightsDescriptortable.pDescriptorRanges = lightDescriptorRange;
 
 	//CREATE SHADER
 	Shader* pComputeShader = m_pResourceLoader->CreateComputeShader(L"RayTracerCS.hlsl");
@@ -309,6 +343,11 @@ bool GameClass::Initialize()
 	triangleRP.Descriptor = triDescriptor;
 	triangleRP.ParameterType = D3D12_ROOT_PARAMETER_TYPE_SRV;
 	triangleRP.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+
+	D3D12_ROOT_PARAMETER lightRP;
+	lightRP.ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
+	lightRP.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;
+	lightRP.DescriptorTable = lightsDescriptortable;
 
 
 	pComputeShader->AddRootParameter(cameraRootParameter);
@@ -370,7 +409,7 @@ bool GameClass::Render()
 
 	m_pMainCamera->BindCameraBuffer(0, pCL, iBackBufferIndex);
 	pCL->SetComputeRootDescriptorTable(1, CD3DX12_GPU_DESCRIPTOR_HANDLE(m_pDHlab->GetGPUDescriptorHandleForHeapStart()).Offset(iDHIncrementSizeRTV  * iBackBufferIndex));
-	pCL->SetComputeRoot32BitConstant(2, iBackBufferIndex, 0);
+	pCL->SetComputeRoot32BitConstant(2, iNrOfTriangles, 0);
 	pCL->SetComputeRoot32BitConstant(2, WindowClass::GetHeight(), 1);
 	pCL->SetComputeRoot32BitConstant(2, WindowClass::GetWidth(), 2);
 	pCL->SetComputeRootShaderResourceView(3, m_pTriangleMatrices->GetGPUVirtualAddress());//CD3DX12_GPU_DESCRIPTOR_HANDLE(m_pDHlab->GetGPUDescriptorHandleForHeapStart()).Offset(iDHIncrementSizeRTV * 3));

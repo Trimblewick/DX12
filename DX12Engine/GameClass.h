@@ -25,6 +25,8 @@ public:
 	void Update(Input* input, float dt);
 	bool Render();
 	void CleanUp();
+
+
 	
 
 private:
@@ -43,6 +45,8 @@ private:
 	ID3D12PipelineState*								m_pComputePSO;
 	ID3D12PipelineState*								m_pGraphicsPSO;
 
+	int iNrOfTriangles;
+	int iNrOfLights;
 
 	GPUbridge*											m_pGPUbridge;
 	ResourceLoader*										m_pResourceLoader;
