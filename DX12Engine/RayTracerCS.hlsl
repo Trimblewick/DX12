@@ -23,7 +23,14 @@ struct Triangle
     float4 color;
 };
 
+struct Light
+{
+    float4 position;
+    float4 b1, b2, b3;
+};
+
 StructuredBuffer<Triangle> triangles : register(t1);
+StructuredBuffer<Light> lights : register(t2);
 
 cbuffer rootConstants : register(b1)
 {
@@ -71,10 +78,11 @@ Hit RayTriangleIntersection(float3 rayDir, float3 rayPos, Triangle tri, Hit prev
     if (dot(normal, cross(tri.p3.xyz - tri.p2.xyz, intersectionPoint - tri.p2.xyz)) < 0)
         return previousHit;
 
-    if (length(intersectionPoint - camPosition) < length(previousHit.hitPoint - camPosition))
+    if (length(intersectionPoint - camPosition) < length(previousHit.hitPoint - camPosition))//better hit achived
     {
         previousHit.hitPoint = intersectionPoint;
-        previousHit.color = tri.color;
+        
+        previousHit.color = lights[0].position;
     }
 
     return previousHit;
@@ -97,7 +105,6 @@ void main( uint3 DTid : SV_DispatchThreadID )
         
         previousHit = RayTriangleIntersection(ray, pixelPosition, triWS, previousHit);
     }
-
     target[DTid.xy] = previousHit.color;
-
+  
 }

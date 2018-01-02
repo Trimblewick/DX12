@@ -33,11 +33,9 @@ private:
 	Camera*												m_pMainCamera;
 	DeferredRenderer*									m_pRenderer;
 
-
-	D3D12_DESCRIPTOR_RANGE								m_pUAVDescriptorRanges[1];
-	D3D12_ROOT_DESCRIPTOR_TABLE							m_UAVDescriptorTable;
 	ID3D12Resource*										m_ppUAVTargets[3];
 	ID3D12Resource*										m_pTriangleMatrices;
+	ID3D12Resource*										m_pLightHeap;
 
 	ID3D12DescriptorHeap*								m_pDHlab;
 	ID3D12RootSignature*								m_pComputeRS;
