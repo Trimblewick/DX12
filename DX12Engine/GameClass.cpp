@@ -20,8 +20,8 @@ struct Tri
 
 struct Light
 {
-	DirectX::XMFLOAT4 position, a, b, c;
-	
+	DirectX::XMFLOAT4 position;
+	DirectX::XMFLOAT4 color;
 };
 
 Light* CreateLights()
@@ -29,7 +29,9 @@ Light* CreateLights()
 	Light* pLights = new Light[2];
 	ZeroMemory(pLights, 2);
 	pLights[0].position = DirectX::XMFLOAT4(1.0f, 0.0f, 1.0f, 1.0f);
+	pLights[0].color = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 	pLights[1].position = DirectX::XMFLOAT4(3, 3, 0, 1);
+	pLights[1].color = DirectX::XMFLOAT4(0.5f, 0.5f, 1.0f, 1.0f);
 
 	return pLights;
 }
