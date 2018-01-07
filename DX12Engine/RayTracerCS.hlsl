@@ -106,7 +106,7 @@ Hit RayTriangleIntersection(float3 rayOrig, float3 rayDir, Triangle tri, Hit pre
             previousHit.hitPoint = newHitPoint;
             previousHit.normal = normalize(cross(edge1, edge2));
             previousHit.color = tri.color;
-           // previousHit.color = float4(previousHit.normal, 1);
+            previousHit.color = float4(previousHit.normal, 1);
         }
     }
 
@@ -124,14 +124,14 @@ float4 AccumulateLights(Hit hit)
 [numthreads(32, 32, 1)]
 void main( uint3 DTid : SV_DispatchThreadID )
 {
-    float3 camPosition = float3(-4, -4, -6);
+    float3 camPosition = float3(-4, -4, 6);
     Hit hit;
     hit.color = float4(0.3f, 0.0f, 0.0f, 1.0f);
     hit.hitPoint = float3(0, 0, 1000000);
 
     float3 dxdy = float3(DTid.x / (float) iScreenWidth * 2 - 1, -(DTid.y / (float) iScreenHeight * 2 - 1), 0.0f);
     float3 rayOrig = camPosition + dxdy;
-    float3 focalPoint = camPosition - float3(0, 0, -0.5f);
+    float3 focalPoint = camPosition - float3(0, 0, 0.5f);
     float3 rayDir = normalize(rayOrig - focalPoint);
     hit.color = float4(rayDir, 1);
 

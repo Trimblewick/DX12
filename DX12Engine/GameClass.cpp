@@ -38,8 +38,10 @@ Light* CreateLights()
 
 Tri* GetBoxMesh()
 {
-	Tri* pMesh = new Tri[12];
+	Tri* pMesh = new Tri[24];
 
+
+	//Small box
 	//Back
 	pMesh[0].p1.x = 1.0f;
 	pMesh[0].p1.y = -1.0f;
@@ -286,6 +288,253 @@ Tri* GetBoxMesh()
 	pMesh[11].color.z = 0.0f;
 	pMesh[11].color.w = 1.0f;
 
+	//Big box
+	//Back
+	pMesh[0 + 12].p1.x = 10.0f;
+	pMesh[0 + 12].p1.y = 10.0f;
+	pMesh[0 + 12].p1.z = 10.0f;
+	pMesh[0 + 12].p1.w = 1.0f;
+
+	pMesh[0 + 12].p2.x = 10.0f;
+	pMesh[0 + 12].p2.y = -10.0f;
+	pMesh[0 + 12].p2.z = 10.0f;
+	pMesh[0 + 12].p2.w = 1.0f;
+
+	pMesh[0 + 12].p3.x = -10.0f;
+	pMesh[0 + 12].p3.y = -10.0f;
+	pMesh[0 + 12].p3.z = 10.0f;
+	pMesh[0 + 12].p3.w = 1.0f;
+
+	pMesh[0 + 12].color.x = 1.0f;
+	pMesh[0 + 12].color.y = 0.0f;
+	pMesh[0 + 12].color.z = 0.0f;
+	pMesh[0 + 12].color.w = 1.0f;
+
+	pMesh[1 + 12].p1.x = -10.0f;
+	pMesh[1 + 12].p1.y = 10.0f;
+	pMesh[1 + 12].p1.z = 10.0f;
+	pMesh[1 + 12].p1.w = 1.0f;
+
+	pMesh[1 + 12].p2.x = 10.0f;
+	pMesh[1 + 12].p2.y = 10.0f;
+	pMesh[1 + 12].p2.z = 10.0f;
+	pMesh[1 + 12].p2.w = 1.0f;
+
+	pMesh[1 + 12].p3.x = -10.0f;
+	pMesh[1 + 12].p3.y = -10.0f;
+	pMesh[1 + 12].p3.z = 10.0f;
+	pMesh[1 + 12].p3.w = 1.0f;
+
+	pMesh[1 + 12].color.x = 1.0f;
+	pMesh[1 + 12].color.y = 0.0f;
+	pMesh[1 + 12].color.z = 0.0f;
+	pMesh[1 + 12].color.w = 1.0f;
+
+	//Front?
+	pMesh[2 + 12].p1.x = 10.0f;
+	pMesh[2 + 12].p1.y = -10.0f;
+	pMesh[2 + 12].p1.z = -10.0f;
+	pMesh[2 + 12].p1.w = 1.0f;
+
+	pMesh[2 + 12].p2.x = 10.0f;
+	pMesh[2 + 12].p2.y = 10.0f;
+	pMesh[2 + 12].p2.z = -10.0f;
+	pMesh[2 + 12].p2.w = 1.0f;
+
+	pMesh[2 + 12].p3.x = -10.0f;
+	pMesh[2 + 12].p3.y = -10.0f;
+	pMesh[2 + 12].p3.z = -10.0f;
+	pMesh[2 + 12].p3.w = 1.0f;
+
+	pMesh[2 + 12].color.x = 1.0f;
+	pMesh[2 + 12].color.y = 0.0f;
+	pMesh[2 + 12].color.z = 0.0f;
+	pMesh[2 + 12].color.w = 1.0f;
+
+	pMesh[3 + 12].p1.x = 10.0f;
+	pMesh[3 + 12].p1.y = 10.0f;
+	pMesh[3 + 12].p1.z = -10.0f;
+	pMesh[3 + 12].p1.w = 1.0f;
+
+	pMesh[3 + 12].p2.x = -10.0f;
+	pMesh[3 + 12].p2.y = 10.0f;
+	pMesh[3 + 12].p2.z = -10.0f;
+	pMesh[3 + 12].p2.w = 1.0f;
+
+	pMesh[3 + 12].p3.x = -10.0f;
+	pMesh[3 + 12].p3.y = -10.0f;
+	pMesh[3 + 12].p3.z = -10.0f;
+	pMesh[3 + 12].p3.w = 1.0f;
+
+	pMesh[3 + 12].color.x = 1.0f;
+	pMesh[3 + 12].color.y = 0.0f;
+	pMesh[3 + 12].color.z = 0.0f;
+	pMesh[3 + 12].color.w = 1.0f;
+
+	//Right
+	pMesh[4 + 12].p1.x = -10.0f;
+	pMesh[4 + 12].p1.y = 10.0f;
+	pMesh[4 + 12].p1.z = -10.0f;
+	pMesh[4 + 12].p1.w = 1.0f;
+
+	pMesh[4 + 12].p2.x = -10.0f;
+	pMesh[4 + 12].p2.y = -10.0f;
+	pMesh[4 + 12].p2.z = -10.0f;
+	pMesh[4 + 12].p2.w = 1.0f;
+
+	pMesh[4 + 12].p3.x = -10.0f;
+	pMesh[4 + 12].p3.y = -10.0f;
+	pMesh[4 + 12].p3.z = 10.0f;
+	pMesh[4 + 12].p3.w = 1.0f;
+
+	pMesh[4 + 12].color.x = 1.0f;
+	pMesh[4 + 12].color.y = 0.0f;
+	pMesh[4 + 12].color.z = 0.0f;
+	pMesh[4 + 12].color.w = 1.0f;
+
+	pMesh[5 + 12].p1.x = -10.0f;
+	pMesh[5 + 12].p1.y = 10.0f;
+	pMesh[5 + 12].p1.z = -10.0f;
+	pMesh[5 + 12].p1.w = 1.0f;
+
+	pMesh[5 + 12].p2.x = -10.0f;
+	pMesh[5 + 12].p2.y = -10.0f;
+	pMesh[5 + 12].p2.z = 10.0f;
+	pMesh[5 + 12].p2.w = 1.0f;
+
+	pMesh[5 + 12].p3.x = -10.0f;
+	pMesh[5 + 12].p3.y = 10.0f;
+	pMesh[5 + 12].p3.z = 10.0f;
+	pMesh[5 + 12].p3.w = 1.0f;
+
+	pMesh[5 + 12].color.x = 1.0f;
+	pMesh[5 + 12].color.y = 0.0f;
+	pMesh[5 + 12].color.z = 0.0f;
+	pMesh[5 + 12].color.w = 1.0f;
+
+	//Right
+	pMesh[6 + 12].p1.x = 10.0f;
+	pMesh[6 + 12].p1.y = -10.0f;
+	pMesh[6 + 12].p1.z = 10.0f;
+	pMesh[6 + 12].p1.w = 1.0f;
+
+	pMesh[6 + 12].p2.x = 10.0f;
+	pMesh[6 + 12].p2.y = -10.0f;
+	pMesh[6 + 12].p2.z = -10.0f;
+	pMesh[6 + 12].p2.w = 1.0f;
+
+	pMesh[6 + 12].p3.x = 10.0f;
+	pMesh[6 + 12].p3.y = 10.0f;
+	pMesh[6 + 12].p3.z = -10.0f;
+	pMesh[6 + 12].p3.w = 1.0f;
+
+	pMesh[6 + 12].color.x = 1.0f;
+	pMesh[6 + 12].color.y = 0.0f;
+	pMesh[6 + 12].color.z = 0.0f;
+	pMesh[6 + 12].color.w = 1.0f;
+
+	pMesh[7 + 12].p1.x = 10.0f;
+	pMesh[7 + 12].p1.y = 10.0f;
+	pMesh[7 + 12].p1.z = 10.0f;
+	pMesh[7 + 12].p1.w = 1.0f;
+
+	pMesh[7 + 12].p2.x = 10.0f;
+	pMesh[7 + 12].p2.y = -10.0f;
+	pMesh[7 + 12].p2.z = 10.0f;
+	pMesh[7 + 12].p2.w = 1.0f;
+
+	pMesh[7 + 12].p3.x = 10.0f;
+	pMesh[7 + 12].p3.y = 10.0f;
+	pMesh[7 + 12].p3.z = -10.0f;
+	pMesh[7 + 12].p3.w = 1.0f;
+
+	pMesh[7 + 12].color.x = 1.0f;
+	pMesh[7 + 12].color.y = 0.0f;
+	pMesh[7 + 12].color.z = 0.0f;
+	pMesh[7 + 12].color.w = 1.0f;
+
+	//Bottom
+	pMesh[8 + 12].p1.x = -10.0f;
+	pMesh[8 + 12].p1.y = 10.0f;
+	pMesh[8 + 12].p1.z = -10.0f;
+	pMesh[8 + 12].p1.w = 1.0f;
+
+	pMesh[8 + 12].p2.x = -10.0f;
+	pMesh[8 + 12].p2.y = 10.0f;
+	pMesh[8 + 12].p2.z = 10.0f;
+	pMesh[8 + 12].p2.w = 1.0f;
+
+	pMesh[8 + 12].p3.x = 10.0f;
+	pMesh[8 + 12].p3.y = 10.0f;
+	pMesh[8 + 12].p3.z = 10.0f;
+	pMesh[8 + 12].p3.w = 1.0f;
+
+	pMesh[8 + 12].color.x = 1.0f;
+	pMesh[8 + 12].color.y = 0.0f;
+	pMesh[8 + 12].color.z = 0.0f;
+	pMesh[8 + 12].color.w = 1.0f;
+
+	pMesh[9 + 12].p1.x = -10.0f;
+	pMesh[9 + 12].p1.y = 10.0f;
+	pMesh[9 + 12].p1.z = -10.0f;
+	pMesh[9 + 12].p1.w = 1.0f;
+
+	pMesh[9 + 12].p2.x = 10.0f;
+	pMesh[9 + 12].p2.y = 10.0f;
+	pMesh[9 + 12].p2.z = 10.0f;
+	pMesh[9 + 12].p2.w = 1.0f;
+
+	pMesh[9 + 12].p3.x = 10.0f;
+	pMesh[9 + 12].p3.y = 10.0f;
+	pMesh[9 + 12].p3.z = -10.0f;
+	pMesh[9 + 12].p3.w = 1.0f;
+
+	pMesh[9 + 12].color.x = 1.0f;
+	pMesh[9 + 12].color.y = 0.0f;
+	pMesh[9 + 12].color.z = 0.0f;
+	pMesh[9 + 12].color.w = 1.0f;
+
+	//Bottom
+	pMesh[10 + 12].p1.x = -10.0f;
+	pMesh[10 + 12].p1.y = -10.0f;
+	pMesh[10 + 12].p1.z = 10.0f;
+	pMesh[10 + 12].p1.w = 1.0f;
+
+	pMesh[10 + 12].p2.x = -10.0f;
+	pMesh[10 + 12].p2.y = -10.0f;
+	pMesh[10 + 12].p2.z = -10.0f;
+	pMesh[10 + 12].p2.w = 1.0f;
+
+	pMesh[10 + 12].p3.x = 10.0f;
+	pMesh[10 + 12].p3.y = -10.0f;
+	pMesh[10 + 12].p3.z = 10.0f;
+	pMesh[10 + 12].p3.w = 1.0f;
+
+	pMesh[10 + 12].color.x = 1.0f;
+	pMesh[10 + 12].color.y = 0.0f;
+	pMesh[10 + 12].color.z = 0.0f;
+	pMesh[10 + 12].color.w = 1.0f;
+
+	pMesh[11 + 12].p1.x = 10.0f;
+	pMesh[11 + 12].p1.y = -10.0f;
+	pMesh[11 + 12].p1.z = 10.0f;
+	pMesh[11 + 12].p1.w = 1.0f;
+
+	pMesh[11 + 12].p2.x = -10.0f;
+	pMesh[11 + 12].p2.y = -10.0f;
+	pMesh[11 + 12].p2.z = -10.0f;
+	pMesh[11 + 12].p2.w = 1.0f;
+
+	pMesh[11 + 12].p3.x = 10.0f;
+	pMesh[11 + 12].p3.y = -10.0f;
+	pMesh[11 + 12].p3.z = -10.0f;
+	pMesh[11 + 12].p3.w = 1.0f;
+
+	pMesh[11 + 12].color.x = 1.0f;
+	pMesh[11 + 12].color.y = 0.0f;
+	pMesh[11 + 12].color.z = 0.0f;
+	pMesh[11 + 12].color.w = 1.0f;
+
 	return pMesh;
 }
 
@@ -352,7 +601,7 @@ bool GameClass::Initialize()
 		//D3DClass::GetDevice()->CreateShaderResourceView(m_ppUAVTargets[i], nullptr, CD3DX12_CPU_DESCRIPTOR_HANDLE(m_pDHlab->GetCPUDescriptorHandleForHeapStart()).Offset(iOffsetSize * i));
 	}
 	
-	iNrOfTriangles = 12;
+	iNrOfTriangles = 24;
 	iNrOfLights = 2;
 	Tri* pTiranglesData = GetBoxMesh();//GenerateTriangles(iNrOfTriangles);
 	Light* pLights = CreateLights();
