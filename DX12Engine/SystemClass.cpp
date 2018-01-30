@@ -126,7 +126,7 @@ void SystemClass::Run()
 		}
 		else //loop logics
 		{
-			s_input.UpdateMouse();
+			//s_input.UpdateMouse();
 
 			//dt
 			auto currentTime = std::chrono::steady_clock::now();

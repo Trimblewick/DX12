@@ -53,15 +53,15 @@ bool D3DClass::Initialize()
 			// we dont want a software device
 			continue;
 		}
-
+		ID3D12Device* pBogoDevice;
 		// we want a device that is compatible with direct3d 12 (feature level 11 or higher)
-		hr = D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, _uuidof(ID3D12Device), nullptr);
+		hr = D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, __uuidof(pBogoDevice), nullptr);
 		if (SUCCEEDED(hr))
 		{
 			adapterFound = true;
 			break;
 		}
-
+		
 		adapterIndex++;
 	}
 
@@ -102,6 +102,7 @@ ID3D12Fence * D3DClass::CreateFence()
 ID3D12DescriptorHeap * D3DClass::CreateDH(int numDescriptors, D3D12_DESCRIPTOR_HEAP_TYPE type, bool bShaderVisible)
 {
 	ID3D12DescriptorHeap* pDH;
+
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 	desc.NumDescriptors = numDescriptors;
 	desc.Type = type;

@@ -29,6 +29,8 @@ struct Light
     float4 color;
 };
 
+
+
 StructuredBuffer<Triangle> triangles : register(t1);
 StructuredBuffer<Light> lights : register(t2);
 
@@ -43,108 +45,145 @@ cbuffer rootConstants : register(b1)
 struct Hit
 {
     float3 hitPoint;
-    float padding;
+    float pad1;
     float4 color;
     float3 normal;
     float pad2;
 };
 
-float RayVsTriangle(float3 rayOrigin, float3 rayDirection, float3 v0, float3 v1, float3 v2)
+struct Ray
 {
-    float3 e1 = v1 - v0;
-    float3 e2 = v2 - v0;
-    float3 s = rayOrigin - v0;
-    float3 d = -rayDirection;
-    float det = determinant(float3x3(d, e1, e2));
-    if (det > 0.001f)
-    {
-        det = 1 / det;
-        float u = det * determinant(float3x3(d, s, e2));
-        float v = det * determinant(float3x3(d, e1, s));
-
-        if ((u >= -0.001f && u <= 1.001f) && (v >= -0.001f && v <= (1.001f - u)))
-        {
-            return det * determinant(float3x3(s, e1, e2));
-        }
-    }
-    return -1.f;
-}
+    float3 origin;
+    float bounce;
+    float3 direction;
+    float pad;
+};
 
 
-Hit RayTriangleIntersection(float3 rayOrig, float3 rayDir, Triangle tri, Hit previousHit)
+bool RayTriangleIntersection(inout Ray ray, in Triangle tri, inout Hit hit)
 {
     float3 p1 = tri.p1.xyz;
     float3 edge1 = tri.p2.xyz - p1;
     float3 edge2 = tri.p3.xyz - p1;
     
-    float3 h = cross(rayDir, edge2);
+    float3 h = cross(ray.direction, edge2);
     float a = dot(edge1, h);
     
     if (a * a < 0.00000000001f)
-        return previousHit;
+        return false;
 
     float f = 1.0f / a;
-    float3 s = rayOrig - p1;
+    float3 s = ray.origin - p1;
     float u = f * dot(s, h);
 
     if (u < 0.0f)
-        return previousHit;
+        return false;
 
     float3 q = cross(s, edge1);
-    float v = f * dot(rayDir, q);
+    float v = f * dot(ray.direction, q);
 
     if (v < 0.0f || u + v > 1.0f)
-        return previousHit;
+        return false;
 
     float t = f * dot(edge2, q);
     if (t < 0.00001f)
     {
-        float3 newHitPoint = rayOrig + rayDir * t;
+        float3 newHitPoint = ray.origin + ray.direction * t;
 
-        if (length(newHitPoint - rayOrig) < length(previousHit.hitPoint - rayOrig))
+        if (length(newHitPoint - ray.origin) < length(hit.hitPoint - ray.origin))
         {
-            previousHit.hitPoint = newHitPoint;
-            previousHit.normal = normalize(cross(edge1, edge2));
-            previousHit.color = tri.color;
-            previousHit.color = float4(previousHit.normal, 1);
+            hit.hitPoint = newHitPoint;
+            hit.normal = normalize(cross(edge1, edge2));
+            hit.color = tri.color;
+
+            ray.origin = newHitPoint;
+            ray.direction = newHitPoint + hit.normal;
+            //previousHit.color = float4(previousHit.normal, 1);
         }
+        return true;
     }
 
-    return previousHit;
+    return false;
 }
 
-float4 AccumulateLights(Hit hit)
+float4 AccumulateLights(Hit hit, float3 camPosition)
 {
     float4 c = float4(0.0f, 0.0f, 0.0f, 1.0f);
-    for (int i = 0; i < iNumberOfLights; ++i)
-        c += saturate(dot(hit.normal, normalize(mul(lights[i].position, vpMatrix).xyz - hit.hitPoint))) * lights[i].color;
+    //int i = 0;
+    
+
+    float magnitude = 1.0f;
+
+    c += saturate(dot(hit.normal, normalize(lights[0].position - camPosition))) * (3.0f / magnitude) * lights[0].color;
+        
     return c;
 }
 
 [numthreads(32, 32, 1)]
 void main( uint3 DTid : SV_DispatchThreadID )
 {
-    float3 camPosition = float3(-4, -4, 6);
+    float3 camPosition = camPositionpp;
+//    float3(-4, -4, 6);
     Hit hit;
+    hit.pad1 = 0;
+    hit.pad2 = 0;
     hit.color = float4(0.3f, 0.0f, 0.0f, 1.0f);
     hit.hitPoint = float3(0, 0, 1000000);
 
+    Ray ray;
+    ray.bounce = 0;
+    ray.pad = 0;
     float3 dxdy = float3(DTid.x / (float) iScreenWidth * 2 - 1, -(DTid.y / (float) iScreenHeight * 2 - 1), 0.0f);
-    float3 rayOrig = camPosition + dxdy;
+    ray.origin = camPosition + dxdy;
     float3 focalPoint = camPosition - float3(0, 0, 0.5f);
-    float3 rayDir = normalize(rayOrig - focalPoint);
-    hit.color = float4(rayDir, 1);
+    ray.direction = normalize(ray.origin - focalPoint);
+    hit.color = float4(0, 0.3f, 0, 1);
+
+
 
     for (int i = 0; i < iNumberOfTriangles; ++i)
     {
         Triangle tri = triangles[i];
 
-        hit = RayTriangleIntersection(rayOrig, rayDir, tri, hit); //RayVsTriangle(rayOrig, rayDir, tri.p1.xyz, tri.p2.xyz, tri.p3.xyz) != - 1 ? tri.color : hit.color; //RayTriangleIntersection(rayDir, rayOrig, tri, hit);
-
+        RayTriangleIntersection(ray, tri, hit); 
     }
 
+    Ray lightRay;
+    lightRay.bounce = 0;
+    lightRay.pad = 0;
+    Hit lightHit;
+    lightHit.pad1 = 0;
+    lightHit.pad2 = 0;
     
-    target[DTid.xy] = hit.color;
-//    +AccumulateLights(hit);
+    
+    for (int l = 0; l < iNumberOfLights; ++l)
+    {
+        lightRay.origin = ray.origin;
+        float3 lightPos = lights[l].position.xyz;
+        lightRay.direction = normalize(lightPos - ray.origin);
+        lightHit.hitPoint = lightPos;
+        
+        bool bInLight = true;
+        for (int k = 0; k < iNumberOfTriangles; ++k)
+        {
+            Triangle tri = triangles[k];
+
+            RayTriangleIntersection(lightRay, tri, lightHit);
+            if (length(lightHit.hitPoint - ray.origin) < length(lightPos - ray.origin))
+            {
+            
+                k = iNumberOfTriangles;
+                bInLight = false;
+            }
+            
+        }
+        if (bInLight)
+        {
+            //hit.color += float4(0.05f, 0.05f, 0.05f, 0.0f);
+        }
+    }
+        
+    
+    target[DTid.xy] = hit.color +AccumulateLights(hit, camPosition);
   
 }

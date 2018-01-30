@@ -19,12 +19,12 @@ Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 	m_fDefaultForward = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	m_fDefaultRight = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 
-	m_position = initPosition;
+	m_position = DirectX::XMFLOAT3(-6, 0, -6);
 
 	DirectX::XMMATRIX tempProjMat = DirectX::XMMatrixPerspectiveFovLH(45.0f*(3.14f / 180.0f), WindowClass::GetWidth() / WindowClass::GetHeight(), 0.1f, 1000.0f);
 	DirectX::XMStoreFloat4x4(&m_projMatrix, tempProjMat);
 
-	m_forward = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&initLookAt), DirectX::XMLoadFloat3(&m_position)));
+	m_forward = DirectX::XMVector3Normalize(DirectX::XMVectorSubtract(DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(0,0,0)), DirectX::XMLoadFloat3(&m_position)));
 	
 	DirectX::XMVECTOR up = DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f));
 	m_right = DirectX::XMVector3Cross(up, m_forward);
@@ -32,7 +32,7 @@ Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 	m_fPitch = 0.0f;
 	m_fYaw = 0.0f;
 
-	DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(5, 0, -10)), DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(0, 0, 0)), up);
+	DirectX::XMMATRIX tempViewMatrix = DirectX::XMMatrixLookAtLH(DirectX::XMLoadFloat3(&m_position), DirectX::XMLoadFloat3(&DirectX::XMFLOAT3(0, 0, 0)), up);
 	DirectX::XMStoreFloat4x4(&m_viewMatrix, tempViewMatrix);
 
 	m_rotMat = DirectX::XMMatrixIdentity();
@@ -50,7 +50,7 @@ Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 	m_cameraBufferStruct.right = tempVec;
 	DirectX::XMStoreFloat3(&tempVec, up);
 	m_cameraBufferStruct.up = tempVec;
-	m_cameraBufferStruct.position = initPosition;
+	m_cameraBufferStruct.position = m_position;
 	DirectX::XMMATRIX transposedViewMatrix = DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&m_viewMatrix));
 	DirectX::XMStoreFloat4x4(&tempMat, transposedViewMatrix);
 	
@@ -118,6 +118,7 @@ void Camera::Update(Input * pInput, float dt, int iBackBufferIndex)
 	float f = 0.0f;
 	float r = 0.0f;
 	float u = 0.0f;
+
 	
 	if (pInput->IsKeyDown(Input::W))
 	{
@@ -135,7 +136,7 @@ void Camera::Update(Input * pInput, float dt, int iBackBufferIndex)
 	{
 		r -= dt * m_fHorizontalSpeed;
 	}
-	if (pInput->IsKeyDown(Input::SPACE))
+	if (pInput->IsKeyDown(Input::C))
 	{
 		u += dt * m_fVerticalSpeed;
 	}
