@@ -114,7 +114,7 @@ float4 AccumulateLights(Hit hit, float3 camPosition)
 
     float magnitude = 1.0f;
 
-    c += saturate(dot(hit.normal, normalize(lights[0].position - camPosition))) * (3.0f / magnitude) * lights[0].color;
+    c += saturate(dot(hit.normal, normalize(lights[0].position.xyz - camPosition))) * (3.0f / magnitude) * lights[0].color;
         
     return c;
 }
