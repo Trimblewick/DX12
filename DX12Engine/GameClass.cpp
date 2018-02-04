@@ -263,12 +263,12 @@ Tri* GetBoxMesh()
 	//Big box
 	//Back
 	pMesh[0 + 12].p1.x = box2Pos.x;
-	pMesh[0 + 12].p1.y = -box2Pos.y;
+	pMesh[0 + 12].p1.y = box2Pos.y;
 	pMesh[0 + 12].p1.z = box2Pos.z;
 	pMesh[0 + 12].p1.w = 1.0f;
 
 	pMesh[0 + 12].p2.x = box2Pos.x;
-	pMesh[0 + 12].p2.y = box2Pos.y;
+	pMesh[0 + 12].p2.y = -box2Pos.y;
 	pMesh[0 + 12].p2.z = box2Pos.z;
 	pMesh[0 + 12].p2.w = 1.0f;
 
@@ -282,12 +282,12 @@ Tri* GetBoxMesh()
 	pMesh[0 + 12].color.z = 0.0f;
 	pMesh[0 + 12].color.w = 1.0f;
 
-	pMesh[1 + 12].p1.x = box2Pos.x;
+	pMesh[1 + 12].p1.x = -box2Pos.x;
 	pMesh[1 + 12].p1.y = box2Pos.y;
 	pMesh[1 + 12].p1.z = box2Pos.z;
 	pMesh[1 + 12].p1.w = 1.0f;
 
-	pMesh[1 + 12].p2.x = -box2Pos.x;
+	pMesh[1 + 12].p2.x = box2Pos.x;
 	pMesh[1 + 12].p2.y = box2Pos.y;
 	pMesh[1 + 12].p2.z = box2Pos.z;
 	pMesh[1 + 12].p2.w = 1.0f;

@@ -151,6 +151,11 @@ float4 AccumulateLights(Hit hit)
     return c;
 }
 
+float3 GetReflection(Hit hit, Ray ray)
+{
+	return ray.direction - 2 * dot(ray.direction, hit.normal)*hit.normal;
+}
+
 [numthreads(32, 32, 1)]
 void main( uint3 DTid : SV_DispatchThreadID )
 {
@@ -161,9 +166,7 @@ void main( uint3 DTid : SV_DispatchThreadID )
     hit.pad1 = 0;
     hit.pad2 = 0;
     hit.color = float4(0.3f, 0.0f, 0.0f, 1.0f);
-    hit.hitPoint = float3(0, 0, 1000000);
-
-    
+    hit.hitPoint = float3(9999999, 9999999, 9999999);
 
     Ray ray;
     ray.bounce = 1;
@@ -175,9 +178,9 @@ void main( uint3 DTid : SV_DispatchThreadID )
     hit.color = float4(0, 0.3f, 0, 1);
 	hit.normal = float4(0, 0, 1, 0);
 	
-	for (int b = 1; b < 4; ++b)
+	for (int b = 1; b < 6; ++b)
 	{
-		hit.hitPoint = float3(9999999, 9999999, 1000000);
+		hit.hitPoint = float3(9999999, 9999999, 9999999);
 		for (int i = 0; i < iNumberOfTriangles; ++i)
 		{
 			Triangle tri = triangles[i];
@@ -187,10 +190,10 @@ void main( uint3 DTid : SV_DispatchThreadID )
 
 
 		
-		colorAccumulator = hit.color;//AccumulateLights(hit);//.xyz += hit.color / (float)ray.bounce;
+		colorAccumulator = AccumulateLights(hit);//.xyz += hit.color / (float)ray.bounce;
 		ray.origin = hit.hitPoint + hit.normal * 0.001f;
-		//hit.normal = float4(1,0,0 ,0);
-		ray.direction = -hit.normal;
+		//hit.normal = float4(0,0,-1 ,0);
+		ray.direction = GetReflection(hit, ray);//-hit.normal;
 		ray.bounce+= 1;
 
 	}
