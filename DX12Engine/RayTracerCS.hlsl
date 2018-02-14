@@ -139,7 +139,7 @@ float4 AccumulateLights(Hit hit)
 
 		if (length(lightHit.hitPoint - hit.hitPoint) < magLightDir)
 		{
-			c += float4(0.1f, 0.1f, 0.1f, 0.0f) *(magLightDir + 2) / magLightDir;
+			c += float4(0.1f, 0.1f, 0.1f, 0.0f) *(magLightDir + 12) / magLightDir;
 		}
 		
 	}

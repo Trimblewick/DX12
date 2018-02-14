@@ -19,7 +19,7 @@ Camera::Camera(DirectX::XMFLOAT3 initPosition, DirectX::XMFLOAT3 initLookAt)
 	m_fDefaultForward = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	m_fDefaultRight = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 
-	m_position = DirectX::XMFLOAT3(-1, 0, 12);
+	m_position = DirectX::XMFLOAT3(-1, 0, 6);
 
 	DirectX::XMMATRIX tempProjMat = DirectX::XMMatrixPerspectiveFovLH(45.0f*(3.14f / 180.0f), WindowClass::GetWidth() / WindowClass::GetHeight(), 0.1f, 1000.0f);
 	DirectX::XMStoreFloat4x4(&m_projMatrix, tempProjMat);

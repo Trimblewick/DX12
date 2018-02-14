@@ -42,9 +42,9 @@ Tri* GetBoxMesh()
 {
 	Tri* pMesh = new Tri[24];
 
-	DirectX::XMFLOAT3 box1Pos = DirectX::XMFLOAT3(10, 10, 10);
+	DirectX::XMFLOAT3 box1Pos = DirectX::XMFLOAT3(1, 1, 1);
 	DirectX::XMFLOAT4 box1Color = DirectX::XMFLOAT4(0.5f, 1.0f, 0.0f, 1.0f);
-	DirectX::XMFLOAT3 box2Pos = DirectX::XMFLOAT3(50, 50, 50);
+	DirectX::XMFLOAT3 box2Pos = DirectX::XMFLOAT3(5, 5, 5);
 
 	//Small box
 	//Back
